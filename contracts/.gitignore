@@ -1,0 +1,9 @@
+out/
+cache/
+broadcast/
+lib/forge-std/.github/
+lib/forge-std/.git/
+lib/forge-std/test/
+lib/forge-std/script/
+.DS_Store
+*.log

@@ -1,0 +1,23 @@
+{
+  "name": "@no-loss-auction/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smart contracts for No Loss Auction dApp",
+  "scripts": {
+    "build": "/home/labidev/.foundry/bin/forge build",
+    "test": "/home/labidev/.foundry/bin/forge test",
+    "test:coverage": "/home/labidev/.foundry/bin/forge coverage",
+    "test:gas": "/home/labidev/.foundry/bin/forge test --gas-report",
+    "lint": "/home/labidev/.foundry/bin/forge fmt --check",
+    "format": "/home/labidev/.foundry/bin/forge fmt",
+    "clean": "/home/labidev/.foundry/bin/forge clean",
+    "deploy": "/home/labidev/.foundry/bin/forge script",
+    "verify": "/home/labidev/.foundry/bin/forge verify-contract"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

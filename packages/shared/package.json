@@ -1,0 +1,38 @@
+{
+  "name": "@no-loss-auction/shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared code for No Loss Auction dApp (re-exports types and utils)",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./types": {
+      "types": "@no-loss-auction/types/dist/index.d.ts",
+      "default": "@no-loss-auction/types/dist/index.js"
+    },
+    "./utils": {
+      "types": "@no-loss-auction/utils/dist/index.d.ts",
+      "default": "@no-loss-auction/utils/dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist node_modules",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@no-loss-auction/types": "workspace:*",
+    "@no-loss-auction/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
