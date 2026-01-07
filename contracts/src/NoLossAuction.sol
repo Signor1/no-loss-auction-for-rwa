@@ -56,6 +56,25 @@ contract NoLossAuction {
     event ReservePriceUpdated(uint256 indexed auctionId, uint256 newReservePrice);
     event EndTimeExtended(uint256 indexed auctionId, uint256 newEndTime);
 
+    event BidWithdrawn(
+        uint256 indexed auctionId,
+        address indexed bidder,
+        uint256 withdrawnAmount,
+        uint256 penaltyAmount
+    );
+
+    event BidExpired(
+        uint256 indexed auctionId,
+        address indexed bidder,
+        uint256 expiredBidAmount
+    );
+
+    event AutomaticSettlementExecuted(
+        uint256 indexed auctionId,
+        address indexed winner,
+        uint256 winningBid
+    );
+
     // =============================================================
     //                        AUCTION STATES
     // =============================================================
@@ -75,7 +94,10 @@ contract NoLossAuction {
         address bidder;
         uint256 amount;
         uint256 timestamp;
+        uint256 expirationTime; // When this bid expires (0 = no expiration)
         bool refunded;
+        bool withdrawn;
+        bool expired;
     }
 
     // =============================================================
@@ -92,6 +114,9 @@ contract NoLossAuction {
         uint256 startTime;
         uint256 endTime;
         uint256 minBidIncrement; // Minimum increase over current highest bid
+        uint256 bidExpirationPeriod; // How long bids remain valid (0 = no expiration)
+        uint256 withdrawalPenaltyBps; // Penalty for early withdrawal in basis points (0 = no penalty)
+        bool autoSettleEnabled; // Whether to automatically settle when auction ends
         AuctionState state;
         bool paused;
         address paymentToken; // Address(0) for native ETH, or ERC-20 token
@@ -170,6 +195,9 @@ contract NoLossAuction {
     /// @param endTime Auction end timestamp
     /// @param minBidIncrement Minimum bid increment over current highest bid
     /// @param paymentToken Payment token address (address(0) for native ETH)
+    /// @param bidExpirationPeriod How long bids remain valid in seconds (0 = no expiration)
+    /// @param withdrawalPenaltyBps Penalty for early withdrawal in basis points (0 = no penalty)
+    /// @param autoSettleEnabled Whether to automatically settle when auction ends
     /// @return auctionId The ID of the created auction
     function createAuction(
         address assetToken,
@@ -179,7 +207,10 @@ contract NoLossAuction {
         uint256 startTime,
         uint256 endTime,
         uint256 minBidIncrement,
-        address paymentToken
+        address paymentToken,
+        uint256 bidExpirationPeriod,
+        uint256 withdrawalPenaltyBps,
+        bool autoSettleEnabled
     ) external returns (uint256 auctionId) {
         require(assetToken != address(0), "NoLossAuction: asset token is zero");
         require(assetAmount > 0, "NoLossAuction: asset amount is zero");
@@ -187,6 +218,7 @@ contract NoLossAuction {
         require(startTime >= block.timestamp, "NoLossAuction: invalid start time");
         require(endTime > startTime, "NoLossAuction: invalid end time");
         require(minBidIncrement > 0, "NoLossAuction: min bid increment is zero");
+        require(withdrawalPenaltyBps <= 10_000, "NoLossAuction: penalty exceeds 100%");
 
         auctionId = _nextAuctionId++;
         auctions[auctionId] = Auction({
@@ -199,6 +231,9 @@ contract NoLossAuction {
             startTime: startTime,
             endTime: endTime,
             minBidIncrement: minBidIncrement,
+            bidExpirationPeriod: bidExpirationPeriod,
+            withdrawalPenaltyBps: withdrawalPenaltyBps,
+            autoSettleEnabled: autoSettleEnabled,
             state: startTime > block.timestamp ? AuctionState.Upcoming : AuctionState.Active,
             paused: false,
             paymentToken: paymentToken
@@ -266,13 +301,25 @@ contract NoLossAuction {
             escrow[auctionId][msg.sender] += bidAmount;
         }
 
+        // Check and handle expired bids before placing new bid
+        _checkAndHandleExpiredBids(auctionId);
+
+        // Calculate bid expiration time
+        uint256 expirationTime = 0;
+        if (auction.bidExpirationPeriod > 0) {
+            expirationTime = block.timestamp + auction.bidExpirationPeriod;
+        }
+
         // Update bid tracking
         uint256 bidIndex = bids[auctionId].length;
         bids[auctionId].push(Bid({
             bidder: msg.sender,
             amount: bidAmount,
             timestamp: block.timestamp,
-            refunded: false
+            expirationTime: expirationTime,
+            refunded: false,
+            withdrawn: false,
+            expired: false
         }));
 
         if (bidderBidIndex[auctionId][msg.sender] == 0) {
@@ -283,7 +330,10 @@ contract NoLossAuction {
         totalBidAmount[auctionId] += bidAmount;
 
         // Update highest bid if this is the new highest
-        if (newTotalBid > currentHighest) {
+        // Need to recalculate after handling expired bids
+        uint256 effectiveHighest = _getEffectiveHighestBid(auctionId);
+        // Update if new bid is higher, or if sender is already highest bidder (they increased their bid)
+        if (newTotalBid > effectiveHighest || highestBidder[auctionId] == msg.sender) {
             highestBid[auctionId] = newTotalBid;
             highestBidder[auctionId] = msg.sender;
         }
@@ -359,6 +409,233 @@ contract NoLossAuction {
     }
 
     // =============================================================
+    //                    BID WITHDRAWAL WITH PENALTIES
+    // =============================================================
+
+    /// @notice Withdraw a bid before auction ends (with penalty if applicable).
+    /// @param auctionId The auction ID
+    /// @param bidIndex Index of the bid to withdraw (use getAllBids to find index)
+    function withdrawBid(uint256 auctionId, uint256 bidIndex) external {
+        Auction storage auction = auctions[auctionId];
+        require(auction.auctionId == auctionId, "NoLossAuction: auction does not exist");
+        require(auction.state == AuctionState.Active, "NoLossAuction: auction not active");
+        require(block.timestamp < auction.endTime, "NoLossAuction: auction ended");
+
+        Bid[] storage auctionBids = bids[auctionId];
+        require(bidIndex < auctionBids.length, "NoLossAuction: invalid bid index");
+
+        Bid storage bid = auctionBids[bidIndex];
+        require(bid.bidder == msg.sender, "NoLossAuction: not bid owner");
+        require(!bid.withdrawn, "NoLossAuction: bid already withdrawn");
+        require(!bid.refunded, "NoLossAuction: bid already refunded");
+        require(!bid.expired, "NoLossAuction: bid expired");
+
+        // Check if bidder is current highest bidder
+        bool isHighestBidder = highestBidder[auctionId] == msg.sender;
+        require(!isHighestBidder, "NoLossAuction: cannot withdraw highest bid");
+
+        uint256 withdrawalAmount = bid.amount;
+        uint256 penaltyAmount = 0;
+
+        // Calculate penalty if applicable
+        if (auction.withdrawalPenaltyBps > 0) {
+            penaltyAmount = (withdrawalAmount * auction.withdrawalPenaltyBps) / 10_000;
+            withdrawalAmount -= penaltyAmount;
+        }
+
+        // Update bid state
+        bid.withdrawn = true;
+        escrow[auctionId][msg.sender] -= bid.amount;
+        bidderTotalBid[auctionId][msg.sender] -= bid.amount;
+        totalBidAmount[auctionId] -= bid.amount;
+
+        // Transfer withdrawal amount (after penalty)
+        if (auction.paymentToken == address(0)) {
+            if (withdrawalAmount > 0) {
+                (bool success,) = payable(msg.sender).call{value: withdrawalAmount}("");
+                require(success, "NoLossAuction: withdrawal transfer failed");
+            }
+            // Penalty stays in contract (can be sent to seller or treasury)
+        } else {
+            if (withdrawalAmount > 0) {
+                _transferPaymentToken(msg.sender, auction.paymentToken, withdrawalAmount);
+            }
+        }
+
+        emit BidWithdrawn(auctionId, msg.sender, withdrawalAmount, penaltyAmount);
+    }
+
+    /// @notice Withdraw all bids from a bidder (with penalties if applicable).
+    /// @param auctionId The auction ID
+    function withdrawAllBids(uint256 auctionId) external {
+        Auction storage auction = auctions[auctionId];
+        require(auction.auctionId == auctionId, "NoLossAuction: auction does not exist");
+        require(auction.state == AuctionState.Active, "NoLossAuction: auction not active");
+        require(block.timestamp < auction.endTime, "NoLossAuction: auction ended");
+
+        // Check if bidder is current highest bidder
+        require(highestBidder[auctionId] != msg.sender, "NoLossAuction: cannot withdraw highest bid");
+
+        Bid[] storage auctionBids = bids[auctionId];
+        uint256 totalWithdrawal = 0;
+        uint256 totalPenalty = 0;
+
+        for (uint256 i = 0; i < auctionBids.length; i++) {
+            Bid storage bid = auctionBids[i];
+            if (
+                bid.bidder == msg.sender &&
+                !bid.withdrawn &&
+                !bid.refunded &&
+                !bid.expired
+            ) {
+                uint256 penalty = 0;
+                if (auction.withdrawalPenaltyBps > 0) {
+                    penalty = (bid.amount * auction.withdrawalPenaltyBps) / 10_000;
+                    totalPenalty += penalty;
+                }
+
+                totalWithdrawal += bid.amount - penalty;
+                bid.withdrawn = true;
+            }
+        }
+
+        require(totalWithdrawal > 0, "NoLossAuction: no bids to withdraw");
+
+        // Update escrow and totals
+        escrow[auctionId][msg.sender] = 0;
+        bidderTotalBid[auctionId][msg.sender] = 0;
+        totalBidAmount[auctionId] -= (totalWithdrawal + totalPenalty);
+
+        // Transfer withdrawal amount
+        if (auction.paymentToken == address(0)) {
+            if (totalWithdrawal > 0) {
+                (bool success,) = payable(msg.sender).call{value: totalWithdrawal}("");
+                require(success, "NoLossAuction: withdrawal transfer failed");
+            }
+        } else {
+            if (totalWithdrawal > 0) {
+                _transferPaymentToken(msg.sender, auction.paymentToken, totalWithdrawal);
+            }
+        }
+
+        emit BidWithdrawn(auctionId, msg.sender, totalWithdrawal, totalPenalty);
+    }
+
+    // =============================================================
+    //                    BID EXPIRATION HANDLING
+    // =============================================================
+
+    /// @notice Check and handle expired bids for an auction.
+    /// @param auctionId The auction ID
+    function checkAndHandleExpiredBids(uint256 auctionId) external {
+        _checkAndHandleExpiredBids(auctionId);
+    }
+
+    /// @notice Internal function to check and handle expired bids.
+    function _checkAndHandleExpiredBids(uint256 auctionId) internal {
+        Auction storage auction = auctions[auctionId];
+        if (auction.bidExpirationPeriod == 0) {
+            return; // No expiration
+        }
+
+        Bid[] storage auctionBids = bids[auctionId];
+        address currentHighestBidder = highestBidder[auctionId];
+        bool highestBidderExpired = false;
+
+        // Process expired bids
+        for (uint256 i = 0; i < auctionBids.length; i++) {
+            Bid storage bid = auctionBids[i];
+            if (
+                !bid.expired &&
+                !bid.withdrawn &&
+                !bid.refunded &&
+                bid.expirationTime > 0 &&
+                block.timestamp >= bid.expirationTime
+            ) {
+                _processExpiredBid(auctionId, bid, auction.paymentToken);
+                if (bid.bidder == currentHighestBidder) {
+                    highestBidderExpired = true;
+                }
+            }
+        }
+
+        // Recalculate highest bidder if needed
+        if (highestBidderExpired) {
+            _recalculateHighestBidder(auctionId);
+        }
+    }
+
+    /// @notice Process a single expired bid.
+    function _processExpiredBid(uint256 auctionId, Bid storage bid, address paymentToken) internal {
+        bid.expired = true;
+        uint256 amount = bid.amount;
+        address bidder = bid.bidder;
+
+        escrow[auctionId][bidder] -= amount;
+        bidderTotalBid[auctionId][bidder] -= amount;
+        totalBidAmount[auctionId] -= amount;
+
+        // Refund expired bid
+        if (paymentToken == address(0)) {
+            (bool success,) = payable(bidder).call{value: amount}("");
+            require(success, "NoLossAuction: expired bid refund failed");
+        } else {
+            _transferPaymentToken(bidder, paymentToken, amount);
+        }
+
+        emit BidExpired(auctionId, bidder, amount);
+    }
+
+    /// @notice Recalculate the highest bidder after expired bids are processed.
+    function _recalculateHighestBidder(uint256 auctionId) internal {
+        Bid[] storage auctionBids = bids[auctionId];
+        uint256 newHighest = 0;
+        address newHighestBidder = address(0);
+
+        for (uint256 i = 0; i < auctionBids.length; i++) {
+            Bid storage bid = auctionBids[i];
+            if (!bid.expired && !bid.withdrawn && !bid.refunded) {
+                address bidder = bid.bidder;
+                uint256 total = bidderTotalBid[auctionId][bidder];
+                if (total > newHighest) {
+                    newHighest = total;
+                    newHighestBidder = bidder;
+                }
+            }
+        }
+
+        highestBid[auctionId] = newHighest;
+        highestBidder[auctionId] = newHighestBidder;
+    }
+
+    /// @notice Get effective highest bid (excluding expired/withdrawn bids).
+    /// @param auctionId The auction ID
+    /// @return effectiveHighest Effective highest bid amount
+    function _getEffectiveHighestBid(uint256 auctionId) internal view returns (uint256) {
+        address currentHighestBidder = highestBidder[auctionId];
+        if (currentHighestBidder == address(0)) {
+            return 0;
+        }
+
+        // Check if current highest bidder's bids are still valid
+        Bid[] memory auctionBids = bids[auctionId];
+        uint256 validTotal = 0;
+
+        for (uint256 i = 0; i < auctionBids.length; i++) {
+            if (
+                auctionBids[i].bidder == currentHighestBidder &&
+                !auctionBids[i].expired &&
+                !auctionBids[i].withdrawn &&
+                !auctionBids[i].refunded
+            ) {
+                validTotal += auctionBids[i].amount;
+            }
+        }
+
+        return validTotal;
+    }
+
+    // =============================================================
     //                    AUCTION ENDING & SETTLEMENT
     // =============================================================
 
@@ -370,8 +647,12 @@ contract NoLossAuction {
         require(auction.state == AuctionState.Active, "NoLossAuction: auction not active");
         require(block.timestamp >= auction.endTime, "NoLossAuction: auction not ended");
 
+        // Handle expired bids before ending
+        _checkAndHandleExpiredBids(auctionId);
+
+        // Get effective highest bid after handling expired bids
         address winner = highestBidder[auctionId];
-        uint256 winningBid = highestBid[auctionId];
+        uint256 winningBid = _getEffectiveHighestBid(auctionId);
         bool reserveMet = winningBid >= auction.reservePrice;
 
         if (reserveMet && winner != address(0)) {
@@ -407,6 +688,60 @@ contract NoLossAuction {
         auction.state = AuctionState.Ended;
 
         emit AuctionEnded(auctionId, winner, winningBid, reserveMet);
+
+        // Automatic settlement if enabled
+        if (auction.autoSettleEnabled && reserveMet && winner != address(0)) {
+            _automaticSettlement(auctionId, winner);
+        }
+    }
+
+    /// @notice Execute automatic settlement (refund losing bidders automatically).
+    /// @param auctionId The auction ID
+    /// @param winner The auction winner
+    function _automaticSettlement(uint256 auctionId, address winner) internal {
+        Auction storage auction = auctions[auctionId];
+        Bid[] storage auctionBids = bids[auctionId];
+
+        // Refund all losing bidders
+        for (uint256 i = 0; i < auctionBids.length; i++) {
+            Bid storage bid = auctionBids[i];
+            if (
+                bid.bidder != winner &&
+                !bid.refunded &&
+                !bid.withdrawn &&
+                !bid.expired &&
+                escrow[auctionId][bid.bidder] > 0
+            ) {
+                uint256 refundAmount = escrow[auctionId][bid.bidder];
+                escrow[auctionId][bid.bidder] = 0;
+                bid.refunded = true;
+
+                // Transfer refund
+                if (auction.paymentToken == address(0)) {
+                    (bool success,) = payable(bid.bidder).call{value: refundAmount}("");
+                    require(success, "NoLossAuction: refund transfer failed");
+                } else {
+                    _transferPaymentToken(bid.bidder, auction.paymentToken, refundAmount);
+                }
+
+                emit BidRefunded(auctionId, bid.bidder, refundAmount);
+            }
+        }
+
+        emit AutomaticSettlementExecuted(auctionId, winner, highestBid[auctionId]);
+    }
+
+    /// @notice Manually trigger automatic settlement (if auto-settle was enabled but didn't execute).
+    /// @param auctionId The auction ID
+    function triggerAutomaticSettlement(uint256 auctionId) external {
+        Auction storage auction = auctions[auctionId];
+        require(auction.state == AuctionState.Ended, "NoLossAuction: auction not ended");
+        require(auction.autoSettleEnabled, "NoLossAuction: auto-settle not enabled");
+
+        address winner = highestBidder[auctionId];
+        require(winner != address(0), "NoLossAuction: no winner");
+
+        _automaticSettlement(auctionId, winner);
     }
 
     // =============================================================
@@ -568,6 +903,162 @@ contract NoLossAuction {
             !auction.paused &&
             block.timestamp >= auction.startTime &&
             block.timestamp < auction.endTime;
+    }
+
+    // =============================================================
+    //                ENHANCED BID HISTORY TRACKING
+    // =============================================================
+
+    /// @notice Get bid history for a specific bidder.
+    /// @param auctionId The auction ID
+    /// @param bidder The bidder address
+    /// @return bidderBids Array of bids from this bidder
+    function getBidderBids(uint256 auctionId, address bidder)
+        external
+        view
+        returns (Bid[] memory bidderBids)
+    {
+        Bid[] memory allBids = bids[auctionId];
+        uint256 count = 0;
+
+        // Count bids from this bidder
+        for (uint256 i = 0; i < allBids.length; i++) {
+            if (allBids[i].bidder == bidder) {
+                count++;
+            }
+        }
+
+        // Create array with bids from this bidder
+        bidderBids = new Bid[](count);
+        uint256 index = 0;
+        for (uint256 i = 0; i < allBids.length; i++) {
+            if (allBids[i].bidder == bidder) {
+                bidderBids[index] = allBids[i];
+                index++;
+            }
+        }
+
+        return bidderBids;
+    }
+
+    /// @notice Get total bid amount for a specific bidder (excluding expired/withdrawn).
+    /// @param auctionId The auction ID
+    /// @param bidder The bidder address
+    /// @return totalBid Total valid bid amount
+    function getBidderTotalBid(uint256 auctionId, address bidder)
+        external
+        view
+        returns (uint256 totalBid)
+    {
+        Bid[] memory allBids = bids[auctionId];
+        totalBid = 0;
+
+        for (uint256 i = 0; i < allBids.length; i++) {
+            if (
+                allBids[i].bidder == bidder &&
+                !allBids[i].expired &&
+                !allBids[i].withdrawn &&
+                !allBids[i].refunded
+            ) {
+                totalBid += allBids[i].amount;
+            }
+        }
+
+        return totalBid;
+    }
+
+    /// @notice Get highest bidder information.
+    /// @param auctionId The auction ID
+    /// @return bidder Highest bidder address
+    /// @return amount Highest bid amount
+    /// @return isValid Whether the highest bid is still valid (not expired/withdrawn)
+    function getHighestBidderInfo(uint256 auctionId)
+        external
+        view
+        returns (address bidder, uint256 amount, bool isValid)
+    {
+        bidder = highestBidder[auctionId];
+        amount = highestBid[auctionId];
+        isValid = bidder != address(0) && _getEffectiveHighestBid(auctionId) == amount;
+    }
+
+    /// @notice Get bid statistics for an auction.
+    /// @param auctionId The auction ID
+    /// @return totalBids Total number of bids
+    /// @return validBids Number of valid (non-expired/withdrawn) bids
+    /// @return expiredBids Number of expired bids
+    /// @return withdrawnBids Number of withdrawn bids
+    /// @return totalBidAmount_ Total bid amount (all bids)
+    /// @return validBidAmount Total valid bid amount
+    function getBidStatistics(uint256 auctionId)
+        external
+        view
+        returns (
+            uint256 totalBids,
+            uint256 validBids,
+            uint256 expiredBids,
+            uint256 withdrawnBids,
+            uint256 totalBidAmount_,
+            uint256 validBidAmount
+        )
+    {
+        Bid[] memory allBids = bids[auctionId];
+        totalBids = allBids.length;
+        totalBidAmount_ = totalBidAmount[auctionId];
+
+        for (uint256 i = 0; i < allBids.length; i++) {
+            if (allBids[i].expired) {
+                expiredBids++;
+            } else if (allBids[i].withdrawn) {
+                withdrawnBids++;
+            } else if (!allBids[i].refunded) {
+                validBids++;
+                validBidAmount += allBids[i].amount;
+            }
+        }
+    }
+
+    /// @notice Check if a bid is expired.
+    /// @param auctionId The auction ID
+    /// @param bidIndex Index of the bid
+    /// @return expired Whether the bid is expired
+    function isBidExpired(uint256 auctionId, uint256 bidIndex) external view returns (bool) {
+        Bid[] memory auctionBids = bids[auctionId];
+        require(bidIndex < auctionBids.length, "NoLossAuction: invalid bid index");
+
+        Bid memory bid = auctionBids[bidIndex];
+        if (bid.expirationTime == 0) {
+            return false; // No expiration
+        }
+
+        return block.timestamp >= bid.expirationTime || bid.expired;
+    }
+
+    /// @notice Get all valid (non-expired, non-withdrawn) bids for an auction.
+    /// @param auctionId The auction ID
+    /// @return validBids Array of valid bids
+    function getValidBids(uint256 auctionId) external view returns (Bid[] memory validBids) {
+        Bid[] memory allBids = bids[auctionId];
+        uint256 count = 0;
+
+        // Count valid bids
+        for (uint256 i = 0; i < allBids.length; i++) {
+            if (!allBids[i].expired && !allBids[i].withdrawn && !allBids[i].refunded) {
+                count++;
+            }
+        }
+
+        // Create array with valid bids
+        validBids = new Bid[](count);
+        uint256 index = 0;
+        for (uint256 i = 0; i < allBids.length; i++) {
+            if (!allBids[i].expired && !allBids[i].withdrawn && !allBids[i].refunded) {
+                validBids[index] = allBids[i];
+                index++;
+            }
+        }
+
+        return validBids;
     }
 
     // =============================================================
