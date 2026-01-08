@@ -31,6 +31,7 @@ contract AuctionFactory is ReentrancyGuard {
     address public owner;
     address public feeReceiver;
     uint256 public creationFee;
+    bool private _paused;
 
     // Template storage
     mapping(uint256 => AuctionTemplate) public templates;
@@ -58,6 +59,8 @@ contract AuctionFactory is ReentrancyGuard {
     event FeeUpdated(uint256 newFee);
     event FeeReceiverUpdated(address newReceiver);
     event FeesCollected(address indexed receiver, uint256 amount);
+    event Paused(address indexed account);
+    event Unpaused(address indexed account);
 
     // =============================================================
     //                          MODIFIERS
@@ -65,6 +68,11 @@ contract AuctionFactory is ReentrancyGuard {
 
     modifier onlyOwner() {
         require(msg.sender == owner, "AuctionFactory: not owner");
+        _;
+    }
+
+    modifier whenNotPaused() {
+        require(!_paused, "AuctionFactory: paused");
         _;
     }
 
@@ -161,7 +169,7 @@ contract AuctionFactory is ReentrancyGuard {
         uint256 startTime,
         uint256 endTime,
         address paymentToken
-    ) external payable nonReentrant returns (uint256) {
+    ) external payable nonReentrant whenNotPaused returns (uint256) {
         // Fee collection
         require(msg.value >= creationFee, "AuctionFactory: insufficient fee");
         
@@ -247,6 +255,22 @@ contract AuctionFactory is ReentrancyGuard {
 
     function getAuctionsByCreator(address creator) external view returns (uint256[] memory) {
         return auctionsByCreator[creator];
+    }
+
+    function pause() external onlyOwner {
+        require(!_paused, "AuctionFactory: already paused");
+        _paused = true;
+        emit Paused(msg.sender);
+    }
+
+    function unpause() external onlyOwner {
+        require(_paused, "AuctionFactory: not paused");
+        _paused = false;
+        emit Unpaused(msg.sender);
+    }
+
+    function paused() external view returns (bool) {
+        return _paused;
     }
 
     // =============================================================
