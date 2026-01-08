@@ -171,4 +171,81 @@ contract AssetRegistryTest is Test {
         
         vm.stopPrank();
     }
+
+    function testUpdateAssetGovernance() public {
+        vm.prank(issuer);
+        uint256 assetId = registry.registerAsset("QmHash123", 1000 ether);
+
+        // Approve and Finalize first
+        vm.prank(verifier1);
+        registry.approveAsset(assetId);
+        vm.prank(verifier2);
+        registry.approveAsset(assetId);
+        registry.finalizeAsset(assetId);
+
+        // 1. Propose Update
+        vm.prank(issuer);
+        uint256 requestId = registry.proposeAssetUpdate(assetId, "QmNewHash456");
+
+        (uint256 reqId, uint256 aId, string memory newHash, uint256 approvals, bool executed, address proposer) = registry.updateRequests(requestId);
+        assertEq(reqId, requestId);
+        assertEq(aId, assetId);
+        assertEq(newHash, "QmNewHash456");
+        assertEq(approvals, 0);
+        assertFalse(executed);
+        assertEq(proposer, issuer);
+
+        // 2. Approve Update
+        vm.prank(verifier1);
+        registry.approveAssetUpdate(requestId);
+        
+        vm.prank(verifier2);
+        registry.approveAssetUpdate(requestId);
+
+        (,,, approvals,,) = registry.updateRequests(requestId);
+        assertEq(approvals, 2);
+
+        // 3. Execute Update
+        registry.executeAssetUpdate(requestId);
+
+        (,,,, executed,) = registry.updateRequests(requestId);
+        assertTrue(executed);
+
+        // Verify Asset and NFT updated
+        (,, string memory currentHash,,,,) = registry.assets(assetId);
+        assertEq(currentHash, "QmNewHash456");
+        assertEq(nft.tokenURI(assetId), "QmNewHash456");
+    }
+
+    function testUpdateValuation() public {
+        vm.prank(issuer);
+        uint256 assetId = registry.registerAsset("QmHash123", 1000 ether);
+
+        vm.prank(verifier1);
+        registry.updateAssetValue(assetId, 1500 ether);
+
+        (,,, uint256 value,,,) = registry.assets(assetId);
+        assertEq(value, 1500 ether);
+
+        vm.prank(admin);
+        registry.updateAssetValue(assetId, 2000 ether);
+
+        (,,, uint256 val,,,) = registry.assets(assetId);
+        assertEq(val, 2000 ether);
+
+        vm.prank(issuer);
+        vm.expectRevert("AssetRegistry: unauthorized");
+        registry.updateAssetValue(assetId, 3000 ether);
+    }
+
+    function testAssetRetirement() public {
+        vm.prank(issuer);
+        uint256 assetId = registry.registerAsset("QmHash123", 1000 ether);
+
+        vm.prank(admin);
+        registry.setAssetStatus(assetId, AssetRegistry.AssetStatus.Delisted);
+
+        (,,,, AssetRegistry.AssetStatus status,,) = registry.assets(assetId);
+        assertEq(uint256(status), uint256(AssetRegistry.AssetStatus.Delisted));
+    }
 }
