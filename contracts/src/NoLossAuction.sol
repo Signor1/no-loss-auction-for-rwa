@@ -250,7 +250,7 @@ contract NoLossAuction {
     /// @param bidExpirationPeriod How long bids remain valid in seconds (0 = no expiration)
     /// @param withdrawalPenaltyBps Penalty for early withdrawal in basis points (0 = no penalty)
     /// @param autoSettleEnabled Whether to automatically settle when auction ends
-    /// @param withdrawalLockPeriod Time lock period for withdrawals in seconds (0 = no lock)
+    /// @param _withdrawalLockPeriod Time lock period for withdrawals in seconds (0 = no lock)
     /// @param secureEscrowEnabled Enable enhanced security features for escrow
     /// @return auctionId The ID of the created auction
     function createAuction(
@@ -265,7 +265,7 @@ contract NoLossAuction {
         uint256 bidExpirationPeriod,
         uint256 withdrawalPenaltyBps,
         bool autoSettleEnabled,
-        uint256 withdrawalLockPeriod,
+        uint256 _withdrawalLockPeriod,
         bool secureEscrowEnabled
     ) external returns (uint256 auctionId) {
         require(assetToken != address(0), "NoLossAuction: asset token is zero");
@@ -290,7 +290,7 @@ contract NoLossAuction {
             bidExpirationPeriod: bidExpirationPeriod,
             withdrawalPenaltyBps: withdrawalPenaltyBps,
             autoSettleEnabled: autoSettleEnabled,
-            withdrawalLockPeriod: withdrawalLockPeriod,
+            withdrawalLockPeriod: _withdrawalLockPeriod,
             secureEscrowEnabled: secureEscrowEnabled,
             state: startTime > block.timestamp ? AuctionState.Upcoming : AuctionState.Active,
             paused: false,
@@ -298,7 +298,7 @@ contract NoLossAuction {
         });
 
         // Set withdrawal lock period for this auction
-        withdrawalLockPeriod[auctionId] = withdrawalLockPeriod;
+        withdrawalLockPeriod[auctionId] = _withdrawalLockPeriod;
 
         // Transfer asset from seller to this contract (escrow)
         _transferAssetFrom(msg.sender, address(this), assetToken, assetTokenId, assetAmount);

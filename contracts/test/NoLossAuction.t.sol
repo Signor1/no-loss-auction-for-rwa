@@ -61,7 +61,9 @@ contract NoLossAuctionTest is Test {
             address(0), // Native ETH
             0, // bidExpirationPeriod
             0, // withdrawalPenaltyBps
-            false // autoSettleEnabled
+            false, // autoSettleEnabled
+            0, // withdrawalLockPeriod
+            false // secureEscrowEnabled
         );
         vm.stopPrank();
 
@@ -164,7 +166,9 @@ contract NoLossAuctionTest is Test {
             address(0),
             0, // bidExpirationPeriod
             0, // withdrawalPenaltyBps
-            false // autoSettleEnabled
+            false, // autoSettleEnabled
+            0, // withdrawalLockPeriod
+            false // secureEscrowEnabled
         );
         vm.stopPrank();
 
@@ -349,7 +353,9 @@ contract NoLossAuctionTest is Test {
             address(0),
             0, // bidExpirationPeriod
             0, // withdrawalPenaltyBps
-            false // autoSettleEnabled
+            false, // autoSettleEnabled
+            0, // withdrawalLockPeriod
+            false // secureEscrowEnabled
         );
 
         // Update reserve price before auction starts
@@ -425,7 +431,9 @@ contract NoLossAuctionTest is Test {
             address(0),
             0, // bidExpirationPeriod
             0, // withdrawalPenaltyBps
-            false // autoSettleEnabled
+            false, // autoSettleEnabled
+            0, // withdrawalLockPeriod
+            false // secureEscrowEnabled
         );
         vm.stopPrank();
 
@@ -473,7 +481,9 @@ contract NoLossAuctionTest is Test {
             paymentToken_,
             0, // bidExpirationPeriod (0 = no expiration)
             0, // withdrawalPenaltyBps (0 = no penalty)
-            false // autoSettleEnabled
+            false, // autoSettleEnabled
+            0, // withdrawalLockPeriod
+            false // secureEscrowEnabled
         );
         vm.stopPrank();
 
@@ -522,7 +532,9 @@ contract NoLossAuctionTest is Test {
             address(0),
             0, // bidExpirationPeriod
             500, // 5% withdrawal penalty
-            false // autoSettleEnabled
+            false, // autoSettleEnabled
+            0, // withdrawalLockPeriod
+            false // secureEscrowEnabled
         );
         vm.stopPrank();
 
@@ -597,7 +609,9 @@ contract NoLossAuctionTest is Test {
             address(0),
             expirationPeriod, // Bids expire after 1 hour
             0, // no penalty
-            false
+            false, // autoSettleEnabled
+            0, // withdrawalLockPeriod
+            false // secureEscrowEnabled
         );
         vm.stopPrank();
 
@@ -634,7 +648,9 @@ contract NoLossAuctionTest is Test {
             address(0),
             0, // no expiration
             0, // no penalty
-            true // auto-settle enabled
+            true, // auto-settle enabled
+            0, // withdrawalLockPeriod
+            false // secureEscrowEnabled
         );
         vm.stopPrank();
 
@@ -748,7 +764,9 @@ contract NoLossAuctionTest is Test {
             address(0),
             expirationPeriod,
             0,
-            false
+            false,
+            0, // withdrawalLockPeriod
+            false // secureEscrowEnabled
         );
         vm.stopPrank();
 
