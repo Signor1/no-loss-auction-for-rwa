@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+import "./lib/ReentrancyGuard.sol";
+
 /// @title NoLossAuction
 /// @notice Core auction contract for RWA tokenization with no-loss guarantee.
 ///         Features:
@@ -13,7 +15,7 @@ pragma solidity 0.8.23;
 ///           - Multi-asset auction support
 /// @dev This contract implements a no-loss auction where all losing bidders
 ///      automatically receive refunds, ensuring no financial loss for participants.
-contract NoLossAuction {
+contract NoLossAuction is ReentrancyGuard {
     // =============================================================
     //                           EVENTS
     // =============================================================
@@ -324,7 +326,7 @@ contract NoLossAuction {
     /// @notice Place a bid on an active auction.
     /// @param auctionId The auction ID
     /// @param bidAmount The bid amount
-    function placeBid(uint256 auctionId, uint256 bidAmount) external payable {
+    function placeBid(uint256 auctionId, uint256 bidAmount) external payable nonReentrant {
         Auction storage auction = auctions[auctionId];
         require(auction.auctionId == auctionId, "NoLossAuction: auction does not exist");
         require(!auction.paused, "NoLossAuction: auction is paused");
@@ -402,7 +404,7 @@ contract NoLossAuction {
 
     /// @notice Refund all losing bidders after auction ends.
     /// @param auctionId The auction ID
-    function refundLosingBidders(uint256 auctionId) external {
+    function refundLosingBidders(uint256 auctionId) external nonReentrant {
         Auction storage auction = auctions[auctionId];
         require(auction.state == AuctionState.Ended, "NoLossAuction: auction not ended");
         require(auction.auctionId == auctionId, "NoLossAuction: auction does not exist");
@@ -426,7 +428,7 @@ contract NoLossAuction {
     /// @notice Refund a specific bidder (can be called by anyone after auction ends).
     /// @param auctionId The auction ID
     /// @param bidder The bidder to refund
-    function refundBidder(uint256 auctionId, address bidder) external {
+    function refundBidder(uint256 auctionId, address bidder) external nonReentrant {
         Auction storage auction = auctions[auctionId];
         require(auction.state == AuctionState.Ended, "NoLossAuction: auction not ended");
         require(bidder != highestBidder[auctionId], "NoLossAuction: cannot refund winner");
@@ -453,7 +455,7 @@ contract NoLossAuction {
     /// @notice Withdraw a bid before auction ends (with penalty if applicable).
     /// @param auctionId The auction ID
     /// @param bidIndex Index of the bid to withdraw (use getAllBids to find index)
-    function withdrawBid(uint256 auctionId, uint256 bidIndex) external {
+    function withdrawBid(uint256 auctionId, uint256 bidIndex) external nonReentrant {
         Auction storage auction = auctions[auctionId];
         require(auction.auctionId == auctionId, "NoLossAuction: auction does not exist");
         require(auction.state == AuctionState.Active, "NoLossAuction: auction not active");
@@ -505,7 +507,7 @@ contract NoLossAuction {
 
     /// @notice Withdraw all bids from a bidder (with penalties if applicable).
     /// @param auctionId The auction ID
-    function withdrawAllBids(uint256 auctionId) external {
+    function withdrawAllBids(uint256 auctionId) external nonReentrant {
         Auction storage auction = auctions[auctionId];
         require(auction.auctionId == auctionId, "NoLossAuction: auction does not exist");
         require(auction.state == AuctionState.Active, "NoLossAuction: auction not active");
@@ -575,7 +577,7 @@ contract NoLossAuction {
 
     /// @notice Check and handle expired bids for an auction.
     /// @param auctionId The auction ID
-    function checkAndHandleExpiredBids(uint256 auctionId) external {
+    function checkAndHandleExpiredBids(uint256 auctionId) external nonReentrant {
         _checkAndHandleExpiredBids(auctionId);
     }
 
@@ -701,7 +703,7 @@ contract NoLossAuction {
 
     /// @notice End the auction and determine the winner.
     /// @param auctionId The auction ID
-    function endAuction(uint256 auctionId) external {
+    function endAuction(uint256 auctionId) external nonReentrant {
         Auction storage auction = auctions[auctionId];
         require(auction.auctionId == auctionId, "NoLossAuction: auction does not exist");
         require(auction.state == AuctionState.Active, "NoLossAuction: auction not active");
@@ -793,7 +795,7 @@ contract NoLossAuction {
 
     /// @notice Manually trigger automatic settlement (if auto-settle was enabled but didn't execute).
     /// @param auctionId The auction ID
-    function triggerAutomaticSettlement(uint256 auctionId) external {
+    function triggerAutomaticSettlement(uint256 auctionId) external nonReentrant {
         Auction storage auction = auctions[auctionId];
         require(auction.state == AuctionState.Ended, "NoLossAuction: auction not ended");
         require(auction.autoSettleEnabled, "NoLossAuction: auto-settle not enabled");

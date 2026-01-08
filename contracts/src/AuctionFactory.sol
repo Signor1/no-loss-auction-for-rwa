@@ -2,11 +2,12 @@
 pragma solidity 0.8.23;
 
 import "./NoLossAuction.sol";
+import "./lib/ReentrancyGuard.sol";
 
 /// @title AuctionFactory
 /// @notice Factory contract to create auctions on NoLossAuction with templates and fees.
 /// @dev Implements Feature 2.4: Auction Factory
-contract AuctionFactory {
+contract AuctionFactory is ReentrancyGuard {
     // =============================================================
     //                           STRUCTS
     // =============================================================
@@ -160,7 +161,7 @@ contract AuctionFactory {
         uint256 startTime,
         uint256 endTime,
         address paymentToken
-    ) external payable returns (uint256) {
+    ) external payable nonReentrant returns (uint256) {
         // Fee collection
         require(msg.value >= creationFee, "AuctionFactory: insufficient fee");
         
