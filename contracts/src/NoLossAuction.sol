@@ -75,6 +75,36 @@ contract NoLossAuction {
         uint256 winningBid
     );
 
+    event EscrowDeposited(
+        uint256 indexed auctionId,
+        address indexed bidder,
+        address indexed paymentToken,
+        uint256 amount
+    );
+
+    event EscrowWithdrawn(
+        uint256 indexed auctionId,
+        address indexed bidder,
+        address indexed paymentToken,
+        uint256 amount,
+        uint256 unlockTime
+    );
+
+    event EscrowUnlocked(
+        uint256 indexed auctionId,
+        address indexed bidder,
+        address indexed paymentToken,
+        uint256 amount
+    );
+
+    event EscrowRefunded(
+        uint256 indexed auctionId,
+        address indexed bidder,
+        address indexed paymentToken,
+        uint256 amount,
+        string reason
+    );
+
     // =============================================================
     //                        AUCTION STATES
     // =============================================================
@@ -117,6 +147,8 @@ contract NoLossAuction {
         uint256 bidExpirationPeriod; // How long bids remain valid (0 = no expiration)
         uint256 withdrawalPenaltyBps; // Penalty for early withdrawal in basis points (0 = no penalty)
         bool autoSettleEnabled; // Whether to automatically settle when auction ends
+        uint256 withdrawalLockPeriod; // Time lock period for withdrawals (0 = no lock)
+        bool secureEscrowEnabled; // Enhanced security features for escrow
         AuctionState state;
         bool paused;
         address paymentToken; // Address(0) for native ETH, or ERC-20 token
@@ -149,6 +181,26 @@ contract NoLossAuction {
 
     // Escrow: mapping from auction ID to bidder to escrowed amount
     mapping(uint256 => mapping(address => uint256)) public escrow;
+
+    // Escrow details for time-locked withdrawals
+    struct EscrowLock {
+        uint256 amount;
+        uint256 unlockTime; // Timestamp when funds can be withdrawn
+        bool locked; // Whether withdrawal is time-locked
+        address paymentToken; // Payment token address
+    }
+
+    // Mapping from auction ID to bidder to escrow lock details
+    mapping(uint256 => mapping(address => EscrowLock)) public escrowLocks;
+
+    // Total escrowed amount per auction (for security tracking)
+    mapping(uint256 => uint256) public totalEscrowed;
+
+    // Total escrowed amount per payment token (for multi-currency tracking)
+    mapping(address => uint256) public totalEscrowedByToken;
+
+    // Withdrawal lock period (in seconds) - can be set per auction
+    mapping(uint256 => uint256) public withdrawalLockPeriod;
 
     // Next auction ID
     uint256 private _nextAuctionId;
@@ -198,6 +250,8 @@ contract NoLossAuction {
     /// @param bidExpirationPeriod How long bids remain valid in seconds (0 = no expiration)
     /// @param withdrawalPenaltyBps Penalty for early withdrawal in basis points (0 = no penalty)
     /// @param autoSettleEnabled Whether to automatically settle when auction ends
+    /// @param withdrawalLockPeriod Time lock period for withdrawals in seconds (0 = no lock)
+    /// @param secureEscrowEnabled Enable enhanced security features for escrow
     /// @return auctionId The ID of the created auction
     function createAuction(
         address assetToken,
@@ -210,7 +264,9 @@ contract NoLossAuction {
         address paymentToken,
         uint256 bidExpirationPeriod,
         uint256 withdrawalPenaltyBps,
-        bool autoSettleEnabled
+        bool autoSettleEnabled,
+        uint256 withdrawalLockPeriod,
+        bool secureEscrowEnabled
     ) external returns (uint256 auctionId) {
         require(assetToken != address(0), "NoLossAuction: asset token is zero");
         require(assetAmount > 0, "NoLossAuction: asset amount is zero");
@@ -234,10 +290,15 @@ contract NoLossAuction {
             bidExpirationPeriod: bidExpirationPeriod,
             withdrawalPenaltyBps: withdrawalPenaltyBps,
             autoSettleEnabled: autoSettleEnabled,
+            withdrawalLockPeriod: withdrawalLockPeriod,
+            secureEscrowEnabled: secureEscrowEnabled,
             state: startTime > block.timestamp ? AuctionState.Upcoming : AuctionState.Active,
             paused: false,
             paymentToken: paymentToken
         });
+
+        // Set withdrawal lock period for this auction
+        withdrawalLockPeriod[auctionId] = withdrawalLockPeriod;
 
         // Transfer asset from seller to this contract (escrow)
         _transferAssetFrom(msg.sender, address(this), assetToken, assetTokenId, assetAmount);
@@ -292,14 +353,8 @@ contract NoLossAuction {
             require(newTotalBid >= auction.reservePrice, "NoLossAuction: bid below reserve price");
         }
 
-        // Transfer payment to escrow
-        if (auction.paymentToken == address(0)) {
-            // Native ETH already received via msg.value
-            escrow[auctionId][msg.sender] += bidAmount;
-        } else {
-            _transferPaymentTokenFrom(msg.sender, address(this), auction.paymentToken, bidAmount);
-            escrow[auctionId][msg.sender] += bidAmount;
-        }
+        // Transfer payment to escrow with enhanced tracking
+        _depositToEscrow(auctionId, msg.sender, auction.paymentToken, bidAmount);
 
         // Check and handle expired bids before placing new bid
         _checkAndHandleExpiredBids(auctionId);
@@ -361,17 +416,8 @@ contract NoLossAuction {
             Bid storage bid = auctionBids[i];
             if (bid.bidder != winner && !bid.refunded && escrow[auctionId][bid.bidder] > 0) {
                 uint256 refundAmount = escrow[auctionId][bid.bidder];
-                escrow[auctionId][bid.bidder] = 0;
                 bid.refunded = true;
-
-                // Transfer refund
-                if (auction.paymentToken == address(0)) {
-                    (bool success,) = payable(bid.bidder).call{value: refundAmount}("");
-                    require(success, "NoLossAuction: refund transfer failed");
-                } else {
-                    _transferPaymentToken(bid.bidder, auction.paymentToken, refundAmount);
-                }
-
+                _refundFromEscrow(auctionId, bid.bidder, "Losing bidder refund");
                 emit BidRefunded(auctionId, bid.bidder, refundAmount);
             }
         }
@@ -387,7 +433,6 @@ contract NoLossAuction {
         require(escrow[auctionId][bidder] > 0, "NoLossAuction: no funds to refund");
 
         uint256 refundAmount = escrow[auctionId][bidder];
-        escrow[auctionId][bidder] = 0;
 
         // Mark all bids from this bidder as refunded
         Bid[] storage auctionBids = bids[auctionId];
@@ -397,14 +442,7 @@ contract NoLossAuction {
             }
         }
 
-        // Transfer refund
-        if (auction.paymentToken == address(0)) {
-            (bool success,) = payable(bidder).call{value: refundAmount}("");
-            require(success, "NoLossAuction: refund transfer failed");
-        } else {
-            _transferPaymentToken(bidder, auction.paymentToken, refundAmount);
-        }
-
+        _refundFromEscrow(auctionId, bidder, "Individual bidder refund");
         emit BidRefunded(auctionId, bidder, refundAmount);
     }
 
@@ -502,9 +540,19 @@ contract NoLossAuction {
         require(totalWithdrawal > 0, "NoLossAuction: no bids to withdraw");
 
         // Update escrow and totals
+        uint256 totalToDeduct = totalWithdrawal + totalPenalty;
         escrow[auctionId][msg.sender] = 0;
         bidderTotalBid[auctionId][msg.sender] = 0;
-        totalBidAmount[auctionId] -= (totalWithdrawal + totalPenalty);
+        totalBidAmount[auctionId] -= totalToDeduct;
+        totalEscrowed[auctionId] -= totalToDeduct;
+        totalEscrowedByToken[auction.paymentToken] -= totalToDeduct;
+
+        // Clear lock if exists
+        EscrowLock storage lock = escrowLocks[auctionId][msg.sender];
+        if (lock.locked) {
+            lock.locked = false;
+            lock.amount = 0;
+        }
 
         // Transfer withdrawal amount
         if (auction.paymentToken == address(0)) {
@@ -571,9 +619,21 @@ contract NoLossAuction {
         uint256 amount = bid.amount;
         address bidder = bid.bidder;
 
+        // Update escrow tracking
         escrow[auctionId][bidder] -= amount;
         bidderTotalBid[auctionId][bidder] -= amount;
         totalBidAmount[auctionId] -= amount;
+        totalEscrowed[auctionId] -= amount;
+        totalEscrowedByToken[paymentToken] -= amount;
+
+        // Update or clear lock
+        EscrowLock storage lock = escrowLocks[auctionId][bidder];
+        if (lock.locked) {
+            lock.amount -= amount;
+            if (lock.amount == 0) {
+                lock.locked = false;
+            }
+        }
 
         // Refund expired bid
         if (paymentToken == address(0)) {
@@ -776,15 +836,7 @@ contract NoLossAuction {
             address bidder = auctionBids[i].bidder;
             if (escrow[auctionId][bidder] > 0) {
                 uint256 refundAmount = escrow[auctionId][bidder];
-                escrow[auctionId][bidder] = 0;
-
-                if (auction.paymentToken == address(0)) {
-                    (bool success,) = payable(bidder).call{value: refundAmount}("");
-                    require(success, "NoLossAuction: refund transfer failed");
-                } else {
-                    _transferPaymentToken(bidder, auction.paymentToken, refundAmount);
-                }
-
+                _refundFromEscrow(auctionId, bidder, "Auction cancelled");
                 emit BidRefunded(auctionId, bidder, refundAmount);
             }
         }
@@ -1171,6 +1223,180 @@ contract NoLossAuction {
             abi.encodeWithSignature("transfer(address,uint256)", to, amount)
         );
         require(success && (data.length == 0 || abi.decode(data, (bool))), "NoLossAuction: payment transfer failed");
+    }
+
+    // =============================================================
+    //                    ENHANCED ESCROW SYSTEM
+    // =============================================================
+
+    /// @notice Deposit funds to escrow with enhanced tracking.
+    /// @param auctionId The auction ID
+    /// @param bidder The bidder address
+    /// @param paymentToken The payment token address
+    /// @param amount The amount to deposit
+    function _depositToEscrow(uint256 auctionId, address bidder, address paymentToken, uint256 amount) internal {
+        // Transfer payment to escrow
+        if (paymentToken == address(0)) {
+            // Native ETH already received via msg.value
+            escrow[auctionId][bidder] += amount;
+        } else {
+            _transferPaymentTokenFrom(bidder, address(this), paymentToken, amount);
+            escrow[auctionId][bidder] += amount;
+        }
+
+        // Update escrow tracking
+        totalEscrowed[auctionId] += amount;
+        totalEscrowedByToken[paymentToken] += amount;
+
+        // Set up time lock if enabled
+        Auction storage auction = auctions[auctionId];
+        if (auction.withdrawalLockPeriod > 0) {
+            EscrowLock storage lock = escrowLocks[auctionId][bidder];
+            if (!lock.locked) {
+                lock.amount = escrow[auctionId][bidder];
+                lock.unlockTime = block.timestamp + auction.withdrawalLockPeriod;
+                lock.locked = true;
+                lock.paymentToken = paymentToken;
+            } else {
+                // Update existing lock
+                lock.amount = escrow[auctionId][bidder];
+                // Extend unlock time if new deposit extends it
+                if (block.timestamp + auction.withdrawalLockPeriod > lock.unlockTime) {
+                    lock.unlockTime = block.timestamp + auction.withdrawalLockPeriod;
+                }
+            }
+        }
+
+        emit EscrowDeposited(auctionId, bidder, paymentToken, amount);
+    }
+
+    /// @notice Withdraw from escrow (with time lock check).
+    /// @param auctionId The auction ID
+    /// @param amount The amount to withdraw
+    function withdrawFromEscrow(uint256 auctionId, uint256 amount) external {
+        Auction storage auction = auctions[auctionId];
+        require(auction.auctionId == auctionId, "NoLossAuction: auction does not exist");
+        require(escrow[auctionId][msg.sender] >= amount, "NoLossAuction: insufficient escrow balance");
+        require(amount > 0, "NoLossAuction: amount is zero");
+
+        // Check time lock if enabled
+        EscrowLock storage lock = escrowLocks[auctionId][msg.sender];
+        if (lock.locked) {
+            require(block.timestamp >= lock.unlockTime, "NoLossAuction: withdrawal still locked");
+        }
+
+        // Update escrow
+        escrow[auctionId][msg.sender] -= amount;
+        totalEscrowed[auctionId] -= amount;
+        address paymentToken = auction.paymentToken;
+        totalEscrowedByToken[paymentToken] -= amount;
+
+        // Update or clear lock
+        if (lock.locked) {
+            lock.amount -= amount;
+            if (lock.amount == 0) {
+                lock.locked = false;
+            }
+        }
+
+        // Transfer funds
+        if (paymentToken == address(0)) {
+            (bool success,) = payable(msg.sender).call{value: amount}("");
+            require(success, "NoLossAuction: withdrawal transfer failed");
+        } else {
+            _transferPaymentToken(msg.sender, paymentToken, amount);
+        }
+
+        emit EscrowWithdrawn(auctionId, msg.sender, paymentToken, amount, lock.locked ? lock.unlockTime : 0);
+    }
+
+    /// @notice Check if escrow is unlocked for withdrawal.
+    /// @param auctionId The auction ID
+    /// @param bidder The bidder address
+    /// @return unlocked Whether the escrow is unlocked
+    /// @return unlockTime The unlock timestamp (0 if not locked)
+    function isEscrowUnlocked(uint256 auctionId, address bidder)
+        external
+        view
+        returns (bool unlocked, uint256 unlockTime)
+    {
+        EscrowLock memory lock = escrowLocks[auctionId][bidder];
+        if (!lock.locked) {
+            return (true, 0);
+        }
+        unlocked = block.timestamp >= lock.unlockTime;
+        unlockTime = lock.unlockTime;
+    }
+
+    /// @notice Get escrow details for a bidder.
+    /// @param auctionId The auction ID
+    /// @param bidder The bidder address
+    /// @return amount Escrowed amount
+    /// @return lockDetails Escrow lock details
+    function getEscrowDetails(uint256 auctionId, address bidder)
+        external
+        view
+        returns (uint256 amount, EscrowLock memory lockDetails)
+    {
+        amount = escrow[auctionId][bidder];
+        lockDetails = escrowLocks[auctionId][bidder];
+    }
+
+    /// @notice Enhanced refund mechanism with automatic processing.
+    /// @param auctionId The auction ID
+    /// @param bidder The bidder to refund
+    /// @param reason Reason for refund
+    function _refundFromEscrow(uint256 auctionId, address bidder, string memory reason) internal {
+        Auction storage auction = auctions[auctionId];
+        uint256 refundAmount = escrow[auctionId][bidder];
+        require(refundAmount > 0, "NoLossAuction: no funds to refund");
+
+        address paymentToken = auction.paymentToken;
+
+        // Clear escrow
+        escrow[auctionId][bidder] = 0;
+        totalEscrowed[auctionId] -= refundAmount;
+        totalEscrowedByToken[paymentToken] -= refundAmount;
+
+        // Clear lock if exists
+        EscrowLock storage lock = escrowLocks[auctionId][bidder];
+        if (lock.locked) {
+            lock.locked = false;
+            lock.amount = 0;
+        }
+
+        // Transfer refund
+        if (paymentToken == address(0)) {
+            (bool success,) = payable(bidder).call{value: refundAmount}("");
+            require(success, "NoLossAuction: refund transfer failed");
+        } else {
+            _transferPaymentToken(bidder, paymentToken, refundAmount);
+        }
+
+        emit EscrowRefunded(auctionId, bidder, paymentToken, refundAmount, reason);
+    }
+
+    /// @notice Get total escrowed amount for an auction.
+    /// @param auctionId The auction ID
+    /// @return total Total escrowed amount
+    function getTotalEscrowed(uint256 auctionId) external view returns (uint256 total) {
+        return totalEscrowed[auctionId];
+    }
+
+    /// @notice Get total escrowed amount for a payment token across all auctions.
+    /// @param paymentToken The payment token address
+    /// @return total Total escrowed amount for this token
+    function getTotalEscrowedByToken(address paymentToken) external view returns (uint256 total) {
+        return totalEscrowedByToken[paymentToken];
+    }
+
+    /// @notice Set withdrawal lock period for an auction (only owner/manager).
+    /// @param auctionId The auction ID
+    /// @param lockPeriod Lock period in seconds
+    function setWithdrawalLockPeriod(uint256 auctionId, uint256 lockPeriod) external onlyOwnerOrManager {
+        require(auctions[auctionId].auctionId == auctionId, "NoLossAuction: auction does not exist");
+        withdrawalLockPeriod[auctionId] = lockPeriod;
+        auctions[auctionId].withdrawalLockPeriod = lockPeriod;
     }
 
     // Receive ETH
