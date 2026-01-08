@@ -6,10 +6,11 @@ import "./RWAAssetNFT.sol";
 import "./RWAFractionalToken.sol";
 import "./DividendDistributor.sol";
 import "./lib/IERC721Receiver.sol";
+import "./lib/ReentrancyGuard.sol";
 
 /// @title TokenizationEngine
 /// @notice Handles the fractionalization of RWAs, custody of NFTs, and deployment of fractional tokens.
-contract TokenizationEngine is IERC721Receiver {
+contract TokenizationEngine is IERC721Receiver, ReentrancyGuard {
     
     // =============================================================
     //                           EVENTS
@@ -75,7 +76,7 @@ contract TokenizationEngine is IERC721Receiver {
         string calldata symbol,
         uint256 supply,
         uint256 price
-    ) external returns (address tokenAddress, address distributorAddress) {
+    ) external nonReentrant returns (address tokenAddress, address distributorAddress) {
         // 1. Verify Asset Status
         (,,, uint256 value, AssetRegistry.AssetStatus status,, uint256 nftId) = assetRegistry.assets(assetId);
         require(status == AssetRegistry.AssetStatus.Approved, "TokenizationEngine: asset not approved");
@@ -139,7 +140,7 @@ contract TokenizationEngine is IERC721Receiver {
 
     /// @notice Redeem 100% of tokens to retrieve the underlying NFT.
     /// @param assetId ID of the asset to redeem
-    function unfractionalize(uint256 assetId) external {
+    function unfractionalize(uint256 assetId) external nonReentrant {
         TokenizedAsset storage tAsset = tokenizedAssets[assetId];
         require(tAsset.active, "TokenizationEngine: not active");
         
