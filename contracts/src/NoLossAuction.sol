@@ -55,6 +55,9 @@ contract NoLossAuction is ReentrancyGuard {
     event AuctionPaused(uint256 indexed auctionId, address indexed account);
     event AuctionUnpaused(uint256 indexed auctionId, address indexed account);
 
+    event GlobalPaused(address indexed account);
+    event GlobalUnpaused(address indexed account);
+
     event ReservePriceUpdated(uint256 indexed auctionId, uint256 newReservePrice);
     event EndTimeExtended(uint256 indexed auctionId, uint256 newEndTime);
 
@@ -207,6 +210,9 @@ contract NoLossAuction is ReentrancyGuard {
     // Next auction ID
     uint256 private _nextAuctionId;
 
+    // Global pause state
+    bool private _globalPaused;
+
     // Access control
     address public owner;
     address public auctionManager;
@@ -223,6 +229,11 @@ contract NoLossAuction is ReentrancyGuard {
 
     modifier onlySeller(uint256 auctionId) {
         require(auctions[auctionId].seller == msg.sender, "NoLossAuction: not seller");
+        _;
+    }
+
+    modifier whenNotGloballyPaused() {
+        require(!_globalPaused, "NoLossAuction: globally paused");
         _;
     }
 
@@ -269,7 +280,7 @@ contract NoLossAuction is ReentrancyGuard {
         bool autoSettleEnabled,
         uint256 _withdrawalLockPeriod,
         bool secureEscrowEnabled
-    ) external returns (uint256 auctionId) {
+    ) external whenNotGloballyPaused returns (uint256 auctionId) {
         require(assetToken != address(0), "NoLossAuction: asset token is zero");
         require(assetAmount > 0, "NoLossAuction: asset amount is zero");
         require(reservePrice > 0, "NoLossAuction: reserve price is zero");
@@ -326,7 +337,7 @@ contract NoLossAuction is ReentrancyGuard {
     /// @notice Place a bid on an active auction.
     /// @param auctionId The auction ID
     /// @param bidAmount The bid amount
-    function placeBid(uint256 auctionId, uint256 bidAmount) external payable nonReentrant {
+    function placeBid(uint256 auctionId, uint256 bidAmount) external payable nonReentrant whenNotGloballyPaused {
         Auction storage auction = auctions[auctionId];
         require(auction.auctionId == auctionId, "NoLossAuction: auction does not exist");
         require(!auction.paused, "NoLossAuction: auction is paused");
@@ -703,7 +714,7 @@ contract NoLossAuction is ReentrancyGuard {
 
     /// @notice End the auction and determine the winner.
     /// @param auctionId The auction ID
-    function endAuction(uint256 auctionId) external nonReentrant {
+    function endAuction(uint256 auctionId) external nonReentrant whenNotGloballyPaused {
         Auction storage auction = auctions[auctionId];
         require(auction.auctionId == auctionId, "NoLossAuction: auction does not exist");
         require(auction.state == AuctionState.Active, "NoLossAuction: auction not active");
@@ -872,6 +883,30 @@ contract NoLossAuction is ReentrancyGuard {
 
         auction.paused = false;
         emit AuctionUnpaused(auctionId, msg.sender);
+    }
+
+    // =============================================================
+    //                    GLOBAL PAUSE (EMERGENCY STOP)
+    // =============================================================
+
+    /// @notice Pause all auction operations globally (emergency stop).
+    /// @dev Allows refunds to continue for user safety.
+    function pauseGlobal() external onlyOwner {
+        require(!_globalPaused, "NoLossAuction: already globally paused");
+        _globalPaused = true;
+        emit GlobalPaused(msg.sender);
+    }
+
+    /// @notice Unpause global operations.
+    function unpauseGlobal() external onlyOwner {
+        require(_globalPaused, "NoLossAuction: not globally paused");
+        _globalPaused = false;
+        emit GlobalUnpaused(msg.sender);
+    }
+
+    /// @notice Check if contract is globally paused.
+    function globallyPaused() external view returns (bool) {
+        return _globalPaused;
     }
 
     // =============================================================
