@@ -194,6 +194,117 @@ contract AssetRegistry {
         requiredApprovals = _requiredApprovals;
     }
 
+    // =============================================================
+    //                    LIFECYCLE MANAGEMENT EVENTS
+    // =============================================================
+
+    event UpdateProposed(uint256 indexed requestId, uint256 indexed assetId, string newIpfsHash, address proposer);
+    event UpdateApproved(uint256 indexed requestId, address indexed verifier);
+    event UpdateExecuted(uint256 indexed requestId, uint256 indexed assetId, string newIpfsHash);
+    event AssetValuationUpdated(uint256 indexed assetId, uint256 newValue, address indexed updater);
+    event AssetStatusUpdated(uint256 indexed assetId, AssetStatus newStatus, address indexed updater);
+
+    // =============================================================
+    //                          STRUCTS (UPDATED)
+    // =============================================================
+
+    struct UpdateRequest {
+        uint256 requestId;
+        uint256 assetId;
+        string newIpfsHash;
+        uint256 approvalCount;
+        bool executed;
+        address proposer;
+    }
+
+    // =============================================================
+    //                          STORAGE (UPDATED)
+    // =============================================================
+
+    mapping(uint256 => UpdateRequest) public updateRequests;
+    mapping(uint256 => mapping(address => bool)) public hasApprovedUpdate; // requestId => verifier => bool
+    uint256 private _nextRequestId = 1;
+
+    // =============================================================
+    //                     LIFECYCLE FUNCTIONS
+    // =============================================================
+
+    /// @notice Propose an update to asset metadata (IPFS hash).
+    /// @dev Only the issuer can propose updates for their asset.
+    function proposeAssetUpdate(uint256 assetId, string calldata newIpfsHash) external returns (uint256) {
+        AssetDetails storage asset = assets[assetId];
+        require(asset.issuer == msg.sender, "AssetRegistry: not issuer");
+        require(asset.status == AssetStatus.Approved, "AssetRegistry: asset not active");
+
+        uint256 requestId = _nextRequestId++;
+        updateRequests[requestId] = UpdateRequest({
+            requestId: requestId,
+            assetId: assetId,
+            newIpfsHash: newIpfsHash,
+            approvalCount: 0,
+            executed: false,
+            proposer: msg.sender
+        });
+
+        emit UpdateProposed(requestId, assetId, newIpfsHash, msg.sender);
+        return requestId;
+    }
+
+    /// @notice Approve an asset update request (Verifier only).
+    function approveAssetUpdate(uint256 requestId) external onlyVerifier {
+        UpdateRequest storage request = updateRequests[requestId];
+        require(!request.executed, "AssetRegistry: already executed");
+        require(!hasApprovedUpdate[requestId][msg.sender], "AssetRegistry: already approved");
+
+        hasApprovedUpdate[requestId][msg.sender] = true;
+        request.approvalCount++;
+
+        emit UpdateApproved(requestId, msg.sender);
+    }
+
+    /// @notice Execute an approved asset update.
+    function executeAssetUpdate(uint256 requestId) external {
+        UpdateRequest storage request = updateRequests[requestId];
+        require(!request.executed, "AssetRegistry: already executed");
+        require(request.approvalCount >= requiredApprovals, "AssetRegistry: insufficient approvals");
+
+        request.executed = true;
+        
+        AssetDetails storage asset = assets[request.assetId];
+        asset.ipfsHash = request.newIpfsHash;
+
+        // Also update the NFT metadata if minted
+        if (asset.nftId != 0) {
+            assetNFT.setTokenURI(asset.nftId, request.newIpfsHash);
+        }
+
+        emit UpdateExecuted(requestId, request.assetId, request.newIpfsHash);
+    }
+
+    /// @notice Update the valuation of an asset (Verifier or Admin only).
+    function updateAssetValue(uint256 assetId, uint256 newValue) external {
+        require(msg.sender == admin || isVerifier[msg.sender], "AssetRegistry: unauthorized");
+        
+        AssetDetails storage asset = assets[assetId];
+        // Value can be updated even if pending or approved
+        // But arguably should check if it exists (assetId < _nextAssetId)
+        require(asset.assetId == assetId, "AssetRegistry: asset not found");
+
+        asset.value = newValue;
+        emit AssetValuationUpdated(assetId, newValue, msg.sender);
+    }
+
+    /// @notice Set asset status (e.g., Retire/Delist) (Admin only for now, or verifiers?)
+    /// @dev Let's allow Admin or Verifiers to retire assets.
+    function setAssetStatus(uint256 assetId, AssetStatus newStatus) external {
+        require(msg.sender == admin || isVerifier[msg.sender], "AssetRegistry: unauthorized");
+        
+        AssetDetails storage asset = assets[assetId];
+        require(asset.assetId == assetId, "AssetRegistry: asset not found");
+        
+        asset.status = newStatus;
+        emit AssetStatusUpdated(assetId, newStatus, msg.sender);
+    }
     function _addVerifier(address verifier) internal {
         require(verifier != address(0), "AssetRegistry: zero address");
         require(!isVerifier[verifier], "AssetRegistry: already verifier");
