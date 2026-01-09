@@ -141,22 +141,22 @@ contract NoLossAuction is ReentrancyGuard {
 
     struct Auction {
         uint256 auctionId;
+        uint256 assetTokenId;
+        uint256 assetAmount;
+        uint256 reservePrice;
+        uint256 minBidIncrement;
         address seller;
-        address assetToken; // ERC-20, ERC-721, or ERC-1155 token address
-        uint256 assetTokenId; // For ERC-721/ERC-1155, 0 for ERC-20
-        uint256 assetAmount; // Amount for ERC-20/ERC-1155, 1 for ERC-721
-        uint256 reservePrice; // Minimum acceptable bid
-        uint256 startTime;
-        uint256 endTime;
-        uint256 minBidIncrement; // Minimum increase over current highest bid
-        uint256 bidExpirationPeriod; // How long bids remain valid (0 = no expiration)
-        uint256 withdrawalPenaltyBps; // Penalty for early withdrawal in basis points (0 = no penalty)
-        bool autoSettleEnabled; // Whether to automatically settle when auction ends
-        uint256 withdrawalLockPeriod; // Time lock period for withdrawals (0 = no lock)
-        bool secureEscrowEnabled; // Enhanced security features for escrow
+        uint64 startTime;
+        uint16 withdrawalPenaltyBps;
+        bool autoSettleEnabled;
+        bool secureEscrowEnabled;
+        address assetToken;
+        uint64 endTime;
         AuctionState state;
         bool paused;
-        address paymentToken; // Address(0) for native ETH, or ERC-20 token
+        address paymentToken;
+        uint64 bidExpirationPeriod;
+        uint32 withdrawalLockPeriod;
     }
 
     // =============================================================
@@ -203,9 +203,6 @@ contract NoLossAuction is ReentrancyGuard {
 
     // Total escrowed amount per payment token (for multi-currency tracking)
     mapping(address => uint256) public totalEscrowedByToken;
-
-    // Withdrawal lock period (in seconds) - can be set per auction
-    mapping(uint256 => uint256) public withdrawalLockPeriod;
 
     // Next auction ID
     uint256 private _nextAuctionId;
@@ -297,21 +294,18 @@ contract NoLossAuction is ReentrancyGuard {
             assetTokenId: assetTokenId,
             assetAmount: assetAmount,
             reservePrice: reservePrice,
-            startTime: startTime,
-            endTime: endTime,
+            startTime: uint64(startTime),
+            endTime: uint64(endTime),
             minBidIncrement: minBidIncrement,
-            bidExpirationPeriod: bidExpirationPeriod,
-            withdrawalPenaltyBps: withdrawalPenaltyBps,
+            bidExpirationPeriod: uint64(bidExpirationPeriod),
+            withdrawalPenaltyBps: uint16(withdrawalPenaltyBps),
             autoSettleEnabled: autoSettleEnabled,
-            withdrawalLockPeriod: _withdrawalLockPeriod,
+            withdrawalLockPeriod: uint32(_withdrawalLockPeriod),
             secureEscrowEnabled: secureEscrowEnabled,
             state: startTime > block.timestamp ? AuctionState.Upcoming : AuctionState.Active,
             paused: false,
             paymentToken: paymentToken
         });
-
-        // Set withdrawal lock period for this auction
-        withdrawalLockPeriod[auctionId] = _withdrawalLockPeriod;
 
         // Transfer asset from seller to this contract (escrow)
         _transferAssetFrom(msg.sender, address(this), assetToken, assetTokenId, assetAmount);
@@ -395,7 +389,9 @@ contract NoLossAuction is ReentrancyGuard {
         }
 
         bidderTotalBid[auctionId][msg.sender] = newTotalBid;
-        totalBidAmount[auctionId] += bidAmount;
+        unchecked {
+            totalBidAmount[auctionId] += bidAmount;
+        }
 
         // Update highest bid if this is the new highest
         // Need to recalculate after handling expired bids
@@ -425,14 +421,19 @@ contract NoLossAuction is ReentrancyGuard {
 
         // Refund all bidders except the winner
         Bid[] storage auctionBids = bids[auctionId];
-        for (uint256 i = 0; i < auctionBids.length; i++) {
+        uint256 len = auctionBids.length;
+        for (uint256 i = 0; i < len; ) {
             Bid storage bid = auctionBids[i];
-            if (bid.bidder != winner && !bid.refunded && escrow[auctionId][bid.bidder] > 0) {
-                uint256 refundAmount = escrow[auctionId][bid.bidder];
-                bid.refunded = true;
-                _refundFromEscrow(auctionId, bid.bidder, "Losing bidder refund");
-                emit BidRefunded(auctionId, bid.bidder, refundAmount);
+            address bidderAddr = bid.bidder;
+            if (bidderAddr != winner && !bid.refunded) {
+                uint256 refundAmount = escrow[auctionId][bidderAddr];
+                if (refundAmount > 0) {
+                    bid.refunded = true;
+                    _refundFromEscrow(auctionId, bidderAddr, "Losing bidder refund");
+                    emit BidRefunded(auctionId, bidderAddr, refundAmount);
+                }
             }
+            unchecked { i++; }
         }
     }
 
@@ -602,9 +603,11 @@ contract NoLossAuction is ReentrancyGuard {
         Bid[] storage auctionBids = bids[auctionId];
         address currentHighestBidder = highestBidder[auctionId];
         bool highestBidderExpired = false;
+        address paymentToken = auction.paymentToken;
+        uint256 len = auctionBids.length;
 
         // Process expired bids
-        for (uint256 i = 0; i < auctionBids.length; i++) {
+        for (uint256 i = 0; i < len; ) {
             Bid storage bid = auctionBids[i];
             if (
                 !bid.expired &&
@@ -613,11 +616,12 @@ contract NoLossAuction is ReentrancyGuard {
                 bid.expirationTime > 0 &&
                 block.timestamp >= bid.expirationTime
             ) {
-                _processExpiredBid(auctionId, bid, auction.paymentToken);
+                _processExpiredBid(auctionId, bid, paymentToken);
                 if (bid.bidder == currentHighestBidder) {
                     highestBidderExpired = true;
                 }
             }
+            unchecked { ++i; }
         }
 
         // Recalculate highest bidder if needed
@@ -664,8 +668,9 @@ contract NoLossAuction is ReentrancyGuard {
         Bid[] storage auctionBids = bids[auctionId];
         uint256 newHighest = 0;
         address newHighestBidder = address(0);
+        uint256 len = auctionBids.length;
 
-        for (uint256 i = 0; i < auctionBids.length; i++) {
+        for (uint256 i = 0; i < len; ) {
             Bid storage bid = auctionBids[i];
             if (!bid.expired && !bid.withdrawn && !bid.refunded) {
                 address bidder = bid.bidder;
@@ -675,6 +680,7 @@ contract NoLossAuction is ReentrancyGuard {
                     newHighestBidder = bidder;
                 }
             }
+            unchecked { ++i; }
         }
 
         highestBid[auctionId] = newHighest;
@@ -942,7 +948,7 @@ contract NoLossAuction is ReentrancyGuard {
         require(newEndTime > block.timestamp, "NoLossAuction: invalid end time");
         require(newEndTime > auction.endTime, "NoLossAuction: cannot shorten end time");
 
-        auction.endTime = newEndTime;
+        auction.endTime = uint64(newEndTime);
         emit EndTimeExtended(auctionId, newEndTime);
     }
 
@@ -1176,9 +1182,12 @@ contract NoLossAuction is ReentrancyGuard {
         uint256 tokenId,
         uint256 amount
     ) private {
+        bool success;
+        bytes memory data;
+        
         // Try ERC-20 first (tokenId = 0, amount > 0)
         if (tokenId == 0 && amount > 0) {
-            (bool success, bytes memory data) = assetToken.call(
+            (success, data) = assetToken.call(
                 abi.encodeWithSignature("transferFrom(address,address,uint256)", from, to, amount)
             );
             require(success && (data.length == 0 || abi.decode(data, (bool))), "NoLossAuction: ERC-20 transfer failed");
@@ -1187,7 +1196,7 @@ contract NoLossAuction is ReentrancyGuard {
 
         // Try ERC-721 (amount = 1)
         if (amount == 1) {
-            (bool success, bytes memory data) = assetToken.call(
+            (success, data) = assetToken.call(
                 abi.encodeWithSignature("transferFrom(address,address,uint256)", from, to, tokenId)
             );
             require(success && (data.length == 0 || abi.decode(data, (bool))), "NoLossAuction: ERC-721 transfer failed");
@@ -1195,7 +1204,7 @@ contract NoLossAuction is ReentrancyGuard {
         }
 
         // Try ERC-1155 (amount > 1, tokenId > 0)
-        (bool success, bytes memory data) = assetToken.call(
+        (success, data) = assetToken.call(
             abi.encodeWithSignature(
                 "safeTransferFrom(address,address,uint256,uint256,bytes)",
                 from,
@@ -1212,9 +1221,12 @@ contract NoLossAuction is ReentrancyGuard {
     function _transferAsset(address to, address assetToken, uint256 tokenId, uint256 amount)
         private
     {
+        bool success;
+        bytes memory data;
+
         // Try ERC-20 first (tokenId = 0, amount > 0)
         if (tokenId == 0 && amount > 0) {
-            (bool success, bytes memory data) = assetToken.call(
+            (success, data) = assetToken.call(
                 abi.encodeWithSignature("transfer(address,uint256)", to, amount)
             );
             require(success && (data.length == 0 || abi.decode(data, (bool))), "NoLossAuction: ERC-20 transfer failed");
@@ -1223,7 +1235,7 @@ contract NoLossAuction is ReentrancyGuard {
 
         // Try ERC-721 (amount = 1)
         if (amount == 1) {
-            (bool success, bytes memory data) = assetToken.call(
+            (success, data) = assetToken.call(
                 abi.encodeWithSignature("transferFrom(address,address,uint256)", address(this), to, tokenId)
             );
             require(success && (data.length == 0 || abi.decode(data, (bool))), "NoLossAuction: ERC-721 transfer failed");
@@ -1231,7 +1243,7 @@ contract NoLossAuction is ReentrancyGuard {
         }
 
         // Try ERC-1155 (amount > 1, tokenId > 0)
-        (bool success, bytes memory data) = assetToken.call(
+        (success, data) = assetToken.call(
             abi.encodeWithSignature(
                 "safeTransferFrom(address,address,uint256,uint256,bytes)",
                 address(this),
@@ -1432,11 +1444,9 @@ contract NoLossAuction is ReentrancyGuard {
     /// @param lockPeriod Lock period in seconds
     function setWithdrawalLockPeriod(uint256 auctionId, uint256 lockPeriod) external onlyOwnerOrManager {
         require(auctions[auctionId].auctionId == auctionId, "NoLossAuction: auction does not exist");
-        withdrawalLockPeriod[auctionId] = lockPeriod;
-        auctions[auctionId].withdrawalLockPeriod = lockPeriod;
+        auctions[auctionId].withdrawalLockPeriod = uint32(lockPeriod);
     }
 
     // Receive ETH
     receive() external payable {}
 }
-

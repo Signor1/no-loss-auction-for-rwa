@@ -284,22 +284,25 @@ contract AuctionFactory is ReentrancyGuard {
         uint256 tokenId,
         uint256 amount
     ) internal {
+        bool success;
+        bytes memory data;
+
         // Logic similar to NoLossAuction but handling transfer into this contract
         if (tokenId == 0 && amount > 0) {
             // ERC-20
-            (bool success, bytes memory data) = assetToken.call(
+            (success, data) = assetToken.call(
                 abi.encodeWithSignature("transferFrom(address,address,uint256)", from, to, amount)
             );
             require(success && (data.length == 0 || abi.decode(data, (bool))), "AuctionFactory: ERC-20 transfer failed");
         } else if (amount == 1) {
             // ERC-721
-            (bool success, bytes memory data) = assetToken.call(
+            (success, data) = assetToken.call(
                 abi.encodeWithSignature("transferFrom(address,address,uint256)", from, to, tokenId)
             );
             require(success && (data.length == 0 || abi.decode(data, (bool))), "AuctionFactory: ERC-721 transfer failed");
         } else {
             // ERC-1155
-            (bool success, bytes memory data) = assetToken.call(
+            (success, data) = assetToken.call(
                 abi.encodeWithSignature(
                     "safeTransferFrom(address,address,uint256,uint256,bytes)",
                     from,
@@ -319,21 +322,24 @@ contract AuctionFactory is ReentrancyGuard {
         uint256 tokenId,
         uint256 amount
     ) internal {
+        bool success;
+        bytes memory data;
+
         if (tokenId == 0 && amount > 0) {
             // ERC-20
-            (bool success, bytes memory data) = assetToken.call(
+            (success, data) = assetToken.call(
                 abi.encodeWithSignature("approve(address,uint256)", spender, amount)
             );
             require(success && (data.length == 0 || abi.decode(data, (bool))), "AuctionFactory: ERC-20 approve failed");
         } else if (amount == 1) {
              // ERC-721
-            (bool success, bytes memory data) = assetToken.call(
+            (success, data) = assetToken.call(
                 abi.encodeWithSignature("approve(address,uint256)", spender, tokenId)
             );
             require(success && (data.length == 0 || abi.decode(data, (bool))), "AuctionFactory: ERC-721 approve failed");
         } else {
             // ERC-1155
-            (bool success, bytes memory data) = assetToken.call(
+            (success, data) = assetToken.call(
                 abi.encodeWithSignature("setApprovalForAll(address,bool)", spender, true)
             );
             require(success, "AuctionFactory: ERC-1155 approve failed");
