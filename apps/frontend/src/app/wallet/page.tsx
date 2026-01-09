@@ -4,24 +4,29 @@ import { useState } from 'react';
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { WalletStatus } from '@/components/WalletStatus';
 import { NetworkSwitcher } from '@/components/NetworkSwitcher';
+import { GasEstimator } from '@/components/GasEstimator';
+import { TransactionTracker } from '@/components/TransactionTracker';
+import { BaseExplorerIntegration, BaseNetworkStats } from '@/components/BaseExplorerIntegration';
 import { useWalletConnection } from '@/lib/wallet';
+import { useBaseNetwork } from '@/lib/base-network';
 
 export default function WalletPage() {
-  const { isConnected } = useWalletConnection();
-  const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'settings'>('overview');
+  const { isConnected, address } = useWalletConnection();
+  const { currentNetwork, isCorrectNetwork } = useBaseNetwork();
+  const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'gas' | 'explorer' | 'settings'>('overview');
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Wallet Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Wallet & Base Network</h1>
           <p className="mt-2 text-gray-600">
-            Manage your wallet connection, network settings, and view transaction history
+            Manage your wallet connection, network settings, gas estimation, and explore Base ecosystem
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Connection Status */}
+          {/* Left Column - Connection & Network */}
           <div className="lg:col-span-1">
             <div className="space-y-6">
               {/* Wallet Connection */}
@@ -48,7 +53,13 @@ export default function WalletPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Network</span>
-                        <span className="text-sm font-medium">Base</span>
+                        <span className="text-sm font-medium">{currentNetwork?.name || 'Unknown'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Optimized</span>
+                        <span className={`text-sm font-medium ${isCorrectNetwork ? 'text-green-600' : 'text-orange-600'}`}>
+                          {isCorrectNetwork ? 'Yes' : 'No'}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Wallet Type</span>
@@ -58,6 +69,12 @@ export default function WalletPage() {
                   </div>
                 </div>
               )}
+
+              {/* Base Network Stats */}
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Base Network</h2>
+                <BaseNetworkStats />
+              </div>
             </div>
           </div>
 
@@ -70,6 +87,8 @@ export default function WalletPage() {
                   {[
                     { id: 'overview', label: 'Overview' },
                     { id: 'transactions', label: 'Transactions' },
+                    { id: 'gas', label: 'Gas Estimation' },
+                    { id: 'explorer', label: 'Base Explorer' },
                     { id: 'settings', label: 'Settings' },
                   ].map((tab) => (
                     <button
@@ -91,16 +110,22 @@ export default function WalletPage() {
               <div className="p-6">
                 {activeTab === 'overview' && <OverviewTab />}
                 {activeTab === 'transactions' && <TransactionsTab />}
+                {activeTab === 'gas' && <GasTab />}
+                {activeTab === 'explorer' && <ExplorerTab />}
                 {activeTab === 'settings' && <SettingsTab />}
               </div>
             </div>
           </div>
         </div>
       </div>
-    );
+    </div>
+  );
 }
 
 function OverviewTab() {
+  const { isConnected } = useWalletConnection();
+  const { currentNetwork, isCorrectNetwork } = useBaseNetwork();
+
   return (
     <div className="space-y-6">
       <div>
@@ -134,28 +159,64 @@ function OverviewTab() {
             <h4 className="text-sm font-medium text-blue-900 mb-2">Base Network Benefits</h4>
             <ul className="space-y-2 text-sm text-blue-700">
               <li>• Lower gas fees compared to Ethereum</li>
-              <li>• Fast transaction finality</li>
+              <li>• Fast transaction finality (~2s blocks)</li>
               <li>• Native RWA token support</li>
               <li>• Growing DeFi ecosystem</li>
+              <li>• Ethereum L2 security</li>
             </ul>
           </div>
         </div>
       </div>
+
+      {/* Network Status */}
+      {isConnected && (
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Network Status</h3>
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <span className="text-sm font-medium text-gray-700">Current Network</span>
+                <div className="text-lg font-semibold text-gray-900">
+                  {currentNetwork?.name || 'Unknown'}
+                </div>
+                <div className={`text-sm ${isCorrectNetwork ? 'text-green-600' : 'text-orange-600'}`}>
+                  {isCorrectNetwork ? '✓ Optimized for Base' : '⚠ Not optimized'}
+                </div>
+              </div>
+              
+              <div>
+                <span className="text-sm font-medium text-gray-700">Connection Health</span>
+                <div className="text-lg font-semibold text-green-600">Excellent</div>
+                <div className="text-sm text-gray-600">All systems operational</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function TransactionsTab() {
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium text-gray-900">Transaction History</h3>
-      <div className="bg-gray-50 rounded-lg p-8 text-center">
-        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 9a6 6 0 0112 0v6a2 2 0 11-2 2H9a2 2 0 11-2-2V9z" />
-        </svg>
-        <p className="mt-4 text-gray-600">Transaction history will be available soon</p>
-        <p className="text-sm text-gray-500">This feature is under development</p>
-      </div>
+    <div className="space-y-6">
+      <TransactionTracker />
+    </div>
+  );
+}
+
+function GasTab() {
+  return (
+    <div className="space-y-6">
+      <GasEstimator />
+    </div>
+  );
+}
+
+function ExplorerTab() {
+  return (
+    <div className="space-y-6">
+      <BaseExplorerIntegration />
     </div>
   );
 }
@@ -188,7 +249,7 @@ function SettingsTab() {
             </button>
           </div>
           
-          <div className="flex items-center justify-between py-3">
+          <div className="flex items-center justify-between py-3 border-b border-gray-200">
             <div>
               <p className="text-sm font-medium text-gray-900">Gas Price Alert</p>
               <p className="text-xs text-gray-500">Alert when gas prices are low</p>
@@ -197,6 +258,53 @@ function SettingsTab() {
               <span className="sr-only">Enable gas alerts</span>
               <span className="inline-block h-4 w-4 transform rounded-full bg-white transition translate-x-6"></span>
             </button>
+          </div>
+
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Base Network Optimization</p>
+              <p className="text-xs text-gray-500">Optimize for Base network features</p>
+            </div>
+            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600">
+              <span className="sr-only">Enable Base optimization</span>
+              <span className="inline-block h-4 w-4 transform rounded-full bg-white transition translate-x-6"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Advanced Settings</h3>
+        <div className="bg-gray-50 rounded-lg p-4">
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700">Default Gas Limit</label>
+              <input
+                type="number"
+                defaultValue="21000"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium text-gray-700">Gas Price Gwei</label>
+              <input
+                type="number"
+                step="0.1"
+                defaultValue="0.5"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700">Slippage Tolerance (%)</label>
+              <input
+                type="number"
+                step="0.1"
+                defaultValue="0.5"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              />
+            </div>
           </div>
         </div>
       </div>
