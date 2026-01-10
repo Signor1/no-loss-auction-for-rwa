@@ -1,7 +1,7 @@
 'use client';
 
-import { AuctionDashboard } from '@/components/dashboard/AuctionDashboard';
+import { UserDashboard } from '@/components/dashboard/UserDashboard';
 
 export default function DashboardPage() {
-  return <AuctionDashboard />;
+  return <UserDashboard />;
 }
