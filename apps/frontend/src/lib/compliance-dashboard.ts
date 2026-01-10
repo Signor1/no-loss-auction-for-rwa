@@ -20,7 +20,7 @@ export interface ComplianceDashboard {
 
 export interface ComplianceAction {
   id: string;
-  type: 'document_upload' | 'information_update' | 'verification_required' | 'payment_required' | 'review_required';
+  type: 'document_upload' | 'information_update' | 'verification_required' | 'payment_required' | 'review_required' | 'reporting_required';
   title: string;
   description: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
@@ -152,7 +152,7 @@ export interface JurisdictionSpecificRequirement {
 
 export interface ComplianceAlert {
   id: string;
-  type: 'expiring_document' | 'overdue_action' | 'compliance_breach' | 'regulatory_change' | 'audit_required';
+  type: 'expiring_document' | 'overdue_action' | 'compliance_breach' | 'regulatory_change' | 'audit_required' | 'reporting_required';
   severity: 'info' | 'warning' | 'error' | 'critical';
   title: string;
   message: string;
@@ -161,7 +161,7 @@ export interface ComplianceAlert {
   actionRequired: boolean;
   actionUrl?: string;
   expiresAt?: number;
-  category: 'documents' | 'actions' | 'regulatory' | 'system';
+  category: 'documents' | 'actions' | 'regulatory' | 'system' | 'reporting';
 }
 
 export interface AuditEntry {
@@ -175,6 +175,20 @@ export interface AuditEntry {
   userAgent: string;
   status: 'success' | 'failure' | 'warning';
   riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface DocumentMetadata {
+  documentNumber?: string;
+  issuingCountry?: string;
+  issueDate?: string;
+  expiryDate?: string;
+  issuingAuthority?: string;
+  documentType?: string;
+  version?: string;
+  effectiveDate?: string;
+  reviewDate?: string;
+  licenseNumber?: string;
+  conditions?: string[];
 }
 
 export interface DocumentReview {
@@ -541,12 +555,22 @@ export function useComplianceDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedJurisdiction, setSelectedJurisdiction] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [documentExpiryAlerts, setDocumentExpiryAlerts] = useState<ComplianceAlert[]>([]);
+  const [complianceTrends, setComplianceTrends] = useState<ComplianceTrend[]>([]);
 
   const loadDashboard = async () => {
     setIsLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       setDashboard(MOCK_COMPLIANCE_DASHBOARD);
+      
+      // Generate document expiry alerts
+      const expiryAlerts = generateDocumentExpiryAlerts(MOCK_COMPLIANCE_DASHBOARD.documents);
+      setDocumentExpiryAlerts(expiryAlerts);
+      
+      // Generate compliance trends
+      const trends = generateComplianceTrends();
+      setComplianceTrends(trends);
     } catch (error) {
       console.error('Error loading compliance dashboard:', error);
     } finally {
@@ -584,6 +608,176 @@ export function useComplianceDashboard() {
     }
   };
 
+  const uploadComplianceDocument = async (file: File, documentType: ComplianceDocumentType, jurisdiction: string) => {
+    if (!dashboard) return;
+    
+    try {
+      const newDocument: ComplianceDocument = {
+        id: `doc_${Date.now()}`,
+        name: file.name,
+        type: documentType,
+        status: 'pending',
+        uploadedAt: Date.now(),
+        lastReviewed: Date.now(),
+        nextReview: Date.now() + (90 * 24 * 60 * 60 * 1000),
+        jurisdiction,
+        complianceCategory: getCategoryFromDocumentType(documentType),
+        fileSize: file.size,
+        url: URL.createObjectURL(file),
+        metadata: {},
+        reviewHistory: []
+      };
+
+      setDashboard(prev => prev ? {
+        ...prev,
+        documents: [...prev.documents, newDocument]
+      } : null);
+    } catch (error) {
+      console.error('Error uploading compliance document:', error);
+    }
+  };
+
+  const updateComplianceStatus = async (status: 'compliant' | 'non_compliant' | 'pending' | 'restricted') => {
+    if (!dashboard) return;
+    
+    try {
+      setDashboard(prev => prev ? {
+        ...prev,
+        overallStatus: status,
+        lastUpdated: Date.now()
+      } : null);
+    } catch (error) {
+      console.error('Error updating compliance status:', error);
+    }
+  };
+
+  const scheduleComplianceReview = async (reviewDate: number) => {
+    if (!dashboard) return;
+    
+    try {
+      setDashboard(prev => prev ? {
+        ...prev,
+        nextReviewDate: reviewDate
+      } : null);
+    } catch (error) {
+      console.error('Error scheduling compliance review:', error);
+    }
+  };
+
+  const generateComplianceReport = async () => {
+    if (!dashboard) return null;
+    
+    try {
+      const report = {
+        generatedAt: Date.now(),
+        complianceScore: dashboard.complianceScore,
+        overallStatus: dashboard.overallStatus,
+        riskLevel: dashboard.riskLevel,
+        totalDocuments: dashboard.documents.length,
+        activeDocuments: dashboard.documents.filter(doc => doc.status === 'active').length,
+        expiredDocuments: dashboard.documents.filter(doc => doc.status === 'expired').length,
+        pendingActions: dashboard.requiredActions.filter(action => action.status === 'pending').length,
+        overdueActions: dashboard.requiredActions.filter(action => action.status === 'overdue').length,
+        activeAlerts: dashboard.alerts.filter(alert => !alert.acknowledged).length,
+        jurisdictionCompliance: dashboard.jurisdictionRequirements.map(jur => ({
+          jurisdiction: jur.jurisdiction,
+          score: jur.complianceScore,
+          riskLevel: jur.riskLevel
+        }))
+      };
+      
+      return report;
+    } catch (error) {
+      console.error('Error generating compliance report:', error);
+      return null;
+    }
+  };
+
+  const getCategoryFromDocumentType = (type: ComplianceDocumentType): string => {
+    const categoryMap: Record<ComplianceDocumentType, string> = {
+      'business_license': 'licensing',
+      'financial_statement': 'reporting',
+      'tax_return': 'tax',
+      'aml_policy': 'aml',
+      'kyc_policy': 'kyc',
+      'privacy_policy': 'data_protection',
+      'terms_of_service': 'legal',
+      'risk_assessment': 'risk',
+      'audit_report': 'audit',
+      'regulatory_filing': 'regulatory',
+      'insurance_certificate': 'insurance',
+      'capital_proof': 'financial',
+      'director_declaration': 'governance'
+    };
+    return categoryMap[type] || 'other';
+  };
+
+  const generateDocumentExpiryAlerts = (documents: ComplianceDocument[]): ComplianceAlert[] => {
+    const alerts: ComplianceAlert[] = [];
+    const now = Date.now();
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+
+    documents.forEach(doc => {
+      if (doc.expiresAt) {
+        const timeToExpiry = doc.expiresAt - now;
+        
+        if (timeToExpiry <= thirtyDays && timeToExpiry > 0) {
+          alerts.push({
+            id: `expiry_${doc.id}`,
+            type: 'expiring_document',
+            severity: timeToExpiry <= sevenDays ? 'critical' : 'warning',
+            title: `Document Expiring Soon: ${doc.name}`,
+            message: `Your ${doc.type.replace('_', ' ')} expires in ${Math.ceil(timeToExpiry / (24 * 60 * 60 * 1000))} days.`,
+            createdAt: now,
+            acknowledged: false,
+            actionRequired: true,
+            actionUrl: `/compliance/documents/${doc.id}`,
+            category: 'documents',
+            expiresAt: doc.expiresAt
+          });
+        } else if (timeToExpiry <= 0) {
+          alerts.push({
+            id: `expired_${doc.id}`,
+            type: 'expiring_document',
+            severity: 'critical',
+            title: `Document Expired: ${doc.name}`,
+            message: `Your ${doc.type.replace('_', ' ')} has expired and requires immediate renewal.`,
+            createdAt: now,
+            acknowledged: false,
+            actionRequired: true,
+            actionUrl: `/compliance/documents/${doc.id}`,
+            category: 'documents'
+          });
+        }
+      }
+    });
+
+    return alerts;
+  };
+
+  const generateComplianceTrends = (): ComplianceTrend[] => {
+    const trends: ComplianceTrend[] = [];
+    const now = Date.now();
+    
+    // Generate monthly compliance scores for the past 12 months
+    for (let i = 11; i >= 0; i--) {
+      const monthDate = new Date(now - (i * 30 * 24 * 60 * 60 * 1000));
+      const baseScore = 85;
+      const variation = Math.random() * 10 - 5;
+      
+      trends.push({
+        date: monthDate.getTime(),
+        complianceScore: Math.round(baseScore + variation),
+        riskLevel: baseScore + variation > 80 ? 'low' : baseScore + variation > 60 ? 'medium' : 'high',
+        documentCount: Math.floor(Math.random() * 5) + 10,
+        actionCount: Math.floor(Math.random() * 3) + 1
+      });
+    }
+    
+    return trends;
+  };
+
   useEffect(() => {
     loadDashboard();
   }, []);
@@ -593,10 +787,24 @@ export function useComplianceDashboard() {
     isLoading,
     selectedJurisdiction,
     selectedCategory,
+    documentExpiryAlerts,
+    complianceTrends,
     setSelectedJurisdiction,
     setSelectedCategory,
     loadDashboard,
     acknowledgeAlert,
-    completeAction
+    completeAction,
+    uploadComplianceDocument,
+    updateComplianceStatus,
+    scheduleComplianceReview,
+    generateComplianceReport
   };
+}
+
+export interface ComplianceTrend {
+  date: number;
+  complianceScore: number;
+  riskLevel: 'low' | 'medium' | 'high';
+  documentCount: number;
+  actionCount: number;
 }
