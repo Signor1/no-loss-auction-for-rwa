@@ -1,5 +1,5 @@
 import { formatEther, parseEther } from 'viem';
-import type { Auction, AuctionStatus } from '@no-loss-auction/types';
+import { Auction, AuctionStatus } from '@no-loss-auction/types';
 
 /**
  * Format wei to ether with specified decimal places
