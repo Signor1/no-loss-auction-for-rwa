@@ -1,205 +1,185 @@
 'use client';
 
-import { AssetToken, PortfolioStats } from '@/lib/asset-portfolio';
+import { useState } from 'react';
+import { usePortfolioOverview } from '@/lib/portfolio-overview';
 
-interface PortfolioOverviewProps {
-  portfolioStats: PortfolioStats;
-  assetTokens: AssetToken[];
-  onAssetSelect: (assetId: string) => void;
-}
+export function PortfolioOverview() {
+  const {
+    portfolioData,
+    metrics,
+    filteredTimeSeriesData,
+    filteredCategoryData,
+    isLoading,
+    selectedTimeRange,
+    selectedCategory,
+    portfolioHealthScore,
+    performanceRating,
+    riskRating,
+    setSelectedTimeRange,
+    setSelectedCategory,
+    acknowledgeWarning,
+    dismissOpportunity,
+    formatCurrency,
+    formatPercentage,
+    formatLargeNumber,
+    formatDate
+  } = usePortfolioOverview();
 
-export function PortfolioOverview({ portfolioStats, assetTokens, onAssetSelect }: PortfolioOverviewProps) {
-  const formatCurrency = (amount: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
+  const [showDetails, setShowDetails] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'performance' | 'allocation' | 'activity' | 'warnings' | 'opportunities'>('overview');
+
+  const timeRanges = [
+    { value: '7d', label: '7 Days' },
+    { value: '30d', label: '30 Days' },
+    { value: '90d', label: '90 Days' },
+    { value: '1y', label: '1 Year' },
+    { value: 'all', label: 'All Time' }
+  ];
+
+  const categories = [
+    { value: 'all', label: 'All Categories' },
+    { value: 'real-estate', label: 'Real Estate' },
+    { value: 'art', label: 'Art' },
+    { value: 'precious-metals', label: 'Precious Metals' },
+    { value: 'digital-assets', label: 'Digital Assets' }
+  ];
+
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: '📊' },
+    { id: 'performance', label: 'Performance', icon: '📈' },
+    { id: 'allocation', label: 'Allocation', icon: '🎯' },
+    { id: 'activity', label: 'Activity', icon: '📋' },
+    { id: 'warnings', label: 'Warnings', icon: '⚠️' },
+    { id: 'opportunities', label: 'Opportunities', icon: '💡' }
+  ];
+
+  const getHealthScoreColor = (score: number) => {
+    if (score >= 80) return '#10B981';
+    if (score >= 60) return '#F59E0B';
+    if (score >= 40) return '#F97316';
+    return '#EF4444';
   };
 
-  const formatPercentage = (value: number) => {
-    return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+  const getHealthScoreLabel = (score: number) => {
+    if (score >= 80) return 'Excellent';
+    if (score >= 60) return 'Good';
+    if (score >= 40) return 'Fair';
+    return 'Poor';
   };
 
-  // Top performing assets
-  const topAssets = assetTokens
-    .sort((a, b) => b.valueUSD - a.valueUSD)
-    .slice(0, 5);
+  const getPerformanceColor = (rating: string) => {
+    const colors: Record<string, string> = {
+      'Excellent': '#10B981',
+      'Good': '#059669',
+      'Average': '#F59E0B',
+      'Poor': '#EF4444'
+    };
+    return colors[rating] || '#6B7280';
+  };
 
-  // Category distribution for pie chart
-  const categoryData = Object.entries(portfolioStats.categoryDistribution).map(([category, value]) => ({
-    name: category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' '),
-    value,
-    percentage: (value / portfolioStats.totalValueUSD) * 100
-  }));
+  const getRiskColor = (rating: string) => {
+    const colors: Record<string, string> = {
+      'Low': '#10B981',
+      'Medium': '#F59E0B',
+      'High': '#EF4444'
+    };
+    return colors[rating] || '#6B7280';
+  };
 
-  const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading portfolio data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!portfolioData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">📊</span>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No Portfolio Data</h3>
+          <p className="text-gray-600">Unable to load portfolio information</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Portfolio Overview</h2>
-        <p className="text-gray-600">A comprehensive view of your asset portfolio performance</p>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Portfolio Overview</h1>
+              <p className="text-gray-600">Comprehensive view of your investment portfolio performance and allocation</p>
+            </div>
+            <button
+              onClick={() => setShowDetails(!showDetails)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              {showDetails ? 'Simple View' : 'Detailed View'}
+            </button>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Portfolio Allocation */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Portfolio Allocation</h3>
-          
-          {/* Simple Pie Chart Visualization */}
-          <div className="flex items-center justify-center mb-6">
-            <div className="relative w-48 h-48">
-              <svg className="w-48 h-48 transform -rotate-90">
-                {categoryData.map((category, index) => {
-                  const percentage = category.percentage;
-                  const strokeDasharray = `${percentage} ${100 - percentage}`;
-                  const strokeDashoffset = index === 0 ? 0 : 
-                    -categoryData.slice(0, index).reduce((sum, cat) => sum + cat.percentage, 0);
-                  
-                  return (
-                    <circle
-                      key={category.name}
-                      cx="96"
-                      cy="96"
-                      r="80"
-                      fill="none"
-                      stroke={colors[index % colors.length]}
-                      strokeWidth="16"
-                      strokeDasharray={strokeDasharray}
-                      strokeDashoffset={strokeDashoffset}
-                    />
-                  );
-                })}
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(portfolioStats.totalValueUSD)}
-                  </p>
-                  <p className="text-sm text-gray-600">Total Value</p>
-                </div>
+        {/* Portfolio Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Portfolio Value</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {formatCurrency(portfolioData.totalValueUSD)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {portfolioData.totalValueETH.toFixed(2)} ETH
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <span className="text-2xl text-blue-600">💰</span>
               </div>
             </div>
           </div>
 
-          {/* Category Legend */}
-          <div className="space-y-2">
-            {categoryData.map((category, index) => (
-              <div key={category.name} className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div 
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: colors[index % colors.length] }}
-                  />
-                  <span className="text-sm text-gray-700">{category.name}</span>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
-                    {formatCurrency(category.value)}
-                  </p>
-                  <p className="text-xs text-gray-500">{category.percentage.toFixed(1)}%</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Performance Summary */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Performance Summary</h3>
-          
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">24h Change</p>
-                <p className={`text-lg font-semibold ${portfolioStats.portfolioChange24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatPercentage(portfolioStats.portfolioChange24h)}
+                <p className={`text-3xl font-bold ${
+                  portfolioData.totalValueChange24h >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {formatPercentage(portfolioData.totalValueChange24h)}
                 </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Value</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {formatCurrency(portfolioStats.totalValueUSD * Math.abs(portfolioStats.portfolioChange24h) / 100)}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600">7d Change</p>
-                <p className={`text-lg font-semibold ${portfolioStats.portfolioChange7d >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatPercentage(portfolioStats.portfolioChange7d)}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Value</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {formatCurrency(portfolioStats.totalValueUSD * Math.abs(portfolioStats.portfolioChange7d) / 100)}
+                <p className="text-sm text-gray-600">
+                  {formatCurrency(Math.abs(portfolioData.totalValueChange24h * portfolioData.totalValueUSD / 100))}
                 </p>
               </div>
             </div>
-
-            <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600">30d Change</p>
-                <p className={`text-lg font-semibold ${portfolioStats.portfolioChange30d >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatPercentage(portfolioStats.portfolioChange30d)}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Value</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {formatCurrency(portfolioStats.totalValueUSD * Math.abs(portfolioStats.portfolioChange30d) / 100)}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600">Total Yield</p>
-                <p className="text-lg font-semibold text-green-600">
-                  {formatPercentage(portfolioStats.totalYield)}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Dividends</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {formatCurrency(portfolioStats.totalDividends)}
-                </p>
-              </div>
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <span className="text-2xl text-green-600">📈</span>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Top Assets */}
-      <div className="mt-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Top Assets by Value</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Asset
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Value
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ownership
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Return
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Action
-                </th>
-              </tr>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Assets</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {portfolioData.assetCount}
+                </p>
+                <p className="text-sm text-gray-600">Assets</p>
+              </div>
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <span className="text-2xl text-purple-600">🏠</span>
+              </div>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {topAssets.map((asset) => {
