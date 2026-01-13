@@ -13,6 +13,7 @@ import authRoutes from './routes/auth'
 import userRoutes from './routes/users'
 import assetRoutes from './routes/assets'
 import paymentRoutes from './routes/payments'
+import financialRoutes from './routes/financial'
 
 import auctionRoutes from './routes/auctions'
 import bidRoutes from './routes/bids'
@@ -98,6 +99,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/users', authenticate, userRoutes)
 app.use('/api/assets', authenticate, assetRoutes)
 app.use('/api/payments', authenticate, paymentRoutes)
+app.use('/api/financial', authenticate, financialRoutes)
 
 
 // API documentation endpoint
@@ -114,7 +116,8 @@ app.get('/api/docs', (req, res) => {
       bids: '/api/bids',
       transactions: '/api/transactions',
       analytics: '/api/analytics',
-      upload: '/api/upload'
+      upload: '/api/upload',
+      financial: '/api/financial'
     },
     documentation: `${process.env.API_URL || 'http://localhost:5000'}/api/docs/swagger`
   })

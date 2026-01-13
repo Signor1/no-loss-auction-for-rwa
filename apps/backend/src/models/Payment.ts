@@ -99,5 +99,6 @@ const PaymentSchema = new Schema<IPayment>({
 PaymentSchema.index({ createdAt: -1 })
 PaymentSchema.index({ userId: 1, type: 1 })
 PaymentSchema.index({ auctionId: 1, status: 1 })
+PaymentSchema.index({ type: 1, status: 1, createdAt: 1 })
 
 export const Payment = mongoose.model<IPayment>('Payment', PaymentSchema)
