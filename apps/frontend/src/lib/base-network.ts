@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount, useSwitchChain, useChainId, useEstimateGas, useGasPrice, useFeeData } from 'wagmi';
+import { useAccount, useSwitchChain, useChainId, useEstimateGas, useGasPrice, useFeeData, usePublicClient } from 'wagmi';
 import { base, baseSepolia } from 'wagmi/chains';
-import { formatEther, formatUnits } from 'viem';
+import { formatEther, formatUnits, parseEther } from 'viem';
 
 export interface GasEstimate {
   gasLimit: bigint;
@@ -27,6 +27,13 @@ export interface NetworkInfo {
   };
   blockTime: number;
   gasOptimization: string;
+}
+
+export interface NetworkHealth {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  latency: number;
+  lastUpdated: number;
+  syncStatus: 'synced' | 'syncing' | 'behind';
 }
 
 export const BASE_NETWORKS: NetworkInfo[] = [
@@ -66,9 +73,16 @@ export function useBaseNetwork() {
   const chainId = useChainId();
   const { data: feeData } = useFeeData();
   const { data: gasPrice } = useGasPrice();
+  const publicClient = usePublicClient();
 
   const [currentNetwork, setCurrentNetwork] = useState<NetworkInfo | null>(null);
   const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
+  const [networkHealth, setNetworkHealth] = useState<NetworkHealth>({
+    status: 'healthy',
+    latency: 0,
+    lastUpdated: Date.now(),
+    syncStatus: 'synced'
+  });
 
   // Determine current network
   useEffect(() => {
@@ -97,19 +111,16 @@ export function useBaseNetwork() {
 
   const estimateTransactionGas = async (to: string, data?: string, value?: bigint): Promise<GasEstimate> => {
     try {
-      const { estimateGas } = await import('viem');
-      
-      const gasLimit = await estimateGas(
-        currentNetwork?.chain.client || base.client,
-        {
-          account: address as `0x${string}`,
-          to: to as `0x${string}`,
-          data: data as `0x${string}` | undefined,
-          value: value,
-        }
-      );
+      if (!publicClient) throw new Error('Public client not available');
 
-      const gasPriceValue = feeData?.gasPrice || gasPrice || BigInt('1000000000'); // 1 gwei fallback
+      const gasLimit = await publicClient.estimateGas({
+        account: address as `0x${string}`,
+        to: to as `0x${string}`,
+        data: data as `0x${string}` | undefined,
+        value: value,
+      });
+
+      const gasPriceValue = (feeData?.gasPrice as bigint) || (gasPrice as bigint) || parseEther('0.000000001'); // 1 gwei fallback
       const estimatedCost = gasLimit * gasPriceValue;
 
       return {
@@ -136,7 +147,7 @@ export function useBaseNetwork() {
 
   const getExplorerUrl = (type: 'tx' | 'address' | 'token', value: string): string => {
     if (!currentNetwork) return '';
-    
+
     const baseUrl = currentNetwork.explorerUrl;
     switch (type) {
       case 'tx':
@@ -156,23 +167,85 @@ export function useBaseNetwork() {
     isCorrectNetwork,
     isSwitching,
     chainId,
-    
+
     // Network actions
     switchToBase,
     switchToBaseSepolia,
-    
+
     // Gas estimation
     estimateTransactionGas,
     feeData,
     gasPrice,
-    
+
     // Utilities
     getExplorerUrl,
     BASE_NETWORKS,
-    
+
     // Network status
     isConnected,
     address,
+    networkHealth,
+  };
+}
+
+export function useNetworkMonitor() {
+  const chainId = useChainId();
+  const [healthData, setHealthData] = useState<Record<number, NetworkHealth>>({});
+
+  useEffect(() => {
+    const monitorHealth = async () => {
+      const network = BASE_NETWORKS.find(n => n.chain.id === chainId);
+      if (!network) return;
+
+      try {
+        const start = Date.now();
+        const response = await fetch(network.rpcUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_blockNumber', params: [] })
+        });
+        const latency = Date.now() - start;
+
+        let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
+        if (latency > 1000) status = 'unhealthy';
+        else if (latency > 500) status = 'degraded';
+
+        setHealthData(prev => ({
+          ...prev,
+          [chainId]: {
+            status,
+            latency,
+            lastUpdated: Date.now(),
+            syncStatus: response.ok ? 'synced' : 'behind'
+          }
+        }));
+      } catch (error) {
+        setHealthData(prev => ({
+          ...prev,
+          [chainId]: {
+            status: 'unhealthy',
+            latency: -1,
+            lastUpdated: Date.now(),
+            syncStatus: 'behind'
+          }
+        }));
+      }
+    };
+
+    const interval = setInterval(monitorHealth, 30000); // Monitor every 30s
+    monitorHealth();
+
+    return () => clearInterval(interval);
+  }, [chainId]);
+
+  return {
+    healthData,
+    currentHealth: healthData[chainId] || {
+      status: 'healthy',
+      latency: 0,
+      lastUpdated: Date.now(),
+      syncStatus: 'synced'
+    }
   };
 }
 
@@ -196,18 +269,18 @@ export function useGasOptimization() {
 
   const getOptimalGasTime = (): string => {
     if (gasHistory.length < 10) return 'Insufficient data';
-    
-    const sortedGas = [...gasHistory].sort((a, b) => 
+
+    const sortedGas = [...gasHistory].sort((a, b) =>
       parseFloat(a.gasPrice) - parseFloat(b.gasPrice)
     );
-    
+
     const lowestGas = sortedGas.slice(0, 10);
-    const avgGas = lowestGas.reduce((sum, record) => 
+    const avgGas = lowestGas.reduce((sum, record) =>
       sum + parseFloat(record.gasPrice), 0
     ) / lowestGas.length;
-    
+
     const hour = new Date().getHours();
-    
+
     // Simple heuristic: lower gas during off-peak hours
     if (hour >= 2 && hour <= 6) return '2:00 AM - 6:00 AM (Lowest)';
     if (hour >= 22 || hour <= 2) return '10:00 PM - 2:00 AM (Low)';

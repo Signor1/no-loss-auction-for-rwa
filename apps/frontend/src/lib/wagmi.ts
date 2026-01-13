@@ -2,9 +2,9 @@
 
 import { createConfig, http } from 'wagmi';
 import { base, baseSepolia, mainnet, sepolia } from 'wagmi/chains';
-import { 
-  injected, 
-  walletConnect, 
+import {
+  injected,
+  walletConnect,
   coinbaseWallet,
   metaMask,
   rainbowWallet,
@@ -18,18 +18,18 @@ export const config = createConfig({
   connectors: [
     // MetaMask - Most popular wallet
     metaMask(),
-    
+
     // Coinbase Wallet - Native Base integration
     coinbaseWallet({
       appName: 'No-Loss Auction',
       appLogoUrl: 'https://no-loss-auction.com/logo.png',
     }),
-    
+
     // Rainbow Wallet - Multi-chain support
     rainbowWallet(),
-    
+
     // WalletConnect v2 - Universal connector
-    walletConnect({ 
+    walletConnect({
       projectId,
       metadata: {
         name: 'No-Loss Auction',
@@ -38,21 +38,21 @@ export const config = createConfig({
         icons: ['https://no-loss-auction.com/logo.png']
       }
     }),
-    
+
     // Base Wallet - Native Base wallet
     injected({
       target: 'com.base.wallet',
     }),
-    
+
     // Safe - Multi-sig wallet support
     safe(),
-    
+
     // Generic injected wallets (catch-all)
     injected(),
   ],
   transports: {
-    [base.id]: http(),
-    [baseSepolia.id]: http(),
+    [base.id]: http(process.env.NEXT_PUBLIC_BASE_RPC_URL),
+    [baseSepolia.id]: http(process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL),
     [mainnet.id]: http(),
     [sepolia.id]: http(),
   },
