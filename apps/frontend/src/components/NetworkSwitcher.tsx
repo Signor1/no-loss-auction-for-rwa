@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { useWalletConnection } from '@/lib/wallet';
-import { useBaseNetwork, BASE_NETWORKS } from '@/lib/base-network';
+import { useBaseNetwork, BASE_NETWORKS, useNetworkMonitor } from '@/lib/base-network';
 import { GasPriceTracker } from './GasEstimator';
 
 export function NetworkSwitcher() {
   const { switchToBase, switchToBaseSepolia, getCurrentChain, isSwitchingChain } = useWalletConnection();
   const { currentNetwork, isCorrectNetwork, getExplorerUrl } = useBaseNetwork();
+  const { currentHealth } = useNetworkMonitor();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showGasTracker, setShowGasTracker] = useState(false);
 
@@ -67,22 +68,26 @@ export function NetworkSwitcher() {
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
           ) : (
             <>
-              <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                currentNetwork?.isTestnet ? 'bg-yellow-500' : 'bg-green-500'
-              }`}>
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center ${currentNetwork?.isTestnet ? 'bg-yellow-500' : 'bg-green-500'
+                }`}>
                 <span className="text-white text-xs font-bold">
                   {currentNetwork?.name.charAt(0)}
                 </span>
               </div>
               <span>{currentNetwork?.name || 'Unknown Network'}</span>
-              
+
               {/* Network Status Indicator */}
-              {!isCorrectNetwork && (
-                <div className="w-2 h-2 bg-orange-500 rounded-full" title="Network not optimized"></div>
-              )}
+              <div className="flex items-center space-x-1">
+                <div className={`w-2 h-2 rounded-full ${currentHealth.status === 'healthy' ? 'bg-green-500' :
+                    currentHealth.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
+                  }`} title={`RPC Latency: ${currentHealth.latency}ms`}></div>
+                {!isCorrectNetwork && (
+                  <div className="w-2 h-2 bg-orange-500 rounded-full" title="Network not optimized"></div>
+                )}
+              </div>
             </>
           )}
-          
+
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
@@ -97,12 +102,12 @@ export function NetworkSwitcher() {
                   <p className="text-sm font-medium text-gray-900">Select Network</p>
                   <p className="text-xs text-gray-500">Choose blockchain network for optimal experience</p>
                 </div>
-                
+
                 <div className="py-1">
                   {BASE_NETWORKS.map((network) => {
                     const status = getNetworkStatus(network.chain.id);
                     const isCurrent = isCurrentNetwork(network.chain.id);
-                    
+
                     return (
                       <button
                         key={network.chain.id}
@@ -112,9 +117,8 @@ export function NetworkSwitcher() {
                       >
                         <div className="flex items-center space-x-3">
                           <div className="relative">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                              network.isTestnet ? 'bg-yellow-500' : 'bg-green-500'
-                            }`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${network.isTestnet ? 'bg-yellow-500' : 'bg-green-500'
+                              }`}>
                               <span className="text-white text-sm font-bold">
                                 {network.name.charAt(0)}
                               </span>
@@ -127,7 +131,7 @@ export function NetworkSwitcher() {
                               </div>
                             )}
                           </div>
-                          
+
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
                               <span className="text-sm font-medium text-gray-900">{network.name}</span>
@@ -137,9 +141,8 @@ export function NetworkSwitcher() {
                               {network.explorerUrl.replace('https://', '').split('/')[0]}
                             </div>
                             <div className="flex items-center space-x-2 mt-1">
-                              <div className={`w-2 h-2 rounded-full ${
-                                network.isTestnet ? 'bg-yellow-500' : 'bg-green-500'
-                              }`}></div>
+                              <div className={`w-2 h-2 rounded-full ${network.isTestnet ? 'bg-yellow-500' : 'bg-green-500'
+                                }`}></div>
                               <span className="text-xs text-gray-600">
                                 {network.isTestnet ? 'Testnet' : 'Mainnet'}
                               </span>
@@ -194,7 +197,7 @@ export function NetworkSwitcher() {
                 </div>
               </div>
             </div>
-            
+
             {/* Click outside to close */}
             <div
               className="fixed inset-0 z-40"

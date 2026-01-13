@@ -280,6 +280,68 @@ export const CHAIN_CONFIGS: ChainConfig[] = [
       delay: 500,
       backoff: 2
     }
+  },
+  {
+    chainId: 8453,
+    name: 'Base Mainnet',
+    network: 'mainnet',
+    rpcUrl: process.env.BASE_RPC_URL || 'https://mainnet.base.org',
+    wsUrl: process.env.BASE_WS_URL || 'wss://mainnet.base.org',
+    blockExplorerUrl: 'https://basescan.org',
+    nativeCurrency: {
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18
+    },
+    contracts: {
+      auction: process.env.BASE_AUCTION_CONTRACT || '0x...',
+      asset: process.env.BASE_ASSET_CONTRACT || '0x...',
+      payment: process.env.BASE_PAYMENT_CONTRACT || '0x...',
+      user: process.env.BASE_USER_CONTRACT || '0x...'
+    },
+    startBlock: 0,
+    confirmations: 2,
+    blockTime: 2000,
+    gasLimit: {
+      default: 300000,
+      max: 8000000
+    },
+    retry: {
+      maxAttempts: 5,
+      delay: 1000,
+      backoff: 2
+    }
+  },
+  {
+    chainId: 84532,
+    name: 'Base Sepolia',
+    network: 'testnet',
+    rpcUrl: process.env.BASE_SEPOLIA_RPC_URL || 'https://sepolia.base.org',
+    wsUrl: process.env.BASE_SEPOLIA_WS_URL || 'wss://sepolia.base.org',
+    blockExplorerUrl: 'https://sepolia.basescan.org',
+    nativeCurrency: {
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18
+    },
+    contracts: {
+      auction: process.env.BASE_SEPOLIA_AUCTION_CONTRACT || '0x...',
+      asset: process.env.BASE_SEPOLIA_ASSET_CONTRACT || '0x...',
+      payment: process.env.BASE_SEPOLIA_PAYMENT_CONTRACT || '0x...',
+      user: process.env.BASE_SEPOLIA_USER_CONTRACT || '0x...'
+    },
+    startBlock: 0,
+    confirmations: 1,
+    blockTime: 2000,
+    gasLimit: {
+      default: 300000,
+      max: 8000000
+    },
+    retry: {
+      maxAttempts: 3,
+      delay: 500,
+      backoff: 2
+    }
   }
 ]
 
@@ -313,7 +375,7 @@ export class ChainConfigManager {
 
   // Get active chain configurations
   getActiveChainConfigs(): ChainConfig[] {
-    return Array.from(this.activeChains).map(chainId => 
+    return Array.from(this.activeChains).map(chainId =>
       this.configs.get(chainId)
     ).filter(Boolean) as ChainConfig[]
   }
@@ -421,7 +483,7 @@ export class ChainConfigManager {
     if (!config.contracts) {
       errors.push('Contracts configuration is required')
     } else {
-      const requiredContracts = ['auction', 'asset', 'payment', 'user']
+      const requiredContracts = ['auction', 'asset', 'payment', 'user'] as const
       for (const contract of requiredContracts) {
         if (!config.contracts[contract] || config.contracts[contract].trim() === '') {
           errors.push(`${contract} contract address is required`)
@@ -531,7 +593,7 @@ export class ChainConfigManager {
   importConfig(configJson: string): ChainConfig {
     try {
       const config = JSON.parse(configJson)
-      
+
       // Validate configuration
       const validation = this.validateChainConfig(config)
       if (!validation.valid) {
@@ -540,9 +602,9 @@ export class ChainConfigManager {
 
       // Add configuration
       this.addChainConfig(config)
-      
+
       return config
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to import chain configuration: ${error.message}`)
     }
   }
@@ -557,7 +619,7 @@ export class ChainConfigManager {
     chainsByNativeCurrency: Record<string, number>
   } {
     const chains = Array.from(this.configs.values())
-    
+
     return {
       totalChains: chains.length,
       activeChains: this.activeChains.size,
