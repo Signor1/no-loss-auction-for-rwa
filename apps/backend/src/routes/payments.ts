@@ -2,7 +2,8 @@ import { Router, Request, Response } from 'express'
 import { paymentService } from '../payments/paymentService'
 import { refundService } from '../payments/refundService'
 import { feeService } from '../payments/feeService'
-import { authenticate } from '../middleware/auth'
+import { validateRequest, validationSchemas } from '../middleware/validation'
+import { checkSchema } from 'express-validator'
 
 const router: Router = Router()
 
@@ -10,7 +11,11 @@ const router: Router = Router()
  * @route GET /api/payments/history
  * @desc Get user's payment history
  */
-router.get('/history', authenticate, async (req: Request, res: Response) => {
+router.get('/history', [
+    authenticate,
+    checkSchema(validationSchemas.payoutHistory),
+    validateRequest
+], async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id
         const limit = parseInt(req.query.limit as string) || 20
@@ -27,7 +32,11 @@ router.get('/history', authenticate, async (req: Request, res: Response) => {
  * @route POST /api/payments/create
  * @desc Initialize a payment
  */
-router.post('/create', authenticate, async (req: Request, res: Response) => {
+router.post('/create', [
+    authenticate,
+    checkSchema(validationSchemas.createPayment),
+    validateRequest
+], async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id
         const { auctionId, amount, currency, type, method, gateway, metadata } = req.body
@@ -54,7 +63,11 @@ router.post('/create', authenticate, async (req: Request, res: Response) => {
  * @route POST /api/payments/refund
  * @desc Process a refund
  */
-router.post('/refund', authenticate, async (req: Request, res: Response) => {
+router.post('/refund', [
+    authenticate,
+    checkSchema(validationSchemas.processRefund),
+    validateRequest
+], async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id
         const { paymentId, amount, reason } = req.body

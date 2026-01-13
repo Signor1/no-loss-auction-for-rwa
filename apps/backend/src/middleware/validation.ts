@@ -4,21 +4,21 @@ import { validationResult, ValidationError } from 'express-validator'
 // Validation middleware
 export const validateRequest = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req)
-  
+
   if (!errors.isEmpty()) {
-    const formattedErrors = errors.array().map((error: ValidationError) => ({
-      field: error.param,
+    const formattedErrors = errors.array().map((error: any) => ({
+      field: error.path || error.param,
       message: error.msg,
       value: error.value,
       location: error.location
     }))
-    
+
     return res.status(400).json({
       error: 'Validation failed',
       details: formattedErrors
     })
   }
-  
+
   next()
 }
 
@@ -108,13 +108,13 @@ export const errorMessages = {
 export const sanitization = {
   // Trim whitespace
   trim: (value: string) => value.trim(),
-  
+
   // Convert to lowercase
   toLowerCase: (value: string) => value.toLowerCase(),
-  
+
   // Remove HTML tags
   stripHTML: (value: string) => value.replace(/<[^>]*>/g, ''),
-  
+
   // Escape HTML
   escapeHTML: (value: string) => {
     const map: Record<string, string> = {
@@ -126,10 +126,10 @@ export const sanitization = {
     }
     return value.replace(/[&<>"']/g, (m) => map[m])
   },
-  
+
   // Remove special characters
   removeSpecialChars: (value: string) => value.replace(/[^a-zA-Z0-9]/g, ''),
-  
+
   // Format phone number
   formatPhone: (value: string) => {
     const cleaned = value.replace(/\D/g, '')
@@ -138,7 +138,7 @@ export const sanitization = {
     }
     return value
   },
-  
+
   // Format Ethereum address
   formatEthereumAddress: (value: string) => {
     if (!value.startsWith('0x')) {
@@ -312,6 +312,87 @@ export const validationSchemas = {
       isInt: { options: { max: 10 * 1024 * 1024 } },
       errorMessage: errorMessages.fileSize
     }
+  },
+
+  // Payment creation
+  createPayment: {
+    auctionId: {
+      optional: true,
+      isMongoId: true,
+      errorMessage: 'Invalid auction ID'
+    },
+    amount: {
+      isFloat: { options: { min: 0.01 } },
+      errorMessage: 'Amount must be at least 0.01'
+    },
+    currency: {
+      isIn: { options: [['ETH', 'USDC', 'USDT']] },
+      errorMessage: 'Invalid currency'
+    },
+    type: {
+      isIn: { options: [['bid', 'refund', 'fee', 'withdrawal']] },
+      errorMessage: 'Invalid payment type'
+    },
+    method: {
+      isIn: { options: [['crypto', 'fiat']] },
+      errorMessage: 'Invalid payment method'
+    },
+    gateway: {
+      isIn: { options: [['on-chain', 'stripe', 'coinbase-pay']] },
+      errorMessage: 'Invalid gateway'
+    }
+  },
+
+  // Refund processing
+  processRefund: {
+    paymentId: {
+      isMongoId: true,
+      errorMessage: 'Invalid payment ID'
+    },
+    amount: {
+      optional: true,
+      isFloat: { options: { min: 0.01 } },
+      errorMessage: 'Refund amount must be at least 0.01'
+    },
+    reason: {
+      optional: true,
+      isString: true,
+      isLength: { options: { max: 500 } },
+      errorMessage: 'Reason must be a string up to 500 characters'
+    }
+  },
+
+  // Financial summary query
+  financialDateRange: {
+    startDate: {
+      optional: true,
+      isISO8601: true,
+      errorMessage: 'Invalid start date'
+    },
+    endDate: {
+      optional: true,
+      isISO8601: true,
+      errorMessage: 'Invalid end date'
+    }
+  },
+
+  // Payout history query
+  payoutHistory: {
+    userId: {
+      optional: true,
+      isMongoId: true,
+      errorMessage: 'Invalid user ID'
+    },
+    limit: {
+      optional: true,
+      isInt: { options: { min: 1, max: 100 } },
+      errorMessage: 'Limit must be between 1 and 100'
+    },
+    offset: {
+      optional: true,
+      isInt: { options: { min: 0 } },
+      errorMessage: 'Offset must be a non-negative integer'
+    }
   }
 }
 
@@ -358,7 +439,7 @@ export const asyncValidations = {
     const Auction = require('../models/Auction').Auction
     const auction = await Auction.findById(auctionId)
     if (!auction) return false
-    
+
     // Check if bid is higher than current bid and meets minimum bid increment
     const minBid = auction.currentBid + auction.minBidIncrement
     return bidAmount >= minBid
