@@ -23,6 +23,7 @@ export const config = createConfig({
     coinbaseWallet({
       appName: 'No-Loss Auction',
       appLogoUrl: 'https://no-loss-auction.com/logo.png',
+      preference: 'all', // Enables Smart Wallet and mobile app
     }),
 
     // Rainbow Wallet - Multi-chain support
@@ -39,10 +40,8 @@ export const config = createConfig({
       }
     }),
 
-    // Base Wallet - Native Base wallet
-    injected({
-      target: 'com.base.wallet',
-    }),
+    // Generic injected wallets (catch-all)
+    injected(),
 
     // Safe - Multi-sig wallet support
     safe(),

@@ -9,7 +9,7 @@ export interface IPayment extends Document {
     status: 'pending' | 'completed' | 'failed' | 'refunded' | 'partially_refunded'
     type: 'bid' | 'refund' | 'fee' | 'withdrawal'
     method: 'crypto' | 'fiat'
-    gateway: 'on-chain' | 'stripe' | 'coinbase-pay'
+    gateway: 'on-chain' | 'stripe' | 'coinbase-pay' | 'coinbase-commerce'
     gatewayTransactionId?: string
     transactionHash?: string
     feeAmount?: number
@@ -68,7 +68,7 @@ const PaymentSchema = new Schema<IPayment>({
     gateway: {
         type: String,
         required: true,
-        enum: ['on-chain', 'stripe', 'coinbase-pay'],
+        enum: ['on-chain', 'stripe', 'coinbase-pay', 'coinbase-commerce'],
         default: 'on-chain'
     },
     gatewayTransactionId: {
