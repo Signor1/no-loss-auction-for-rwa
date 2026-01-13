@@ -1,4 +1,7 @@
 import { EventEmitter } from 'events';
+import prisma from '../db/prisma';
+import redis from '../db/redis';
+import logger from '../utils/logger';
 
 // Enums
 export enum UserStatus {
@@ -39,12 +42,12 @@ export interface User {
   email?: string;
   username?: string;
   displayName?: string;
-  
+
   // Authentication
   passwordHash?: string;
   walletAddresses: string[];
   socialAccounts?: SocialAccount[];
-  
+
   // Profile
   firstName?: string;
   lastName?: string;
@@ -53,7 +56,7 @@ export interface User {
   banner?: string;
   location?: UserLocation;
   website?: string;
-  
+
   // Status and verification
   status: UserStatus;
   tier: UserTier;
@@ -61,24 +64,24 @@ export interface User {
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   isKYCVerified: boolean;
-  
+
   // Registration details
   registrationMethod: RegistrationMethod;
   registeredAt: Date;
   lastLoginAt?: Date;
   invitedBy?: string;
   referralCode?: string;
-  
+
   // Preferences and settings
   preferences: UserPreferences;
   settings: UserSettings;
-  
+
   // Activity and reputation
   reputationScore: number;
   totalAuctions: number;
   totalBids: number;
   winningRate: number;
-  
+
   // Metadata
   metadata: Record<string, any>;
   tags: string[];
@@ -162,31 +165,31 @@ export interface RegistrationRequest {
   password?: string;
   walletAddress?: string;
   registrationMethod: RegistrationMethod;
-  
+
   // Verification
   verificationToken?: string;
   verificationExpiresAt?: Date;
   isVerified: boolean;
-  
+
   // Social registration
   socialProvider?: string;
   socialId?: string;
   socialData?: Record<string, any>;
-  
+
   // Invitation
   inviteCode?: string;
   invitedBy?: string;
-  
+
   // Status
   status: 'pending' | 'approved' | 'rejected';
   rejectionReason?: string;
-  
+
   // Metadata
   ipAddress?: string;
   userAgent?: string;
   deviceFingerprint?: string;
   metadata: Record<string, any>;
-  
+
   // Timestamps
   requestedAt: Date;
   processedAt?: Date;
@@ -212,30 +215,30 @@ export interface RegistrationConfig {
 
 export interface RegistrationAnalytics {
   period: { start: Date; end: Date };
-  
+
   // Registration metrics
   totalRegistrations: number;
   successfulRegistrations: number;
   failedRegistrations: number;
   registrationsByMethod: Record<RegistrationMethod, number>;
   registrationsByTier: Record<UserTier, number>;
-  
+
   // Verification metrics
   emailVerificationRate: number;
   phoneVerificationRate: number;
   kycVerificationRate: number;
   averageVerificationTime: number;
-  
+
   // Geographic distribution
   registrationsByCountry: Record<string, number>;
-  
+
   // Trends
   dailyRegistrations: {
     date: Date;
     count: number;
     method: RegistrationMethod;
   }[];
-  
+
   // Quality metrics
   duplicateRegistrations: number;
   suspiciousRegistrations: number;
@@ -244,13 +247,7 @@ export interface RegistrationAnalytics {
 
 // Main User Registration Service
 export class UserRegistrationService extends EventEmitter {
-  private users: Map<string, User> = new Map();
-  private registrationRequests: Map<string, RegistrationRequest> = new Map();
-  private emailToUserId: Map<string, string> = new Map();
-  private usernameToUserId: Map<string, string> = new Map();
-  private walletToUserId: Map<string, string> = new Map();
   private config: RegistrationConfig;
-  private registrationAttempts: Map<string, { count: number; lastAttempt: Date }> = new Map();
 
   constructor(config?: Partial<RegistrationConfig>) {
     super();
@@ -285,46 +282,54 @@ export class UserRegistrationService extends EventEmitter {
       inviteCode?: string;
       metadata?: Record<string, any>;
     } = {}
-  ): Promise<RegistrationRequest> {
+  ): Promise<any> {
     // Validate input
     await this.validateEmailRegistration(email, password, username);
-    
+
     // Check rate limiting
     await this.checkRateLimit(email);
-    
-    // Check existing user
-    if (this.emailToUserId.has(email)) {
-      throw new Error('Email already registered');
-    }
 
-    if (username && this.usernameToUserId.has(username)) {
-      throw new Error('Username already taken');
+    // Check existing user
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: email.toLowerCase() },
+          { username: username }
+        ]
+      }
+    });
+
+    if (existingUser) {
+      if (existingUser.email === email.toLowerCase()) {
+        throw new Error('Email already registered');
+      }
+      if (username && existingUser.username === username) {
+        throw new Error('Username already taken');
+      }
     }
 
     // Create registration request
-    const requestId = this.generateId();
     const verificationToken = this.generateVerificationToken();
-    
-    const request: RegistrationRequest = {
-      id: requestId,
-      email,
-      username,
-      password,
-      registrationMethod: RegistrationMethod.EMAIL,
-      verificationToken,
-      verificationExpiresAt: new Date(Date.now() + this.config.verificationTokenExpiry * 60 * 60 * 1000),
-      isVerified: false,
-      inviteCode: options.inviteCode,
-      metadata: options.metadata || {},
-      requestedAt: new Date(),
-      status: 'pending'
-    };
 
-    this.registrationRequests.set(requestId, request);
-    
+    const request = await prisma.registrationRequest.create({
+      data: {
+        email: email.toLowerCase(),
+        username,
+        password, // Should be hashed in a real app, following existing logic/Mongoose pre-save for now
+        registrationMethod: RegistrationMethod.EMAIL,
+        verificationToken,
+        verificationExpiresAt: new Date(Date.now() + this.config.verificationTokenExpiry * 60 * 60 * 1000),
+        isVerified: false,
+        inviteCode: options.inviteCode,
+        metadata: options.metadata || {},
+        requestedAt: new Date(),
+        status: 'pending'
+      }
+    });
+
     // Send verification email
     await this.sendVerificationEmail(email, verificationToken);
-    
+
     this.emit('registrationRequested', request);
     return request;
   }
@@ -339,37 +344,44 @@ export class UserRegistrationService extends EventEmitter {
       inviteCode?: string;
       metadata?: Record<string, any>;
     } = {}
-  ): Promise<RegistrationRequest> {
+  ): Promise<any> {
     // Validate wallet signature
     await this.validateWalletSignature(walletAddress, signature, message);
-    
-    // Check existing wallet
-    if (this.walletToUserId.has(walletAddress)) {
-      throw new Error('Wallet address already registered');
-    }
 
-    if (options.username && this.usernameToUserId.has(options.username)) {
-      throw new Error('Username already taken');
+    // Check existing wallet
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { walletAddress: walletAddress },
+          { username: options.username }
+        ].filter(v => v.username !== undefined || v.walletAddress !== undefined) as any
+      }
+    });
+
+    if (existingUser) {
+      if (existingUser.walletAddress === walletAddress) {
+        throw new Error('Wallet address already registered');
+      }
+      if (options.username && existingUser.username === options.username) {
+        throw new Error('Username already taken');
+      }
     }
 
     // Create registration request
-    const requestId = this.generateId();
-    
-    const request: RegistrationRequest = {
-      id: requestId,
-      walletAddress,
-      username: options.username,
-      email: options.email,
-      registrationMethod: RegistrationMethod.WALLET,
-      isVerified: true, // Wallet signature serves as verification
-      inviteCode: options.inviteCode,
-      metadata: options.metadata || {},
-      requestedAt: new Date(),
-      status: 'pending'
-    };
+    const request = await prisma.registrationRequest.create({
+      data: {
+        walletAddress,
+        username: options.username,
+        email: options.email,
+        registrationMethod: RegistrationMethod.WALLET,
+        isVerified: true, // Wallet signature serves as verification
+        inviteCode: options.inviteCode,
+        metadata: options.metadata || {},
+        requestedAt: new Date(),
+        status: 'pending'
+      }
+    });
 
-    this.registrationRequests.set(requestId, request);
-    
     this.emit('registrationRequested', request);
     return request;
   }
@@ -384,30 +396,27 @@ export class UserRegistrationService extends EventEmitter {
       inviteCode?: string;
       metadata?: Record<string, any>;
     } = {}
-  ): Promise<RegistrationRequest> {
+  ): Promise<any> {
     // Validate social token
     const socialData = await this.validateSocialToken(provider, accessToken);
-    
-    // Create registration request
-    const requestId = this.generateId();
-    
-    const request: RegistrationRequest = {
-      id: requestId,
-      email: options.email || socialData.email,
-      username: options.username || socialData.username,
-      registrationMethod: RegistrationMethod.SOCIAL,
-      socialProvider: provider,
-      socialId,
-      socialData,
-      isVerified: true, // Social provider verification
-      inviteCode: options.inviteCode,
-      metadata: options.metadata || {},
-      requestedAt: new Date(),
-      status: 'pending'
-    };
 
-    this.registrationRequests.set(requestId, request);
-    
+    // Create registration request
+    const request = await prisma.registrationRequest.create({
+      data: {
+        email: options.email || socialData.email,
+        username: options.username || socialData.username,
+        registrationMethod: RegistrationMethod.SOCIAL,
+        socialProvider: provider,
+        socialId,
+        socialData: socialData || {},
+        isVerified: true, // Social provider verification
+        inviteCode: options.inviteCode,
+        metadata: options.metadata || {},
+        requestedAt: new Date(),
+        status: 'pending'
+      }
+    });
+
     this.emit('registrationRequested', request);
     return request;
   }
@@ -416,8 +425,11 @@ export class UserRegistrationService extends EventEmitter {
   async verifyRegistration(
     requestId: string,
     token: string
-  ): Promise<User> {
-    const request = this.registrationRequests.get(requestId);
+  ): Promise<any> {
+    const request = await prisma.registrationRequest.findUnique({
+      where: { id: requestId }
+    });
+
     if (!request) {
       throw new Error('Registration request not found');
     }
@@ -436,18 +448,26 @@ export class UserRegistrationService extends EventEmitter {
 
     // Create user
     const user = await this.createUserFromRequest(request);
-    
+
     // Update request status
-    request.status = 'approved';
-    request.processedAt = new Date();
-    request.isVerified = true;
+    await prisma.registrationRequest.update({
+      where: { id: requestId },
+      data: {
+        status: 'approved',
+        processedAt: new Date(),
+        isVerified: true
+      }
+    });
 
     this.emit('registrationVerified', { request, user });
     return user;
   }
 
   async resendVerification(requestId: string): Promise<boolean> {
-    const request = this.registrationRequests.get(requestId);
+    const request = await prisma.registrationRequest.findUnique({
+      where: { id: requestId }
+    });
+
     if (!request) {
       throw new Error('Registration request not found');
     }
@@ -456,14 +476,25 @@ export class UserRegistrationService extends EventEmitter {
       throw new Error('Registration request already processed');
     }
 
+    let verificationToken = request.verificationToken;
+    let verificationExpiresAt = request.verificationExpiresAt;
+
     if (request.verificationExpiresAt && new Date() > request.verificationExpiresAt) {
       // Generate new token
-      request.verificationToken = this.generateVerificationToken();
-      request.verificationExpiresAt = new Date(Date.now() + this.config.verificationTokenExpiry * 60 * 60 * 1000);
+      verificationToken = this.generateVerificationToken();
+      verificationExpiresAt = new Date(Date.now() + this.config.verificationTokenExpiry * 60 * 60 * 1000);
+
+      await prisma.registrationRequest.update({
+        where: { id: requestId },
+        data: {
+          verificationToken,
+          verificationExpiresAt
+        }
+      });
     }
 
-    if (request.email && request.verificationToken) {
-      await this.sendVerificationEmail(request.email, request.verificationToken);
+    if (request.email && verificationToken) {
+      await this.sendVerificationEmail(request.email, verificationToken);
     }
 
     this.emit('verificationResent', request);
@@ -471,16 +502,21 @@ export class UserRegistrationService extends EventEmitter {
   }
 
   // Request Management
-  async getRegistrationRequest(requestId: string): Promise<RegistrationRequest | null> {
-    return this.registrationRequests.get(requestId) || null;
+  async getRegistrationRequest(requestId: string): Promise<any | null> {
+    return prisma.registrationRequest.findUnique({
+      where: { id: requestId }
+    });
   }
 
   async approveRegistration(
     requestId: string,
     approvedBy: string,
     notes?: string
-  ): Promise<User> {
-    const request = this.registrationRequests.get(requestId);
+  ): Promise<any> {
+    const request = await prisma.registrationRequest.findUnique({
+      where: { id: requestId }
+    });
+
     if (!request) {
       throw new Error('Registration request not found');
     }
@@ -491,12 +527,20 @@ export class UserRegistrationService extends EventEmitter {
 
     // Create user
     const user = await this.createUserFromRequest(request);
-    
+
     // Update request
-    request.status = 'approved';
-    request.processedAt = new Date();
-    request.metadata.approvedBy = approvedBy;
-    request.metadata.approvalNotes = notes;
+    await prisma.registrationRequest.update({
+      where: { id: requestId },
+      data: {
+        status: 'approved',
+        processedAt: new Date(),
+        metadata: {
+          ...(request.metadata as any || {}),
+          approvedBy,
+          approvalNotes: notes
+        }
+      }
+    });
 
     this.emit('registrationApproved', { request, user, approvedBy });
     return user;
@@ -507,7 +551,10 @@ export class UserRegistrationService extends EventEmitter {
     reason: string,
     rejectedBy: string
   ): Promise<boolean> {
-    const request = this.registrationRequests.get(requestId);
+    const request = await prisma.registrationRequest.findUnique({
+      where: { id: requestId }
+    });
+
     if (!request) {
       throw new Error('Registration request not found');
     }
@@ -516,10 +563,18 @@ export class UserRegistrationService extends EventEmitter {
       throw new Error('Registration request already processed');
     }
 
-    request.status = 'rejected';
-    request.rejectionReason = reason;
-    request.processedAt = new Date();
-    request.metadata.rejectedBy = rejectedBy;
+    await prisma.registrationRequest.update({
+      where: { id: requestId },
+      data: {
+        status: 'rejected',
+        rejectionReason: reason,
+        processedAt: new Date(),
+        metadata: {
+          ...(request.metadata as any || {}),
+          rejectedBy
+        }
+      }
+    });
 
     this.emit('registrationRejected', { request, reason, rejectedBy });
     return true;
@@ -554,7 +609,7 @@ export class UserRegistrationService extends EventEmitter {
     // - Verify the signature against the wallet address
     // - Check if the message is recent and valid
     // - Validate the wallet address format
-    
+
     if (!walletAddress || !signature || !message) {
       throw new Error('Wallet signature validation failed');
     }
@@ -569,7 +624,7 @@ export class UserRegistrationService extends EventEmitter {
     // - Validate the access token with the social provider
     // - Extract user information from the provider
     // - Verify the token is not expired
-    
+
     return {
       email: 'user@example.com',
       username: 'social_user',
@@ -580,31 +635,24 @@ export class UserRegistrationService extends EventEmitter {
   private async checkRateLimit(identifier: string): Promise<void> {
     if (!this.config.enableRateLimit) return;
 
-    const now = new Date();
-    const attempts = this.registrationAttempts.get(identifier) || { count: 0, lastAttempt: now };
-    
-    // Reset if window expired
-    if (now.getTime() - attempts.lastAttempt.getTime() > this.config.rateLimitWindow * 60 * 1000) {
-      attempts.count = 0;
-    }
+    const key = `registration_limit:${identifier}`;
+    const attempts = await redis.get(key);
+    const count = attempts ? parseInt(attempts) : 0;
 
-    if (attempts.count >= this.config.maxAttemptsPerWindow) {
+    if (count >= this.config.maxAttemptsPerWindow) {
       throw new Error('Too many registration attempts. Please try again later.');
     }
 
-    attempts.count++;
-    attempts.lastAttempt = now;
-    this.registrationAttempts.set(identifier, attempts);
+    await redis.set(key, count + 1, 'EX', this.config.rateLimitWindow * 60);
   }
 
-  private async createUserFromRequest(request: RegistrationRequest): Promise<User> {
-    const userId = this.generateId();
+  private async createUserFromRequest(request: any): Promise<any> {
     const now = new Date();
 
     // Handle invitation/referral
     let invitedBy: string | undefined;
     let referralCode: string | undefined;
-    
+
     if (request.inviteCode && this.config.enableInvitationSystem) {
       invitedBy = await this.validateInviteCode(request.inviteCode);
     }
@@ -613,48 +661,30 @@ export class UserRegistrationService extends EventEmitter {
       referralCode = this.generateReferralCode();
     }
 
-    const user: User = {
-      id: userId,
-      email: request.email,
-      username: request.username,
-      walletAddresses: request.walletAddress ? [request.walletAddress] : [],
-      status: UserStatus.PENDING_VERIFICATION,
-      tier: this.config.defaultUserTier,
-      verificationStatus: VerificationStatus.NOT_STARTED,
-      isEmailVerified: request.registrationMethod === RegistrationMethod.EMAIL ? false : true,
-      isPhoneVerified: false,
-      isKYCVerified: false,
-      registrationMethod: request.registrationMethod,
-      registeredAt: now,
-      invitedBy,
-      referralCode,
-      preferences: this.getDefaultPreferences(),
-      settings: this.getDefaultSettings(),
-      reputationScore: 0,
-      totalAuctions: 0,
-      totalBids: 0,
-      winningRate: 0,
-      metadata: request.metadata,
-      tags: [],
-      createdAt: now,
-      updatedAt: now
-    };
-
-    // Store user
-    this.users.set(userId, user);
-    
-    // Update indexes
-    if (user.email) {
-      this.emailToUserId.set(user.email, userId);
-    }
-    
-    if (user.username) {
-      this.usernameToUserId.set(user.username, userId);
-    }
-    
-    for (const wallet of user.walletAddresses) {
-      this.walletToUserId.set(wallet, userId);
-    }
+    const user = await prisma.user.create({
+      data: {
+        email: request.email,
+        username: request.username,
+        password: request.password, // Should be hashed!
+        walletAddress: request.walletAddress,
+        isActive: true,
+        emailVerified: request.registrationMethod === RegistrationMethod.EMAIL ? false : true,
+        role: 'USER',
+        profile: {
+          create: {
+            displayName: request.username || request.email?.split('@')[0] || 'User',
+          }
+        },
+        preferences: {
+          create: {
+            language: 'en',
+            timezone: 'UTC',
+          }
+        },
+        createdAt: now,
+        updatedAt: now
+      }
+    });
 
     return user;
   }
@@ -709,7 +739,7 @@ export class UserRegistrationService extends EventEmitter {
     // - Check if the invite code exists and is valid
     // - Check if it has exceeded usage limits
     // - Return the inviter's user ID
-    
+
     return undefined;
   }
 
@@ -719,7 +749,7 @@ export class UserRegistrationService extends EventEmitter {
     // - Send verification email with the token
     // - Use a proper email service provider
     // - Track email delivery status
-    
+
     console.log(`Sending verification email to ${email} with token ${token}`);
   }
 
@@ -751,7 +781,7 @@ export class UserRegistrationService extends EventEmitter {
   ): Promise<RegistrationAnalytics> {
     const requests = Array.from(this.registrationRequests.values())
       .filter(r => r.requestedAt >= period.start && r.requestedAt <= period.end);
-    
+
     const users = Array.from(this.users.values())
       .filter(u => u.registeredAt >= period.start && u.registeredAt <= period.end);
 
@@ -846,9 +876,9 @@ export class UserRegistrationService extends EventEmitter {
     const totalUsers = this.users.size;
     const pendingRequests = Array.from(this.registrationRequests.values())
       .filter(r => r.status === 'pending').length;
-    
+
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    
+
     if (pendingRequests > 1000) {
       status = 'unhealthy';
     } else if (pendingRequests > 500) {
@@ -880,7 +910,7 @@ export class UserRegistrationService extends EventEmitter {
         'ID', 'Email', 'Username', 'Status', 'Tier', 'Registration Method',
         'Registered At', 'Last Login At', 'Is Email Verified', 'Is KYC Verified'
       ];
-      
+
       const rows = Array.from(this.users.values()).map(u => [
         u.id,
         u.email || '',
@@ -893,7 +923,7 @@ export class UserRegistrationService extends EventEmitter {
         u.isEmailVerified,
         u.isKYCVerified
       ]);
-      
+
       return [headers, ...rows].map(row => row.join(',')).join('\n');
     }
   }
