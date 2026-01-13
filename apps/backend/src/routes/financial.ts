@@ -14,7 +14,7 @@ const router: Router = Router()
 router.get('/summary', [
     authenticate,
     authorize('admin'),
-    checkSchema(validationSchemas.financialDateRange),
+    ...checkSchema(validationSchemas.financialDateRange),
     validateRequest
 ], async (req: Request, res: Response) => {
     try {
@@ -35,7 +35,7 @@ router.get('/summary', [
 router.get('/fees', [
     authenticate,
     authorize('admin'),
-    checkSchema(validationSchemas.financialDateRange),
+    ...checkSchema(validationSchemas.financialDateRange),
     validateRequest
 ], async (req: Request, res: Response) => {
     try {
@@ -55,7 +55,7 @@ router.get('/fees', [
  */
 router.get('/payouts', [
     authenticate,
-    checkSchema(validationSchemas.payoutHistory),
+    ...checkSchema(validationSchemas.payoutHistory),
     validateRequest
 ], async (req: Request, res: Response) => {
     try {
@@ -77,7 +77,7 @@ router.get('/payouts', [
 router.get('/export', [
     authenticate,
     authorize('admin'),
-    checkSchema(validationSchemas.financialDateRange),
+    ...checkSchema(validationSchemas.financialDateRange),
     validateRequest
 ], async (req: Request, res: Response) => {
     try {

@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import logger from '../utils/logger';
 
 // Enums
 export enum AuctionStatus {
@@ -44,14 +45,14 @@ export interface Auction {
   biddingStrategy: BiddingStrategy;
   status: AuctionStatus;
   visibility: AuctionVisibility;
-  
+
   // Timing
   startTime: Date;
   endTime: Date;
   createdAt: Date;
   updatedAt: Date;
   settledAt?: Date;
-  
+
   // Pricing
   startingPrice: number;
   reservePrice?: number;
@@ -59,14 +60,14 @@ export interface Auction {
   minimumBidIncrement: number;
   currentPrice: number;
   currentBid?: Bid;
-  
+
   // Participants
   sellerId: string;
   winnerId?: string;
   participantIds: string[];
   invitedParticipants?: string[];
   maxParticipants?: number;
-  
+
   // Settings
   autoExtend: boolean;
   extensionDuration: number; // in minutes
@@ -74,27 +75,27 @@ export interface Auction {
   requireVerification: boolean;
   allowBuyNow: boolean;
   allowProxyBidding: boolean;
-  
+
   // Metadata
   category: string;
   tags: string[];
   images: string[];
   documents: string[];
   customFields: Record<string, any>;
-  
+
   // Statistics
   totalBids: number;
   uniqueBidders: number;
   totalVolume: number;
   viewCount: number;
   watchCount: number;
-  
+
   // Blockchain
   contractAddress?: string;
   transactionHash?: string;
   blockNumber?: number;
   gasUsed?: number;
-  
+
   // Settlement
   settlementStatus: 'pending' | 'processing' | 'completed' | 'failed';
   settlementTransactionHash?: string;
@@ -111,14 +112,14 @@ export interface Bid {
   proxyMaxAmount?: number;
   isWinning: boolean;
   status: 'active' | 'outbid' | 'withdrawn' | 'winning';
-  
+
   // Blockchain
   transactionHash?: string;
   blockNumber?: number;
   gasUsed?: number;
   confirmed: boolean;
   confirmations: number;
-  
+
   // Metadata
   ipAddress?: string;
   userAgent?: string;
@@ -209,9 +210,10 @@ export class AuctionService extends EventEmitter {
 
   // Auction Creation and Management
   async createAuction(auctionData: Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'currentPrice' | 'totalBids' | 'uniqueBidders' | 'totalVolume' | 'viewCount' | 'watchCount' | 'settlementStatus'>): Promise<Auction> {
+    const startTime = Date.now();
     const auctionId = this.generateId();
     const now = new Date();
-    
+
     const auction: Auction = {
       ...auctionData,
       id: auctionId,
@@ -249,6 +251,10 @@ export class AuctionService extends EventEmitter {
     }
 
     this.emit('auctionCreated', auction);
+
+    const duration = Date.now() - startTime;
+    logger.info(`Auction created: ${auctionId}`, { durationMs: duration });
+
     return auction;
   }
 
@@ -438,6 +444,7 @@ export class AuctionService extends EventEmitter {
 
   // Auction Search and Filtering
   async searchAuctions(filter: AuctionFilter): Promise<Auction[]> {
+    const startTime = Date.now();
     let auctions = Array.from(this.auctions.values());
 
     // Apply filters
@@ -458,33 +465,33 @@ export class AuctionService extends EventEmitter {
     }
 
     if (filter.priceRange) {
-      auctions = auctions.filter(a => 
-        a.currentPrice >= filter.priceRange!.min && 
+      auctions = auctions.filter(a =>
+        a.currentPrice >= filter.priceRange!.min &&
         a.currentPrice <= filter.priceRange!.max
       );
     }
 
     if (filter.dateRange) {
-      auctions = auctions.filter(a => 
-        a.startTime >= filter.dateRange!.start && 
+      auctions = auctions.filter(a =>
+        a.startTime >= filter.dateRange!.start &&
         a.endTime <= filter.dateRange!.end
       );
     }
 
     if (filter.tags && filter.tags.length > 0) {
-      auctions = auctions.filter(a => 
+      auctions = auctions.filter(a =>
         filter.tags!.some(tag => a.tags.includes(tag))
       );
     }
 
     if (filter.hasReserve !== undefined) {
-      auctions = auctions.filter(a => 
+      auctions = auctions.filter(a =>
         filter.hasReserve ? !!a.reservePrice : !a.reservePrice
       );
     }
 
     if (filter.hasBuyNow !== undefined) {
-      auctions = auctions.filter(a => 
+      auctions = auctions.filter(a =>
         filter.hasBuyNow ? !!a.buyNowPrice : !a.buyNowPrice
       );
     }
@@ -493,7 +500,7 @@ export class AuctionService extends EventEmitter {
     if (filter.sortBy) {
       auctions.sort((a, b) => {
         let aVal: any, bVal: any;
-        
+
         switch (filter.sortBy) {
           case 'createdAt':
             aVal = a.createdAt;
@@ -536,6 +543,11 @@ export class AuctionService extends EventEmitter {
       auctions = auctions.slice(0, filter.limit);
     }
 
+    const duration = Date.now() - startTime;
+    if (duration > 100) { // Log slow searches
+      logger.warn('Slow auction search detected', { durationMs: duration, filterCount: auctions.length });
+    }
+
     return auctions;
   }
 
@@ -560,8 +572,8 @@ export class AuctionService extends EventEmitter {
   async getUpcomingAuctions(): Promise<Auction[]> {
     const now = new Date();
     return Array.from(this.auctions.values())
-      .filter(auction => 
-        auction.status === AuctionStatus.SCHEDULED && 
+      .filter(auction =>
+        auction.status === AuctionStatus.SCHEDULED &&
         auction.startTime > now
       );
   }
@@ -613,8 +625,8 @@ export class AuctionService extends EventEmitter {
     for (let i = 1; i < bids.length; i++) {
       intervals.push(bids[i].timestamp.getTime() - bids[i - 1].timestamp.getTime());
     }
-    const averageBidInterval = intervals.length > 0 
-      ? intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length 
+    const averageBidInterval = intervals.length > 0
+      ? intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length
       : 0;
 
     // Peak bidding time
@@ -680,11 +692,11 @@ export class AuctionService extends EventEmitter {
     const successfulAuctions = completedAuctions; // Simplified - would check if reserve was met
 
     const totalVolume = auctions.reduce((sum, a) => sum + a.totalVolume, 0);
-    const averagePrice = completedAuctions > 0 
-      ? auctions.reduce((sum, a) => sum + a.currentPrice, 0) / completedAuctions 
+    const averagePrice = completedAuctions > 0
+      ? auctions.reduce((sum, a) => sum + a.currentPrice, 0) / completedAuctions
       : 0;
-    const averageBidsPerAuction = auctions.length > 0 
-      ? auctions.reduce((sum, a) => sum + a.totalBids, 0) / auctions.length 
+    const averageBidsPerAuction = auctions.length > 0
+      ? auctions.reduce((sum, a) => sum + a.totalBids, 0) / auctions.length
       : 0;
 
     // Top categories
@@ -785,7 +797,7 @@ export class AuctionService extends EventEmitter {
 
   private scheduleSettlement(auctionId: string): void {
     const delay = this.config.settlementDelay * 60 * 60 * 1000; // Convert hours to milliseconds
-    
+
     setTimeout(async () => {
       await this.processSettlement(auctionId);
     }, delay);
@@ -798,7 +810,7 @@ export class AuctionService extends EventEmitter {
     // - Process blockchain transactions for refunds
     // - Update bid statuses
     // - Send notifications
-    
+
     this.emit('refundsProcessed', { auctionId });
   }
 
@@ -810,12 +822,12 @@ export class AuctionService extends EventEmitter {
     // - Deduct commission
     // - Update auction status
     // - Send notifications
-    
+
     const auction = this.auctions.get(auctionId);
     if (auction) {
       auction.settlementStatus = 'processing';
       auction.settlementCompletedAt = new Date();
-      
+
       // Simulate settlement completion
       setTimeout(() => {
         auction.settlementStatus = 'completed';
@@ -860,9 +872,9 @@ export class AuctionService extends EventEmitter {
   }> {
     const stats = await this.getGlobalStats();
     const activeAuctions = stats.activeAuctions;
-    
+
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    
+
     if (activeAuctions === 0 && stats.totalAuctions > 0) {
       status = 'degraded';
     }
@@ -893,7 +905,7 @@ export class AuctionService extends EventEmitter {
         'ID', 'Title', 'Asset ID', 'Status', 'Type', 'Starting Price',
         'Current Price', 'Seller ID', 'Start Time', 'End Time', 'Total Bids'
       ];
-      
+
       const rows = Array.from(this.auctions.values()).map(a => [
         a.id,
         a.title,
@@ -907,7 +919,7 @@ export class AuctionService extends EventEmitter {
         a.endTime.toISOString(),
         a.totalBids
       ]);
-      
+
       return [headers, ...rows].map(row => row.join(',')).join('\n');
     }
   }

@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import mongoose from 'mongoose'
+import * as Sentry from "@sentry/node"
+import logger from '../utils/logger'
 
 // Custom error classes
 export class AppError extends Error {
@@ -69,19 +71,30 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  let error = { ...err }
+  let error: any = { ...err }
   error.message = err.message
 
-  // Log error
-  console.error('Error:', {
-    message: err.message,
+  // Log error using centralized logger
+  logger.error(err.message, {
     stack: err.stack,
     url: req.url,
     method: req.method,
     ip: req.ip,
     userAgent: req.get('User-Agent'),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    userId: (req as any).user?.id
   })
+
+  // Capture in Sentry if not operational (critical)
+  if (!error.isOperational) {
+    Sentry.captureException(err, {
+      user: { id: (req as any).user?.id },
+      extra: {
+        url: req.url,
+        method: req.method
+      }
+    })
+  }
 
   // Mongoose validation error
   if (err instanceof mongoose.Error.ValidationError) {
@@ -180,20 +193,15 @@ export const notFound = (req: Request, res: Response, next: NextFunction) => {
 
 // Error logging utility
 export const logError = (error: Error, context: string = '') => {
-  const logData = {
-    message: error.message,
+  logger.error(error.message, {
     stack: error.stack,
     context,
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV
-  }
+  })
 
-  if (process.env.NODE_ENV === 'development') {
-    console.error('Error Log:', logData)
-  } else {
-    // In production, you would send this to a logging service
-    console.error('Error:', error.message)
-  }
+  // Capture in Sentry
+  Sentry.captureException(error, { extra: { context } })
 }
 
 // Error response formatter
