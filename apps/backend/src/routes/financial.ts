@@ -2,13 +2,21 @@ import { Router, Request, Response } from 'express'
 import { financialService } from '../payments/financialService'
 import { authenticate, authorize } from '../middleware/auth'
 
+import { validateRequest, validationSchemas } from '../middleware/validation'
+import { checkSchema } from 'express-validator'
+
 const router: Router = Router()
 
 /**
  * @route GET /api/financial/summary
  * @desc Get financial summary for a date range (Admin only)
  */
-router.get('/summary', authenticate, authorize('admin'), async (req: Request, res: Response) => {
+router.get('/summary', [
+    authenticate,
+    authorize('admin'),
+    checkSchema(validationSchemas.financialDateRange),
+    validateRequest
+], async (req: Request, res: Response) => {
     try {
         const startDate = req.query.startDate ? new Date(req.query.startDate as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         const endDate = req.query.endDate ? new Date(req.query.endDate as string) : new Date()
@@ -24,7 +32,12 @@ router.get('/summary', authenticate, authorize('admin'), async (req: Request, re
  * @route GET /api/financial/fees
  * @desc Get fee breakdown (Admin only)
  */
-router.get('/fees', authenticate, authorize('admin'), async (req: Request, res: Response) => {
+router.get('/fees', [
+    authenticate,
+    authorize('admin'),
+    checkSchema(validationSchemas.financialDateRange),
+    validateRequest
+], async (req: Request, res: Response) => {
     try {
         const startDate = req.query.startDate ? new Date(req.query.startDate as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         const endDate = req.query.endDate ? new Date(req.query.endDate as string) : new Date()
@@ -40,7 +53,11 @@ router.get('/fees', authenticate, authorize('admin'), async (req: Request, res: 
  * @route GET /api/financial/payouts
  * @desc Get payout history (Regular users see their own, admins see all)
  */
-router.get('/payouts', authenticate, async (req: Request, res: Response) => {
+router.get('/payouts', [
+    authenticate,
+    checkSchema(validationSchemas.payoutHistory),
+    validateRequest
+], async (req: Request, res: Response) => {
     try {
         const userId = req.user?.role === 'admin' ? (req.query.userId as string) : req.user?.id
         const limit = parseInt(req.query.limit as string) || 20
@@ -57,7 +74,12 @@ router.get('/payouts', authenticate, async (req: Request, res: Response) => {
  * @route GET /api/financial/export
  * @desc Export financial data to CSV (Admin only)
  */
-router.get('/export', authenticate, authorize('admin'), async (req: Request, res: Response) => {
+router.get('/export', [
+    authenticate,
+    authorize('admin'),
+    checkSchema(validationSchemas.financialDateRange),
+    validateRequest
+], async (req: Request, res: Response) => {
     try {
         const startDate = req.query.startDate ? new Date(req.query.startDate as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         const endDate = req.query.endDate ? new Date(req.query.endDate as string) : new Date()

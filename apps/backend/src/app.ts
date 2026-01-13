@@ -4,8 +4,13 @@ import helmet from 'helmet'
 import compression from 'compression'
 import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
+import slowDown from 'express-slow-down'
+import hpp from 'hpp'
+import mongoSanitize from 'mongo-sanitize'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
+import cookieSession from 'cookie-session'
+import csurf from 'csurf'
 import dotenv from 'dotenv'
 
 // Import routes
@@ -14,12 +19,6 @@ import userRoutes from './routes/users'
 import assetRoutes from './routes/assets'
 import paymentRoutes from './routes/payments'
 import financialRoutes from './routes/financial'
-
-import auctionRoutes from './routes/auctions'
-import bidRoutes from './routes/bids'
-import transactionRoutes from './routes/transactions'
-import analyticsRoutes from './routes/analytics'
-import uploadRoutes from './routes/upload'
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler'
@@ -32,7 +31,7 @@ import { rateLimiter } from './middleware/rateLimiter'
 dotenv.config()
 
 // Create Express app
-const app = express()
+const app: express.Application = express()
 const server = createServer(app)
 
 // Create Socket.IO server
@@ -43,8 +42,14 @@ const io = new Server(server, {
   }
 })
 
-// Rate limiting
-const limiter = rateLimit({
+// General Rate limiting & Slow down
+const generalSpeedLimiter = slowDown({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  delayAfter: 50, // allow 50 requests per 15 minutes, then...
+  delayMs: (hits) => hits * 100, // begin adding 100ms of delay per request after 50
+})
+
+const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
   message: {
@@ -79,9 +84,38 @@ app.use(cors({
 // General middleware
 app.use(compression())
 app.use(morgan('combined'))
-app.use(limiter)
+app.use(generalSpeedLimiter)
+app.use(generalLimiter)
+app.use(hpp()) // Prevent HTTP Parameter Pollution
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+
+// Session configuration for CSRF
+app.use(cookieSession({
+  name: 'session',
+  keys: [process.env.SESSION_SECRET || 'secret-key'],
+  maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  secure: process.env.NODE_ENV === 'production',
+  httpOnly: true,
+  sameSite: 'lax'
+}))
+
+// CSRF protection
+const csrfProtection = csurf({ cookie: false })
+app.use(csrfProtection)
+
+// Provide CSRF token to frontend
+app.get('/api/csrf-token', (req, res) => {
+  res.json({ csrfToken: req.csrfToken() })
+})
+
+// Sanitize NoSQL queries
+app.use((req, res, next) => {
+  if (req.body) req.body = mongoSanitize(req.body)
+  if (req.query) req.query = mongoSanitize(req.query)
+  if (req.params) req.params = mongoSanitize(req.params)
+  next()
+})
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -95,7 +129,7 @@ app.get('/health', (req, res) => {
 })
 
 // API routes
-app.use('/api/auth', authRoutes)
+app.use('/api/auth', rateLimiter.login, authRoutes)
 app.use('/api/users', authenticate, userRoutes)
 app.use('/api/assets', authenticate, assetRoutes)
 app.use('/api/payments', authenticate, paymentRoutes)
@@ -112,11 +146,6 @@ app.get('/api/docs', (req, res) => {
       auth: '/api/auth',
       users: '/api/users',
       assets: '/api/assets',
-      auctions: '/api/auctions',
-      bids: '/api/bids',
-      transactions: '/api/transactions',
-      analytics: '/api/analytics',
-      upload: '/api/upload',
       financial: '/api/financial'
     },
     documentation: `${process.env.API_URL || 'http://localhost:5000'}/api/docs/swagger`
