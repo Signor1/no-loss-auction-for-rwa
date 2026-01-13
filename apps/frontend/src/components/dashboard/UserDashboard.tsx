@@ -6,17 +6,19 @@ import { ProfileManagement } from './ProfileManagement';
 import { ActivityFeed } from './ActivityFeed';
 import { WalletManagement } from './WalletManagement';
 import { TransactionHistory } from './TransactionHistory';
+import { PaymentHistory } from './PaymentHistory';
 import { SettingsPanel } from './SettingsPanel';
 
 export function UserDashboard() {
   const { profile, isLoading } = useUserProfile();
-  const [activeTab, setActiveTab] = useState<'profile' | 'activity' | 'wallets' | 'transactions' | 'settings'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'activity' | 'wallets' | 'transactions' | 'payments' | 'settings'>('profile');
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: '👤' },
     { id: 'activity', label: 'Activity', icon: '📊' },
     { id: 'wallets', label: 'Wallets', icon: '👛' },
     { id: 'transactions', label: 'Transactions', icon: '💳' },
+    { id: 'payments', label: 'Payments', icon: '💰' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
@@ -50,8 +52,8 @@ export function UserDashboard() {
                   <p className="text-lg font-semibold text-gray-900">{profile.displayName}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <img 
-                    src={profile.avatar} 
+                  <img
+                    src={profile.avatar}
                     alt={profile.displayName}
                     className="w-10 h-10 rounded-full"
                   />
@@ -119,6 +121,7 @@ export function UserDashboard() {
           {activeTab === 'activity' && <ActivityFeed />}
           {activeTab === 'wallets' && <WalletManagement />}
           {activeTab === 'transactions' && <TransactionHistory />}
+          {activeTab === 'payments' && <PaymentHistory />}
           {activeTab === 'settings' && <SettingsPanel />}
         </div>
       </div>
