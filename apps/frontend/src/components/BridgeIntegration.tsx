@@ -5,11 +5,14 @@ import { useAccount, useBalance, useSwitchChain } from 'wagmi';
 import { mainnet } from 'wagmi/chains';
 import { useBaseNetwork } from '@/lib/base-network';
 import { formatEther } from 'viem';
+import { useCoinbasePay } from '@/hooks/useCoinbasePay';
+import { CoinbaseButton } from '@/components/CoinbaseBranding';
 
 export function BridgeIntegration() {
     const { address, isConnected } = useAccount();
     const { currentNetwork } = useBaseNetwork();
     const { switchChain } = useSwitchChain();
+    const { openCoinbasePay, isOpening } = useCoinbasePay();
 
     const ethMainnetBalance = useBalance({
         address,
@@ -134,6 +137,20 @@ export function BridgeIntegration() {
             </div>
 
             <div className="bg-gray-50 p-6">
+                <h4 className="text-sm font-bold text-gray-900 mb-3">Don't have ETH on Mainnet?</h4>
+                <div className="mb-6">
+                    <CoinbaseButton
+                        onClick={openCoinbasePay}
+                        className="w-full"
+                        variant="primary"
+                    >
+                        {isOpening ? 'Opening Coinbase Pay...' : 'Buy Crypto with Coinbase Pay'}
+                    </CoinbaseButton>
+                    <p className="mt-2 text-[10px] text-gray-400 text-center">
+                        Standard Coinbase fees apply. Available in supported regions.
+                    </p>
+                </div>
+
                 <h4 className="text-sm font-bold text-gray-900 mb-3">How to bridge</h4>
                 <ol className="space-y-3">
                     <li className="flex items-start space-x-3 text-xs text-gray-600">

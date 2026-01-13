@@ -25,12 +25,12 @@ import userRoutes from './routes/users'
 import assetRoutes from './routes/assets'
 import paymentRoutes from './routes/payments'
 import financialRoutes from './routes/financial'
+import coinbaseWebhookRoutes from './routes/coinbaseWebhook'
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler'
 import { notFound } from './middleware/notFound'
 import { authenticate } from './middleware/auth'
-import { validateRequest } from './middleware/validation'
 import { rateLimiter } from './middleware/rateLimiter'
 
 // Create Express app
@@ -110,7 +110,12 @@ app.use(morgan('combined', {
 app.use(generalSpeedLimiter)
 app.use(generalLimiter)
 app.use(hpp()) // Prevent HTTP Parameter Pollution
-app.use(express.json({ limit: '10mb' }))
+app.use(express.json({
+  limit: '10mb',
+  verify: (req: any, _res, buf) => {
+    req.rawBody = buf.toString();
+  }
+}))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
 // Session configuration for CSRF
@@ -141,7 +146,7 @@ app.use((req, res, next) => {
 })
 
 // Health check endpoint
-app.get('/health', async (req, res) => {
+app.get('/health', async (_req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? 'UP' : 'DOWN'
 
   const status = dbStatus === 'UP' ? 200 : 503
@@ -164,10 +169,11 @@ app.use('/api/users', authenticate, userRoutes)
 app.use('/api/assets', authenticate, assetRoutes)
 app.use('/api/payments', authenticate, paymentRoutes)
 app.use('/api/financial', authenticate, financialRoutes)
+app.use('/api/webhooks/coinbase', coinbaseWebhookRoutes)
 
 
 // API documentation endpoint
-app.get('/api/docs', (req, res) => {
+app.get('/api/docs', (_req, res) => {
   res.json({
     title: 'No-Loss Auction API',
     version: '1.0.0',
