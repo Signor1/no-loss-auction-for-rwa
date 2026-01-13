@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express'
 import { paymentService } from '../payments/paymentService'
 import { refundService } from '../payments/refundService'
 import { feeService } from '../payments/feeService'
+import { authenticate } from '../middleware/auth'
 import { validateRequest, validationSchemas } from '../middleware/validation'
 import { checkSchema } from 'express-validator'
 
@@ -13,7 +14,7 @@ const router: Router = Router()
  */
 router.get('/history', [
     authenticate,
-    checkSchema(validationSchemas.payoutHistory),
+    ...checkSchema(validationSchemas.payoutHistory),
     validateRequest
 ], async (req: Request, res: Response) => {
     try {
@@ -34,7 +35,7 @@ router.get('/history', [
  */
 router.post('/create', [
     authenticate,
-    checkSchema(validationSchemas.createPayment),
+    ...checkSchema(validationSchemas.createPayment),
     validateRequest
 ], async (req: Request, res: Response) => {
     try {
@@ -65,7 +66,7 @@ router.post('/create', [
  */
 router.post('/refund', [
     authenticate,
-    checkSchema(validationSchemas.processRefund),
+    ...checkSchema(validationSchemas.processRefund),
     validateRequest
 ], async (req: Request, res: Response) => {
     try {

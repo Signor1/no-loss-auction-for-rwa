@@ -12,6 +12,12 @@ import { Server } from 'socket.io'
 import cookieSession from 'cookie-session'
 import csurf from 'csurf'
 import dotenv from 'dotenv'
+import * as Sentry from "@sentry/node"
+import mongoose from 'mongoose'
+import logger from './utils/logger'
+
+// Load environment variables
+dotenv.config()
 
 // Import routes
 import authRoutes from './routes/auth'
@@ -27,11 +33,20 @@ import { authenticate } from './middleware/auth'
 import { validateRequest } from './middleware/validation'
 import { rateLimiter } from './middleware/rateLimiter'
 
-// Load environment variables
-dotenv.config()
-
 // Create Express app
 const app: express.Application = express()
+
+// Initialize Sentry after app is created
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV || 'development',
+  integrations: [
+    new Sentry.Integrations.Http({ tracing: true }),
+    new Sentry.Integrations.Express({ app }),
+  ],
+  tracesSampleRate: 1.0,
+})
+
 const server = createServer(app)
 
 // Create Socket.IO server
@@ -81,9 +96,17 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }))
 
+// Sentry RequestHandler creates a separate execution context using domains, so that every
+// transaction/span/breadcrumb is attached to its own Hub instance
+app.use(Sentry.Handlers.requestHandler())
+// TracingHandler creates a trace for every incoming request
+app.use(Sentry.Handlers.tracingHandler())
+
 // General middleware
 app.use(compression())
-app.use(morgan('combined'))
+app.use(morgan('combined', {
+  stream: { write: (message) => logger.http(message.trim()) }
+}))
 app.use(generalSpeedLimiter)
 app.use(generalLimiter)
 app.use(hpp()) // Prevent HTTP Parameter Pollution
@@ -118,13 +141,20 @@ app.use((req, res, next) => {
 })
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
+app.get('/health', async (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'UP' : 'DOWN'
+
+  const status = dbStatus === 'UP' ? 200 : 503
+
+  res.status(status).json({
+    status: dbStatus === 'UP' ? 'OK' : 'DEGRADED',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || 'development',
-    version: process.env.npm_package_version || '1.0.0'
+    version: process.env.npm_package_version || '1.0.0',
+    services: {
+      database: dbStatus,
+    }
   })
 })
 
@@ -154,7 +184,7 @@ app.get('/api/docs', (req, res) => {
 
 // WebSocket connection handling
 io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id}`)
+  logger.info(`User connected: ${socket.id}`)
 
   // Join user to their personal room
   socket.on('join-user-room', (userId) => {
@@ -177,12 +207,15 @@ io.on('connection', (socket) => {
   })
 
   socket.on('disconnect', () => {
-    console.log(`User disconnected: ${socket.id}`)
+    logger.info(`User connected: ${socket.id}`)
   })
 })
 
 // Export io for use in other modules
 export { io }
+
+// The error handler must be before any other error middleware and after all controllers
+app.use(Sentry.Handlers.errorHandler())
 
 // Error handling middleware
 app.use(notFound)
@@ -191,9 +224,9 @@ app.use(errorHandler)
 // Start server
 const PORT = process.env.PORT || 5000
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`)
-  console.log(`API Documentation: http://localhost:${PORT}/api/docs`)
+  logger.info(`Server running on port ${PORT}`)
+  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`)
+  logger.info(`API Documentation: http://localhost:${PORT}/api/docs`)
 })
 
 export default app
