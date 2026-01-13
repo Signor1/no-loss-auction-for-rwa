@@ -1,0 +1,452 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+enum KYCStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AuctionStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  ENDED
+  CANCELLED
+  SOLD
+}
+
+enum AuctionType {
+  ENGLISH
+  DUTCH
+  SEALED_BID
+  NO_LOSS
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+  UNLISTED
+}
+
+enum Condition {
+  NEW
+  LIKE_NEW
+  EXCELLENT
+  VERY_GOOD
+  GOOD
+  FAIR
+  POOR
+}
+
+enum AssetStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  ACTIVE
+  SOLD
+  WITHDRAWN
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentType {
+  BID
+  REFUND
+  FEE
+  WITHDRAWAL
+}
+
+enum PaymentMethod {
+  CRYPTO
+  FIAT
+}
+
+enum PaymentGateway {
+  ON_CHAIN
+  STRIPE
+  COINBASE_PAY
+}
+
+enum RegistrationMethod {
+  EMAIL
+  WALLET
+  SOCIAL
+  INVITE
+}
+
+enum UserTier {
+  BASIC
+  VERIFIED
+  PREMIUM
+  ENTERPRISE
+}
+
+model User {
+  id                        String    @id @default(uuid())
+  email                     String    @unique
+  username                  String?   @unique
+  password                  String
+  firstName                 String
+  lastName                  String
+  walletAddress             String?   @unique
+  role                      Role      @default(USER)
+  isActive                  Boolean   @default(true)
+  emailVerified             Boolean   @default(false)
+  emailVerificationToken    String?
+  emailVerificationExpires  DateTime?
+  twoFactorEnabled          Boolean   @default(false)
+  twoFactorSecret           String?
+  kycVerified               Boolean   @default(false)
+  tier                      UserTier  @default(BASIC)
+  
+  profile                   Profile?
+  preferences               Preferences?
+  security                  Security?
+  
+  kycDocuments              KYCDocument[]
+  apiKeys                   ApiKey[]
+  
+  ownedAssets               Asset[]   @relation("Owner")
+  auctionsAsSeller          Auction[] @relation("Seller")
+  auctionsAsWinner          Auction[] @relation("Winner")
+  bids                      Bid[]
+  payments                  Payment[]
+  
+  ownershipHistory          OwnershipHistory[]
+
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  @@index([email])
+  @@index([walletAddress])
+}
+
+model Profile {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id])
+  avatar      String?
+  bio         String?   @db.Text
+  phone       String?
+  country     String?
+  dateOfBirth DateTime?
+}
+
+model Preferences {
+  id              String  @id @default(uuid())
+  userId          String  @unique
+  user            User    @relation(fields: [userId], references: [id])
+  language        String  @default("en")
+  timezone        String  @default("UTC")
+  
+  // Flattening notifications for easier SQL access or use JSON
+  emailNotifications   Boolean @default(true)
+  pushNotifications    Boolean @default(true)
+  smsNotifications     Boolean @default(false)
+  auctionNotifications Boolean @default(true)
+  bidNotifications     Boolean @default(true)
+  paymentNotifications Boolean @default(true)
+  
+  showProfile     Boolean @default(true)
+  showActivity    Boolean @default(true)
+  allowMessages   Boolean @default(true)
+}
+
+model Security {
+  id                 String    @id @default(uuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id])
+  lastPasswordChange DateTime?
+  lastLoginAt        DateTime?
+  loginAttempts      Int       @default(0)
+  lockUntil          DateTime?
+  passwordChangedAt  DateTime?
+}
+
+model KYCDocument {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  type        String
+  url         String
+  status      KYCStatus @default(PENDING)
+  uploadedAt  DateTime  @default(now())
+}
+
+model ApiKey {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  name        String
+  key         String    @unique
+  permissions String[]
+  isActive    Boolean   @default(true)
+  lastUsed    DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Asset {
+  id              String      @id @default(uuid())
+  title           String
+  description     String      @db.Text
+  category        String
+  subcategory     String?
+  condition       Condition
+  status          AssetStatus @default(DRAFT)
+  visibility      Visibility  @default(PUBLIC)
+  featured        Boolean     @default(false)
+  priority        Int         @default(0)
+  
+  locationCountry String
+  locationCity    String
+  locationAddress String?
+  locationLat     Float?
+  locationLng     Float?
+  
+  specifications  Json?       @default("{}")
+  
+  valuationAmount   Float
+  valuationCurrency String    @default("USD")
+  appraisalDate     DateTime?
+  appraisalReport   String?
+  
+  currentOwnerId    String
+  owner             User      @relation("Owner", fields: [currentOwnerId], references: [id])
+  
+  images            AssetImage[]
+  videos            AssetVideo[]
+  documents         AssetDocument[]
+  ownershipHistory  OwnershipHistory[]
+  
+  auction           Auction?
+  
+  views             Int       @default(0)
+  likes             Int       @default(0)
+  shares            Int       @default(0)
+  
+  metadata          Json?       @default("{}")
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  publishedAt       DateTime?
+  expiresAt         DateTime?
+
+  @@index([title])
+  @@index([category])
+  @@index([status])
+}
+
+model AssetImage {
+  id        String  @id @default(uuid())
+  assetId   String
+  asset     Asset   @relation(fields: [assetId], references: [id])
+  url       String
+  alt       String
+  order     Int     @default(0)
+  isPrimary Boolean @default(false)
+}
+
+model AssetVideo {
+  id        String @id @default(uuid())
+  assetId   String
+  asset     Asset  @relation(fields: [assetId], references: [id])
+  url       String
+  title     String
+  duration  Int
+  thumbnail String
+}
+
+model AssetDocument {
+  id      String @id @default(uuid())
+  assetId String
+  asset   Asset  @relation(fields: [assetId], references: [id])
+  title   String
+  url     String
+  type    String
+  size    Int
+}
+
+model OwnershipHistory {
+  id                String   @id @default(uuid())
+  assetId           String
+  asset             Asset    @relation(fields: [assetId], references: [id])
+  ownerId           String
+  owner             User     @relation(fields: [ownerId], references: [id])
+  acquisitionDate   DateTime
+  acquisitionMethod String
+  price             Float?
+}
+
+model Auction {
+  id                String        @id @default(uuid())
+  title             String
+  description       String        @db.Text
+  status            AuctionStatus @default(DRAFT)
+  auctionType       AuctionType   @default(ENGLISH)
+  visibility        Visibility    @default(PUBLIC)
+  endTime           DateTime
+  
+  startingBid       Float
+  currentBid        Float         @default(0)
+  minBidIncrement   Float         @default(1.0)
+  reservePrice      Float?
+  buyNowPrice       Float?
+  
+  assetId           String        @unique
+  asset             Asset         @relation(fields: [assetId], references: [id])
+  
+  sellerId          String
+  seller            User          @relation("Seller", fields: [sellerId], references: [id])
+  
+  winnerId          String?
+  winnerUser        User?         @relation("Winner", fields: [winnerId], references: [id])
+  winnerAmount      Float?
+  winnerTime        DateTime?
+  winnerTxHash      String?
+  
+  featured          Boolean       @default(false)
+  priority          Int           @default(0)
+  
+  // Settings
+  autoExtend        Boolean       @default(false)
+  extendDuration    Int           @default(10)
+  maxExtensions     Int           @default(3)
+  currentExtensions Int           @default(0)
+  requireVerification Boolean     @default(true)
+  allowProxyBidding Boolean      @default(true)
+  showBidderNames   Boolean       @default(false)
+  enableBuyNow      Boolean       @default(false)
+  enableReserve     Boolean       @default(true)
+  
+  // Fees
+  platformFee       Float         @default(2.5)
+  processorFee      Float         @default(2.9)
+  totalFees         Float         @default(5.4)
+  feeStructure      String        @default("percentage")
+  
+  // Timeline details
+  publishedAt       DateTime?
+  startedAt         DateTime?
+  endedAt           DateTime?
+  lastBidAt         DateTime?
+  extendedAt        DateTime[]
+  
+  bids              Bid[]
+  payments          Payment[]
+  
+  metrics           Json?         @default("{}")
+  location          Json?         @default("{}")
+  shipping          Json?         @default("{}")
+  terms             Json?         @default("{}")
+  tags              String[]
+  metadata          Json?         @default("{}")
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([status])
+  @@index([endTime])
+}
+
+model Bid {
+  id              String   @id @default(uuid())
+  auctionId       String
+  auction         Auction  @relation(fields: [auctionId], references: [id])
+  bidderId        String
+  bidder          User     @relation(fields: [bidderId], references: [id])
+  amount          Float
+  timestamp       DateTime @default(now())
+  isWinning       Boolean  @default(false)
+  transactionHash String?
+  status          String   @default("pending")
+  
+  payments        Payment[]
+
+  @@index([auctionId])
+  @@index([bidderId])
+}
+
+model Payment {
+  id              String          @id @default(uuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id])
+  auctionId       String?
+  auction         Auction?        @relation(fields: [auctionId], references: [id])
+  bidId           String?
+  bid             Bid?            @relation(fields: [bidId], references: [id])
+  
+  amount          Float
+  currency        String          @default("USDC")
+  status          PaymentStatus   @default(PENDING)
+  type            PaymentType
+  method          PaymentMethod   @default(CRYPTO)
+  gateway         PaymentGateway  @default(ON_CHAIN)
+  
+  gatewayTransactionId String?
+  transactionHash      String?
+  feeAmount            Float      @default(0)
+  exchangeRate         Float      @default(1)
+  
+  metadata        Json?           @default("{}")
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([auctionId])
+  @@index([status])
+}
+
+model RegistrationRequest {
+  id                String   @id @default(uuid())
+  email             String?
+  username          String?
+  password          String?
+  walletAddress     String?
+  registrationMethod RegistrationMethod
+  
+  verificationToken String?
+  verificationExpiresAt DateTime?
+  isVerified        Boolean  @default(false)
+  
+  socialProvider    String?
+  socialId          String?
+  socialData        Json?
+  
+  inviteCode        String?
+  invitedBy         String?
+  
+  status            String   @default("pending")
+  rejectionReason   String?
+  
+  ipAddress         String?
+  userAgent         String?
+  deviceFingerprint String?
+  metadata          Json?    @default("{}")
+  
+  requestedAt       DateTime @default(now())
+  processedAt       DateTime?
+}
