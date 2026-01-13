@@ -7,11 +7,13 @@ import { ActivityFeed } from './ActivityFeed';
 import { WalletManagement } from './WalletManagement';
 import { TransactionHistory } from './TransactionHistory';
 import { PaymentHistory } from './PaymentHistory';
+import { PayoutHistory } from './PayoutHistory';
+import FinancialDashboard from '../admin/FinancialDashboard';
 import { SettingsPanel } from './SettingsPanel';
 
 export function UserDashboard() {
   const { profile, isLoading } = useUserProfile();
-  const [activeTab, setActiveTab] = useState<'profile' | 'activity' | 'wallets' | 'transactions' | 'payments' | 'settings'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'activity' | 'wallets' | 'transactions' | 'payments' | 'payouts' | 'financials' | 'settings'>('profile');
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: '👤' },
@@ -19,6 +21,8 @@ export function UserDashboard() {
     { id: 'wallets', label: 'Wallets', icon: '👛' },
     { id: 'transactions', label: 'Transactions', icon: '💳' },
     { id: 'payments', label: 'Payments', icon: '💰' },
+    { id: 'payouts', label: 'Payouts', icon: '💸' },
+    ...(profile?.role === 'admin' ? [{ id: 'financials', label: 'Financials', icon: '📈' }] : []),
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
@@ -122,6 +126,8 @@ export function UserDashboard() {
           {activeTab === 'wallets' && <WalletManagement />}
           {activeTab === 'transactions' && <TransactionHistory />}
           {activeTab === 'payments' && <PaymentHistory />}
+          {activeTab === 'payouts' && <PayoutHistory />}
+          {activeTab === 'financials' && <FinancialDashboard />}
           {activeTab === 'settings' && <SettingsPanel />}
         </div>
       </div>

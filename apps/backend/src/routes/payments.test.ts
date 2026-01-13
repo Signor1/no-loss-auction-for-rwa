@@ -3,35 +3,38 @@ import request from 'supertest'
 import express from 'express'
 import paymentRoutes from './payments'
 
-// Mock the services
-const mockPaymentService = {
-    getPaymentHistory: vi.fn().mockResolvedValue([{ _id: 'p1', amount: 100 }]),
-    createPayment: vi.fn().mockResolvedValue({ _id: 'p2', amount: 50 }),
-    getPaymentById: vi.fn().mockResolvedValue({ _id: 'p1', userId: 'user123' })
-}
+vi.mock('../payments/paymentService', () => {
+    const mock = {
+        getPaymentHistory: vi.fn().mockResolvedValue([{ _id: 'p1', amount: 100 }]),
+        createPayment: vi.fn().mockResolvedValue({ _id: 'p2', amount: 50 }),
+        getPaymentById: vi.fn().mockResolvedValue({ _id: 'p1', userId: 'user123' })
+    }
+    return {
+        PaymentService: vi.fn().mockImplementation(() => mock),
+        paymentService: mock
+    }
+})
 
-const mockRefundService = {
-    processRefund: vi.fn().mockResolvedValue({ _id: 'r1', amount: 30 })
-}
+vi.mock('../payments/refundService', () => {
+    const mock = {
+        processRefund: vi.fn().mockResolvedValue({ _id: 'r1', amount: 30 })
+    }
+    return {
+        RefundService: vi.fn().mockImplementation(() => mock),
+        refundService: mock
+    }
+})
 
-const mockFeeService = {
-    calculateAuctionFees: vi.fn().mockResolvedValue({ platformFee: 5, processorFee: 2, totalFees: 7 })
-}
+vi.mock('../payments/feeService', () => {
+    const mock = {
+        calculateAuctionFees: vi.fn().mockResolvedValue({ platformFee: 5, processorFee: 2, totalFees: 7 })
+    }
+    return {
+        FeeService: vi.fn().mockImplementation(() => mock),
+        feeService: mock
+    }
+})
 
-vi.mock('../payments/paymentService', () => ({
-    PaymentService: vi.fn().mockImplementation(() => mockPaymentService),
-    paymentService: mockPaymentService
-}))
-
-vi.mock('../payments/refundService', () => ({
-    RefundService: vi.fn().mockImplementation(() => mockRefundService),
-    refundService: mockRefundService
-}))
-
-vi.mock('../payments/feeService', () => ({
-    FeeService: vi.fn().mockImplementation(() => mockFeeService),
-    feeService: mockFeeService
-}))
 
 
 // Mock the authenticate middleware
