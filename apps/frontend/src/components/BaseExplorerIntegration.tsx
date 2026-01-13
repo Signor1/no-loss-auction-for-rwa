@@ -30,11 +30,11 @@ interface ExplorerIntegrationProps {
   showTransactions?: boolean;
 }
 
-export function BaseExplorerIntegration({ 
-  address: propAddress, 
-  showTokens = true, 
-  showNFTs = true, 
-  showTransactions = true 
+export function BaseExplorerIntegration({
+  address: propAddress,
+  showTokens = true,
+  showNFTs = true,
+  showTransactions = true
 }: ExplorerIntegrationProps) {
   const { address: connectedAddress } = useAccount();
   const { currentNetwork, getExplorerUrl } = useBaseNetwork();
@@ -176,7 +176,7 @@ export function BaseExplorerIntegration({
                 <span className="text-sm font-mono text-gray-900">{formatAddress(address)}</span>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <span className="text-gray-600">ETH Balance</span>
@@ -203,11 +203,10 @@ export function BaseExplorerIntegration({
               {showTokens && (
                 <button
                   onClick={() => setActiveTab('tokens')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'tokens'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'tokens'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
                 >
                   Tokens ({data.tokenBalances?.length || 0})
                 </button>
@@ -215,11 +214,10 @@ export function BaseExplorerIntegration({
               {showNFTs && (
                 <button
                   onClick={() => setActiveTab('nfts')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'nfts'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'nfts'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
                 >
                   NFTs ({data.nfts?.length || 0})
                 </button>
@@ -227,11 +225,10 @@ export function BaseExplorerIntegration({
               {showTransactions && (
                 <button
                   onClick={() => setActiveTab('transactions')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'transactions'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'transactions'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
                 >
                   Transactions ({data.transactionCount || 0})
                 </button>
@@ -245,7 +242,7 @@ export function BaseExplorerIntegration({
               <div className="space-y-3">
                 {data.tokenBalances && data.tokenBalances.length > 0 ? (
                   data.tokenBalances.map((token, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg group">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                           <span className="text-blue-600 font-bold text-sm">
@@ -253,8 +250,21 @@ export function BaseExplorerIntegration({
                           </span>
                         </div>
                         <div>
-                          <div className="font-medium">{token.tokenName}</div>
-                          <div className="text-sm text-gray-500">{token.tokenSymbol}</div>
+                          <div className="font-medium flex items-center">
+                            {token.tokenName}
+                            <a
+                              href={getExplorerUrl('tokenBalance', token.tokenAddress, address)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-blue-500 hover:text-blue-700"
+                              title="View balance on BaseScan"
+                            >
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </a>
+                          </div>
+                          <div className="text-sm text-gray-500 font-mono text-xs">{formatAddress(token.tokenAddress)}</div>
                         </div>
                       </div>
                       <div className="text-right">
@@ -292,7 +302,20 @@ export function BaseExplorerIntegration({
                         />
                       </div>
                       <div className="p-3">
-                        <div className="font-medium text-sm truncate">{nft.name}</div>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="font-medium text-sm truncate">{nft.name}</div>
+                          <a
+                            href={getExplorerUrl('contract', nft.contractAddress)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-gray-400 hover:text-blue-500 transition-colors"
+                            title="Verify contract on BaseScan"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                          </a>
+                        </div>
                         <div className="text-xs text-gray-500">#{nft.tokenId}</div>
                       </div>
                     </div>
@@ -368,7 +391,7 @@ export function BaseNetworkStats() {
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
         {currentNetwork.name} Network Stats
       </h3>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-blue-50 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">

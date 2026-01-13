@@ -1,8 +1,9 @@
 import { EventEmitter } from 'events'
 import { ethers } from 'ethers'
-import { Logger } from '../utils/logger'
+import { Logger } from 'winston'
 import { CHAIN_CONFIGS } from './chainConfig'
 import { AUCTION_CONTRACT, ASSET_CONTRACT, PAYMENT_CONTRACT, USER_CONTRACT } from './abi'
+import { BaseFeeService } from './baseFeeService'
 
 // Gas estimation strategy enum
 export enum GasEstimationStrategy {
@@ -57,15 +58,18 @@ export interface BatchGasEstimation {
 export class GasEstimator extends EventEmitter {
   private logger: Logger
   private isEstimating: boolean = false
-  private estimationCache: Map<string, { result: GasEstimationResult; timestamp: Date; ttl: number }> = new Map()
+  private calculationCache: Map<string, { result: GasEstimationResult; timestamp: Date; ttl: number }> = new Map()
   private gasHistory: Map<number, Array<{ price: string; timestamp: Date; blockNumber: number }>> = new Map()
+  private baseFeeService: BaseFeeService
   private defaultCacheTimeout: number = 30000 // 30 seconds
+  private defaultGasLimit: number = 21000
   private maxGasLimit: number = 8000000
   private safetyMargin: number = 1.2 // 20% safety margin
 
-  constructor(logger: Logger) {
+  constructor(logger: Logger, baseFeeService: BaseFeeService) {
     super()
     this.logger = logger
+    this.baseFeeService = baseFeeService
   }
 
   // Start gas estimator
@@ -98,7 +102,7 @@ export class GasEstimator extends EventEmitter {
     this.logger.info('Stopping gas estimator...')
 
     // Clear cache
-    this.estimationCache.clear()
+    this.calculationCache.clear()
 
     this.logger.info('Gas estimator stopped')
     this.emit('estimator:stopped')
@@ -113,9 +117,9 @@ export class GasEstimator extends EventEmitter {
     strategy?: GasEstimationStrategy
   }): Promise<GasEstimationResult> {
     const cacheKey = `transfer:${options.chainId}:${options.from}:${options.to}:${options.value}`
-    
+
     // Check cache first
-    const cached = this.estimationCache.get(cacheKey)
+    const cached = this.calculationCache.get(cacheKey)
     if (cached && Date.now() - cached.timestamp.getTime() < cached.ttl) {
       this.logger.debug(`Cache hit for transfer gas estimation: ${cacheKey}`)
       return cached.result
@@ -126,10 +130,10 @@ export class GasEstimator extends EventEmitter {
 
       const strategy = options.strategy || GasEstimationStrategy.STANDARD
       const provider = await this.getProvider(options.chainId)
-      
+
       // Get current gas prices
       const gasPrices = await this.getCurrentGasPrices(options.chainId)
-      
+
       // Estimate gas limit
       const gasLimit = await this.estimateGasLimit({
         to: options.to,
@@ -140,16 +144,17 @@ export class GasEstimator extends EventEmitter {
 
       // Apply strategy
       const adjustedGasLimit = this.applyGasStrategy(gasLimit, strategy)
-      
+
       // Calculate costs
-      const totalCost = this.calculateTotalCost(adjustedGasLimit, gasPrices)
-      
+      const l1Fee = await this.baseFeeService.getL1Fee(options.chainId, '0x')
+      const totalCost = this.calculateTotalCost(adjustedGasLimit, gasPrices, l1Fee)
+
       // Estimate execution time
       const estimatedTime = this.estimateExecutionTime(adjustedGasLimit, options.chainId)
-      
+
       // Calculate confidence
       const confidence = this.calculateConfidence(strategy, gasPrices)
-      
+
       const result: GasEstimationResult = {
         success: true,
         gasLimit: adjustedGasLimit,
@@ -165,7 +170,7 @@ export class GasEstimator extends EventEmitter {
       }
 
       // Cache result
-      this.estimationCache.set(cacheKey, {
+      this.calculationCache.set(cacheKey, {
         result,
         timestamp: new Date(),
         ttl: this.defaultCacheTimeout
@@ -176,7 +181,7 @@ export class GasEstimator extends EventEmitter {
 
       return result
 
-    } catch (error) {
+    } catch (error: any) {
       const result: GasEstimationResult = {
         success: false,
         gasLimit: '0',
@@ -206,9 +211,9 @@ export class GasEstimator extends EventEmitter {
     strategy?: GasEstimationStrategy
   }): Promise<GasEstimationResult> {
     const cacheKey = `contract:${options.chainId}:${options.contractAddress}:${options.functionName}:${JSON.stringify(options.parameters)}`
-    
+
     // Check cache first
-    const cached = this.estimationCache.get(cacheKey)
+    const cached = this.calculationCache.get(cacheKey)
     if (cached && Date.now() - cached.timestamp.getTime() < cached.ttl) {
       this.logger.debug(`Cache hit for contract gas estimation: ${cacheKey}`)
       return cached.result
@@ -219,14 +224,14 @@ export class GasEstimator extends EventEmitter {
 
       const strategy = options.strategy || GasEstimationStrategy.STANDARD
       const provider = await this.getProvider(options.chainId)
-      
+
       // Get current gas prices
       const gasPrices = await this.getCurrentGasPrices(options.chainId)
-      
+
       // Create contract interface
       const abi = options.abi || await this.getContractABI(options.contractAddress, options.chainId)
       const contract = new ethers.Contract(options.contractAddress, abi, provider)
-      
+
       // Encode function call
       const encodedData = contract.interface.encodeFunctionData(
         options.functionName,
@@ -243,16 +248,17 @@ export class GasEstimator extends EventEmitter {
 
       // Apply strategy
       const adjustedGasLimit = this.applyGasStrategy(gasLimit, strategy)
-      
+
       // Calculate costs
-      const totalCost = this.calculateTotalCost(adjustedGasLimit, gasPrices)
-      
+      const l1Fee = await this.baseFeeService.getL1Fee(options.chainId, encodedData)
+      const totalCost = this.calculateTotalCost(adjustedGasLimit, gasPrices, l1Fee)
+
       // Estimate execution time
       const estimatedTime = this.estimateExecutionTime(adjustedGasLimit, options.chainId)
-      
+
       // Calculate confidence
       const confidence = this.calculateConfidence(strategy, gasPrices)
-      
+
       const result: GasEstimationResult = {
         success: true,
         gasLimit: adjustedGasLimit,
@@ -268,7 +274,7 @@ export class GasEstimator extends EventEmitter {
       }
 
       // Cache result
-      this.estimationCache.set(cacheKey, {
+      this.calculationCache.set(cacheKey, {
         result,
         timestamp: new Date(),
         ttl: this.defaultCacheTimeout
@@ -279,7 +285,7 @@ export class GasEstimator extends EventEmitter {
 
       return result
 
-    } catch (error) {
+    } catch (error: any) {
       const result: GasEstimationResult = {
         success: false,
         gasLimit: '0',
@@ -371,7 +377,7 @@ export class GasEstimator extends EventEmitter {
 
       return batchEstimation
 
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to estimate batch gas:`, error)
       throw error
     }
@@ -386,7 +392,7 @@ export class GasEstimator extends EventEmitter {
   }): Promise<string> {
     try {
       const provider = await this.getProvider(options.chainId)
-      
+
       const txObject = {
         to: options.to,
         value: ethers.utils.parseEther(options.value || '0'),
@@ -394,14 +400,14 @@ export class GasEstimator extends EventEmitter {
       }
 
       const gasEstimate = await provider.estimateGas(txObject)
-      
+
       // Apply safety margin
       const adjustedGas = Math.floor(parseInt(gasEstimate.toString()) * this.safetyMargin)
-      
+
       // Ensure it doesn't exceed max gas limit
       return Math.min(adjustedGas, this.maxGasLimit).toString()
 
-    } catch (error) {
+    } catch (error: any) {
       this.logger.warn(`Gas estimation failed, using default:`, error.message)
       return this.defaultGasLimit.toString()
     }
@@ -416,14 +422,14 @@ export class GasEstimator extends EventEmitter {
     try {
       const provider = await this.getProvider(chainId)
       const feeData = await provider.getFeeData()
-      
+
       return {
         gasPrice: feeData.gasPrice?.toString() || '20000000000',
         maxFeePerGas: feeData.maxFeePerGas?.toString(),
         maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.toString()
       }
 
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to get gas prices for chain ${chainId}:`, error)
       return {
         gasPrice: '20000000000'
@@ -434,7 +440,7 @@ export class GasEstimator extends EventEmitter {
   // Apply gas strategy
   private applyGasStrategy(gasLimit: string, strategy: GasEstimationStrategy): string {
     const gasLimitNum = parseInt(gasLimit)
-    
+
     switch (strategy) {
       case GasEstimationStrategy.CONSERVATIVE:
         return Math.floor(gasLimitNum * 1.5).toString()
@@ -453,27 +459,29 @@ export class GasEstimator extends EventEmitter {
     gasPrice: string
     maxFeePerGas?: string
     maxPriorityFeePerGas?: string
-  }): string {
-    const gasLimitNum = parseInt(gasLimit)
-    const gasPriceNum = parseInt(gasPrices.gasPrice)
-    
-    let totalCost = gasLimitNum * gasPriceNum
-    
+  }, l1Fee: string = '0'): string {
+    const gasLimitNum = BigInt(gasLimit)
+    const gasPriceNum = BigInt(gasPrices.gasPrice)
+
+    let l2Cost = gasLimitNum * gasPriceNum
+
     // Use EIP-1559 pricing if available
     if (gasPrices.maxFeePerGas) {
-      totalCost = gasLimitNum * parseInt(gasPrices.maxFeePerGas)
+      l2Cost = gasLimitNum * BigInt(gasPrices.maxFeePerGas)
     }
-    
-    return ethers.utils.formatEther(totalCost.toString())
+
+    const totalCostWei = l2Cost + BigInt(l1Fee)
+
+    return ethers.utils.formatEther(totalCostWei.toString())
   }
 
   // Estimate execution time
   private estimateExecutionTime(gasLimit: string, chainId: number): number {
     const gasLimitNum = parseInt(gasLimit)
-    
+
     // Base time estimation (simplified)
     let baseTime = gasLimitNum / 1000000 // 1 second per 1M gas
-    
+
     // Adjust based on chain
     switch (chainId) {
       case 1: // Ethereum
@@ -489,14 +497,14 @@ export class GasEstimator extends EventEmitter {
         baseTime *= 0.8
         break
     }
-    
+
     return Math.max(1, Math.floor(baseTime * 1000)) // Minimum 1 second, return in milliseconds
   }
 
   // Calculate confidence
   private calculateConfidence(strategy: GasEstimationStrategy, gasPrices: any): number {
     let confidence = 0.8 // Base confidence
-    
+
     // Adjust based on strategy
     switch (strategy) {
       case GasEstimationStrategy.CONSERVATIVE:
@@ -512,11 +520,11 @@ export class GasEstimator extends EventEmitter {
         confidence = 0.8
         break
     }
-    
+
     // Adjust based on gas price volatility
     const volatility = this.calculateGasPriceVolatility(gasPrices)
     confidence *= (1 - volatility)
-    
+
     return Math.max(0.1, Math.min(1.0, confidence))
   }
 
@@ -531,15 +539,15 @@ export class GasEstimator extends EventEmitter {
   private generateWarnings(gasLimit: string, gasPrices: any): string[] {
     const warnings: string[] = []
     const gasLimitNum = parseInt(gasLimit)
-    
+
     if (gasLimitNum > this.maxGasLimit * 0.8) {
       warnings.push('High gas limit detected')
     }
-    
+
     if (parseInt(gasPrices.gasPrice) > 100000000000) { // 100 gwei
       warnings.push('High gas price detected')
     }
-    
+
     return warnings
   }
 
@@ -550,15 +558,15 @@ export class GasEstimator extends EventEmitter {
     strategy: GasEstimationStrategy
   ): string[] {
     const recommendations: string[] = []
-    
+
     if (strategy === GasEstimationStrategy.AGGRESSIVE) {
       recommendations.push('Consider using standard strategy for better reliability')
     }
-    
+
     if (parseInt(gasPrices.gasPrice) > 50000000000) { // 50 gwei
       recommendations.push('Consider waiting for lower gas prices')
     }
-    
+
     return recommendations
   }
 
@@ -573,10 +581,10 @@ export class GasEstimator extends EventEmitter {
     savingsPercentage: number
   }> {
     const originalGas = operations.reduce((sum, op) => sum + parseInt(op.gasLimit), 0)
-    
+
     // Simple optimization: look for similar operations that can be batched
     let optimizedGas = originalGas
-    
+
     // Group by contract address
     const contractGroups = new Map<string, ContractGasEstimation[]>()
     for (const op of operations) {
@@ -584,7 +592,7 @@ export class GasEstimator extends EventEmitter {
       group.push(op)
       contractGroups.set(op.contractAddress, group)
     }
-    
+
     // Optimize within each group
     for (const [contractAddress, groupOps] of contractGroups.entries()) {
       if (groupOps.length > 1) {
@@ -595,10 +603,10 @@ export class GasEstimator extends EventEmitter {
         optimizedGas = optimizedGas - groupGas + optimizedGroupGas
       }
     }
-    
+
     const savings = originalGas - optimizedGas
     const savingsPercentage = originalGas > 0 ? (savings / originalGas) * 100 : 0
-    
+
     return {
       originalGas: originalGas.toString(),
       optimizedGas: optimizedGas.toString(),
@@ -617,7 +625,7 @@ export class GasEstimator extends EventEmitter {
   // Get provider for chain
   private async getProvider(chainId: number): Promise<ethers.providers.Provider> {
     const chainConfig = CHAIN_CONFIGS.find(config => config.chainId === chainId)
-    
+
     if (!chainConfig) {
       throw new Error(`Chain configuration not found: ${chainId}`)
     }
@@ -628,13 +636,13 @@ export class GasEstimator extends EventEmitter {
   // Initialize gas history
   private async initializeGasHistory(): Promise<void> {
     const chainIds = CHAIN_CONFIGS.map(config => config.chainId)
-    
+
     for (const chainId of chainIds) {
       try {
         const provider = await this.getProvider(chainId)
         const feeData = await provider.getFeeData()
         const blockNumber = await provider.getBlockNumber()
-        
+
         this.gasHistory.set(chainId, [{
           price: feeData.gasPrice?.toString() || '0',
           timestamp: new Date(),
@@ -658,9 +666,9 @@ export class GasEstimator extends EventEmitter {
     const now = Date.now()
     let cleanedCount = 0
 
-    for (const [key, cached] of this.estimationCache.entries()) {
+    for (const [key, cached] of this.calculationCache.entries()) {
       if (now - cached.timestamp.getTime() > cached.ttl) {
-        this.estimationCache.delete(key)
+        this.calculationCache.delete(key)
         cleanedCount++
       }
     }
@@ -690,7 +698,7 @@ export class GasEstimator extends EventEmitter {
 
   // Clear cache
   clearCache(): void {
-    this.estimationCache.clear()
+    this.calculationCache.clear()
     this.logger.info('Gas estimation cache cleared')
     this.emit('cache:cleared')
   }
@@ -709,7 +717,7 @@ export class GasEstimator extends EventEmitter {
       // Convert to CSV format
       const headers = ['chainId', 'price', 'timestamp', 'blockNumber']
       const csvRows = [headers.join(',')]
-      
+
       for (const [chainId, history] of this.gasHistory.entries()) {
         for (const entry of history) {
           csvRows.push([
@@ -717,10 +725,10 @@ export class GasEstimator extends EventEmitter {
             entry.price,
             entry.timestamp.toISOString(),
             entry.blockNumber.toString()
-          ])
+          ].join(','))
         }
       }
-      
+
       return csvRows.join('\n')
     }
 
@@ -737,7 +745,7 @@ export class GasEstimator extends EventEmitter {
   } {
     return {
       isEstimating: this.isEstimating,
-      cacheSize: this.estimationCache.size,
+      cacheSize: this.calculationCache.size,
       gasHistorySize: Array.from(this.gasHistory.values()).flat().length,
       lastActivity: new Date(),
       metrics: this.getEstimationStatistics()

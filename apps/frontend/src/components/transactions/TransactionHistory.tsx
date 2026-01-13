@@ -4,6 +4,8 @@ import React, { useState, useMemo } from 'react'
 import { useTransactionHistory } from '@/lib/transaction-history'
 import { Transaction, TransactionType, TransactionStatus, TransactionCategory, DateRange, AmountRange, TransactionFilters } from '@/lib/transaction-history'
 import { formatDistanceToNow } from 'date-fns'
+import { BridgeIntegration } from '@/components/BridgeIntegration'
+import { BaseExplorerIntegration } from '@/components/BaseExplorerIntegration'
 
 export default function TransactionHistory() {
   const {
@@ -25,6 +27,8 @@ export default function TransactionHistory() {
 
   const [showFilters, setShowFilters] = useState(false)
   const [exportFormat, setExportFormat] = useState<'csv' | 'json' | 'xlsx' | 'pdf'>('csv')
+  const [showBridgeModal, setShowBridgeModal] = useState(false)
+  const [showExplorerModal, setShowExplorerModal] = useState(false)
 
   // Handle filter changes
   const handleFilterChange = (key: keyof TransactionFilters, value: any) => {
@@ -141,7 +145,25 @@ export default function TransactionHistory() {
             View and manage all your blockchain transactions
           </p>
         </div>
-        <div className="mt-4 sm:mt-0 flex space-x-3">
+        <div className="mt-4 sm:mt-0 flex flex-wrap gap-3">
+          <button
+            onClick={() => setShowBridgeModal(true)}
+            className="inline-flex items-center px-4 py-2 border border-blue-600 rounded-md shadow-sm text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m4-4l-4-4" />
+            </svg>
+            Bridge to Base
+          </button>
+          <button
+            onClick={() => setShowExplorerModal(true)}
+            className="inline-flex items-center px-4 py-2 border border-blue-600 rounded-md shadow-sm text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            Base Explorer
+          </button>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -155,7 +177,7 @@ export default function TransactionHistory() {
             <select
               value={exportFormat}
               onChange={(e) => setExportFormat(e.target.value as any)}
-              className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm h-10"
             >
               <option value="csv">CSV</option>
               <option value="json">JSON</option>
@@ -164,7 +186,7 @@ export default function TransactionHistory() {
             </select>
             <button
               onClick={handleExport}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 h-10"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -588,6 +610,55 @@ export default function TransactionHistory() {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Bridge Modal */}
+      {showBridgeModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowBridgeModal(false)}></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+              <div className="absolute top-0 right-0 pt-4 pr-4">
+                <button
+                  type="button"
+                  onClick={() => setShowBridgeModal(false)}
+                  className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none"
+                >
+                  <span className="sr-only">Close</span>
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <BridgeIntegration />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Explorer Modal */}
+      {showExplorerModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowExplorerModal(false)}></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+              <div className="absolute top-0 right-0 pt-4 pr-4">
+                <button
+                  type="button"
+                  onClick={() => setShowExplorerModal(false)}
+                  className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none"
+                >
+                  <span className="sr-only">Close</span>
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <BaseExplorerIntegration />
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useBaseNetwork } from './base-network';
 
 export interface Transaction {
   id: string;
@@ -169,7 +170,7 @@ export interface ExportColumn {
   format?: string;
 }
 
-export type TransactionType = 
+export type TransactionType =
   | 'bid'
   | 'transfer'
   | 'claim'
@@ -203,7 +204,7 @@ export type TransactionType =
   | 'emergency_pause'
   | 'emergency_unpause';
 
-export type TransactionStatus = 
+export type TransactionStatus =
   | 'pending'
   | 'processing'
   | 'confirmed'
@@ -222,7 +223,7 @@ export type TransactionStatus =
   | 'gas_limit_exceeded'
   | 'contract_execution_failed';
 
-export type TransactionCategory = 
+export type TransactionCategory =
   | 'auction'
   | 'payment'
   | 'transfer'
@@ -457,6 +458,7 @@ export const MOCK_TRANSACTION_STATS: TransactionStats = {
 };
 
 export function useTransactionHistory() {
+  const { currentNetwork, getExplorerUrl: getBaseExplorerUrl } = useBaseNetwork();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [stats, setStats] = useState<TransactionStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -573,22 +575,22 @@ export function useTransactionHistory() {
     // Filter by address
     if (filter.address) {
       const address = filter.address.toLowerCase();
-      filtered = filtered.filter(tx => 
-        tx.from.toLowerCase().includes(address) || 
+      filtered = filtered.filter(tx =>
+        tx.from.toLowerCase().includes(address) ||
         tx.to.toLowerCase().includes(address)
       );
     }
 
     // Filter by asset ID
     if (filter.assetId) {
-      filtered = filtered.filter(tx => 
+      filtered = filtered.filter(tx =>
         tx.relatedAsset?.id === filter.assetId
       );
     }
 
     // Filter by auction ID
     if (filter.auctionId) {
-      filtered = filtered.filter(tx => 
+      filtered = filtered.filter(tx =>
         tx.relatedAuction?.id === filter.auctionId
       );
     }
@@ -681,7 +683,7 @@ export function useTransactionHistory() {
 
       // Format data based on export format
       let exportData: any;
-      
+
       switch (exportConfig.format) {
         case 'csv':
           exportData = formatAsCSV(filtered, exportConfig);
@@ -701,7 +703,7 @@ export function useTransactionHistory() {
 
       // Download file
       downloadFile(exportData, `transactions.${exportConfig.format}`);
-      
+
       return true;
     } catch (error) {
       console.error('Error exporting transactions:', error);
@@ -778,18 +780,18 @@ export function useTransactionHistory() {
     try {
       // Simulate retry logic
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setTransactions(prev => prev.map(tx => 
-        tx.id === transactionId 
-          ? { 
-              ...tx, 
-              status: 'pending' as TransactionStatus, 
-              retryCount: tx.retryCount + 1,
-              error: undefined 
-            }
+
+      setTransactions(prev => prev.map(tx =>
+        tx.id === transactionId
+          ? {
+            ...tx,
+            status: 'pending' as TransactionStatus,
+            retryCount: tx.retryCount + 1,
+            error: undefined
+          }
           : tx
       ));
-      
+
       return true;
     } catch (error) {
       console.error('Error retrying transaction:', error);
@@ -802,13 +804,13 @@ export function useTransactionHistory() {
     try {
       // Simulate cancel logic
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setTransactions(prev => prev.map(tx => 
-        tx.id === transactionId 
+
+      setTransactions(prev => prev.map(tx =>
+        tx.id === transactionId
           ? { ...tx, status: 'cancelled' as TransactionStatus }
           : tx
       ));
-      
+
       return true;
     } catch (error) {
       console.error('Error cancelling transaction:', error);
@@ -817,14 +819,21 @@ export function useTransactionHistory() {
   };
 
   // Get blockchain explorer URL
-  const getExplorerUrl = (hash: string, network: string = 'ethereum') => {
+  const getExplorerUrl = (hash: string, networkIdentifier: string = 'ethereum') => {
+    // If it's a Base network and we have the hook context
+    if (currentNetwork && (networkIdentifier === 'base' || networkIdentifier === 'base-sepolia')) {
+      return getBaseExplorerUrl('tx', hash);
+    }
+
     const explorers: Record<string, string> = {
       ethereum: `https://etherscan.io/tx/${hash}`,
       polygon: `https://polygonscan.com/tx/${hash}`,
       arbitrum: `https://arbiscan.io/tx/${hash}`,
-      optimism: `https://optimistic.etherscan.io/tx/${hash}`
+      optimism: `https://optimistic.etherscan.io/tx/${hash}`,
+      base: `https://basescan.org/tx/${hash}`,
+      'base-sepolia': `https://sepolia.basescan.org/tx/${hash}`
     };
-    return explorers[network] || explorers.ethereum;
+    return explorers[networkIdentifier] || explorers.ethereum;
   };
 
   useEffect(() => {
