@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuctionDetail, useBidHistory } from '@/lib/auction-detail';
+import { paymentService } from '@/lib/payment-service';
 import { AuctionDetail } from '@/lib/auction-detail';
 
 export function AuctionDetail({ auctionId }: { auctionId: string }) {
@@ -27,6 +28,16 @@ export function AuctionDetail({ auctionId }: { auctionId: string }) {
   const { bids, isLoading: bidsLoading } = useBidHistory(auctionId);
   const [activeTab, setActiveTab] = useState<'details' | 'bids' | 'documents' | 'analytics'>('details');
   const [showBidModal, setShowBidModal] = useState(false);
+  const [fees, setFees] = useState<{ platformFee: number, processorFee: number, totalFees: number } | null>(null);
+
+  useEffect(() => {
+    if (auction && bidAmount) {
+      paymentService.getFees(auctionId, parseFloat(bidAmount))
+        .then(setFees)
+        .catch(console.error);
+    }
+  }, [auctionId, bidAmount]);
+
 
   if (isLoading) {
     return (
@@ -88,14 +99,13 @@ export function AuctionDetail({ auctionId }: { auctionId: string }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7-7-7" />
                 </svg>
               </button>
-              
+
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-500">Auction #{auction.id}</span>
-                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  auction.status === 'active' ? 'bg-green-100 text-green-800' :
-                  auction.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${auction.status === 'active' ? 'bg-green-100 text-green-800' :
+                    auction.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
+                      'bg-gray-100 text-gray-800'
+                  }`}>
                   {auction.status}
                 </span>
                 {auction.featured && (
@@ -105,7 +115,7 @@ export function AuctionDetail({ auctionId }: { auctionId: string }) {
                 )}
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setShowBidModal(true)}
@@ -114,7 +124,7 @@ export function AuctionDetail({ auctionId }: { auctionId: string }) {
               >
                 {isAuctionEnded() ? 'Auction Ended' : 'Place Bid'}
               </button>
-              
+
               <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
                 <svg className="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M7 7h10l5 5-5-5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2z" />
@@ -138,7 +148,7 @@ export function AuctionDetail({ auctionId }: { auctionId: string }) {
                   alt={auction.title}
                   className="w-full h-full object-cover"
                 />
-                
+
                 {/* Image Navigation */}
                 {auction.images.length > 1 && (
                   <>
@@ -150,7 +160,7 @@ export function AuctionDetail({ auctionId }: { auctionId: string }) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7-7-7" />
                       </svg>
                     </button>
-                    
+
                     <button
                       onClick={nextImage}
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-2 shadow-lg"
@@ -161,13 +171,13 @@ export function AuctionDetail({ auctionId }: { auctionId: string }) {
                     </button>
                   </>
                 )}
-                
+
                 {/* Image Counter */}
                 <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
                   {activeImageIndex + 1} / {auction.images.length}
                 </div>
               </div>
-              
+
               {/* Thumbnail Strip */}
               {auction.images.length > 1 && (
                 <div className="flex space-x-1 p-2 bg-gray-50 overflow-x-auto">
@@ -175,9 +185,8 @@ export function AuctionDetail({ auctionId }: { auctionId: string }) {
                     <button
                       key={index}
                       onClick={() => setActiveImageIndex(index)}
-                      className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden border-2 ${
-                        index === activeImageIndex ? 'border-blue-500' : 'border-gray-300'
-                      }`}
+                      className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden border-2 ${index === activeImageIndex ? 'border-blue-500' : 'border-gray-300'
+                        }`}
                     >
                       <img
                         src={image}
@@ -206,11 +215,10 @@ export function AuctionDetail({ auctionId }: { auctionId: string }) {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as any)}
-                      className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                        activeTab === tab.id
+                      className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab.id
                           ? 'border-blue-500 text-blue-600'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }`}
+                        }`}
                     >
                       {tab.label}
                     </button>
@@ -253,11 +261,10 @@ function DetailsTab({ auction, timeLeft }: { auction: AuctionDetail; timeLeft: s
       <div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{auction.title}</h1>
         <div className="flex items-center space-x-3 mb-4">
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-            auction.status === 'active' ? 'bg-green-100 text-green-800' :
-            auction.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
-            'bg-gray-100 text-gray-800'
-          }`}>
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${auction.status === 'active' ? 'bg-green-100 text-green-800' :
+              auction.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
+                'bg-gray-100 text-gray-800'
+            }`}>
             {auction.status}
           </span>
           {auction.noLossGuarantee && (
@@ -333,23 +340,45 @@ function DetailsTab({ auction, timeLeft }: { auction: AuctionDetail; timeLeft: s
         </div>
       </div>
 
-      {/* Auction Terms */}
-      <div className="bg-blue-50 rounded-lg p-4">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">Auction Terms</h3>
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <span className="text-sm text-blue-700">Settlement Period</span>
-            <span className="text-sm font-medium">{auction.auctionTerms.settlementPeriod} days</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-blue-700">Withdrawal Penalty</span>
-            <span className="text-sm font-medium">{auction.auctionTerms.withdrawalPenalty}%</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-blue-700">Auto-Settle</span>
-            <span className="text-sm font-medium">{auction.auctionTerms.autoSettle ? 'Yes' : 'No'}</span>
+      {/* Auction Terms & Fees */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-blue-50 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-blue-900 mb-3">Auction Terms</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-sm text-blue-700">Settlement Period</span>
+              <span className="text-sm font-medium">{auction.auctionTerms.settlementPeriod} days</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-blue-700">Withdrawal Penalty</span>
+              <span className="text-sm font-medium">{auction.auctionTerms.withdrawalPenalty}%</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-blue-700">Auto-Settle</span>
+              <span className="text-sm font-medium">{auction.auctionTerms.autoSettle ? 'Yes' : 'No'}</span>
+            </div>
           </div>
         </div>
+
+        {fees && (
+          <div className="bg-indigo-50 rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-indigo-900 mb-3">Estimated Fees</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-indigo-700">Platform Fee</span>
+                <span className="text-sm font-medium">{fees.platformFee.toFixed(4)} ETH</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-indigo-700">Processor Fee</span>
+                <span className="text-sm font-medium">{fees.processorFee.toFixed(4)} ETH</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-indigo-200">
+                <span className="text-sm font-bold text-indigo-900">Total Fees</span>
+                <span className="text-sm font-bold text-indigo-900">{fees.totalFees.toFixed(4)} ETH</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -360,7 +389,7 @@ function BidsTab({ bids, isLoading }: { bids: any[]; isLoading: boolean }) {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Bid History</h3>
-      
+
       {isLoading ? (
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -407,7 +436,7 @@ function DocumentsTab({ auction }: { auction: AuctionDetail }) {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Asset Documents</h3>
-      
+
       {auction.metadata.documents && auction.metadata.documents.length > 0 ? (
         <div className="space-y-3">
           {auction.metadata.documents.map((doc, index) => (
@@ -474,19 +503,19 @@ function AnalyticsTab({ auction }: { auction: AuctionDetail }) {
           <div className="text-2xl font-bold text-blue-600">1,234</div>
           <div className="text-sm text-gray-500">+12% from last {timeRange}</div>
         </div>
-        
+
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <h4 className="text-sm font-medium text-gray-900 mb-2">Unique Bidders</h4>
           <div className="text-2xl font-bold text-green-600">{auction.bidHistory.length}</div>
           <div className="text-sm text-gray-500">3 new this {timeRange}</div>
         </div>
-        
+
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <h4 className="text-sm font-medium text-gray-900 mb-2">Watchlist Adds</h4>
           <div className="text-2xl font-bold text-purple-600">89</div>
           <div className="text-sm text-gray-500">+5% from last {timeRange}</div>
         </div>
-        
+
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <h4 className="text-sm font-medium text-gray-900 mb-2">Engagement Rate</h4>
           <div className="text-2xl font-bold text-orange-600">67%</div>
@@ -498,17 +527,17 @@ function AnalyticsTab({ auction }: { auction: AuctionDetail }) {
 }
 
 // Bid Modal Component
-function BidModal({ auction, onClose, onBidPlaced }: { 
-  auction: AuctionDetail; 
-  onClose: () => void; 
-  onBidPlaced: () => void 
+function BidModal({ auction, onClose, onBidPlaced }: {
+  auction: AuctionDetail;
+  onClose: () => void;
+  onBidPlaced: () => void
 }) {
   const [bidAmount, setBidAmount] = useState('');
   const [isPlacing, setIsPlacing] = useState(false);
 
   const handlePlaceBid = async () => {
     if (!bidAmount || parseFloat(bidAmount) <= 0) return;
-    
+
     setIsPlacing(true);
     try {
       // Simulate bid placement
@@ -572,22 +601,22 @@ function BidModal({ auction, onClose, onBidPlaced }: {
               </div>
             </div>
           </div>
-          </div>
-
-          <button
-            onClick={handlePlaceBid}
-            disabled={isPlacing || !bidAmount || parseFloat(bidAmount) <= 0}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium"
-          >
-            {isPlacing ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Placing Bid...
-              </div>
-            ) : 'Place Bid'}
-          </button>
         </div>
+
+        <button
+          onClick={handlePlaceBid}
+          disabled={isPlacing || !bidAmount || parseFloat(bidAmount) <= 0}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium"
+        >
+          {isPlacing ? (
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Placing Bid...
+            </div>
+          ) : 'Place Bid'}
+        </button>
       </div>
     </div>
+    </div >
   );
 }

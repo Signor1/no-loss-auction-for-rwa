@@ -12,6 +12,8 @@ import dotenv from 'dotenv'
 import authRoutes from './routes/auth'
 import userRoutes from './routes/users'
 import assetRoutes from './routes/assets'
+import paymentRoutes from './routes/payments'
+
 import auctionRoutes from './routes/auctions'
 import bidRoutes from './routes/bids'
 import transactionRoutes from './routes/transactions'
@@ -95,11 +97,8 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/users', authenticate, userRoutes)
 app.use('/api/assets', authenticate, assetRoutes)
-app.use('/api/auctions', authenticate, auctionRoutes)
-app.use('/api/bids', authenticate, bidRoutes)
-app.use('/api/transactions', authenticate, transactionRoutes)
-app.use('/api/analytics', authenticate, analyticsRoutes)
-app.use('/api/upload', authenticate, uploadRoutes)
+app.use('/api/payments', authenticate, paymentRoutes)
+
 
 // API documentation endpoint
 app.get('/api/docs', (req, res) => {
