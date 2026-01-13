@@ -1,0 +1,2223 @@
+./routes/financial.ts:        const startDate = req.query.startDate ? new Date(req.query.startDate as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+./routes/financial.ts:        const endDate = req.query.endDate ? new Date(req.query.endDate as string) : new Date()
+./routes/financial.ts:        const startDate = req.query.startDate ? new Date(req.query.startDate as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+./routes/financial.ts:        const endDate = req.query.endDate ? new Date(req.query.endDate as string) : new Date()
+./routes/financial.ts:        const startDate = req.query.startDate ? new Date(req.query.startDate as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+./routes/financial.ts:        const endDate = req.query.endDate ? new Date(req.query.endDate as string) : new Date()
+./routes/auth.ts:// Register new user
+./routes/auth.ts:    const user = new User({
+./routes/auth.ts:      timestamp: new Date()
+./routes/auth.ts:    user.lastLoginAt = new Date()
+./routes/auth.ts:      timestamp: new Date()
+./routes/auth.ts:    // Generate new access token
+./routes/auth.ts:    user.passwordResetExpires = new Date(Date.now() + 3600000) // 1 hour
+./routes/auth.ts:    // Hash new password
+./routes/auth.ts:    user.passwordChangedAt = new Date()
+./routes/auth.ts:    // Hash new password
+./routes/auth.ts:    user.passwordChangedAt = new Date()
+./routes/auth.ts:    // Generate new verification token
+./routes/auth.ts:    user.emailVerificationExpires = new Date(Date.now() + 86400000) // 24 hours
+./routes/assets.ts:// Create new asset
+./routes/assets.ts:      acquisitionDate: new Date(),
+./routes/assets.ts:  const asset = new Asset(assetData)
+./routes/assets.ts:    timestamp: new Date()
+./routes/assets.ts:    timestamp: new Date()
+./routes/assets.ts:    timestamp: new Date()
+./routes/assets.ts:    timestamp: new Date()
+./routes/assets.ts:    timestamp: new Date()
+./routes/assets.ts:    asset.publishedAt = new Date()
+./routes/assets.ts:    timestamp: new Date()
+./routes/payments.test.ts:        it('should create a new payment', async () => {
+./routes/users.ts:    timestamp: new Date()
+./routes/users.ts:    timestamp: new Date()
+./routes/users.ts:    timestamp: new Date()
+./routes/users.ts:    timestamp: new Date()
+./routes/users.ts:    timestamp: new Date()
+./graphql/middleware.ts:            timestamp: new Date().toISOString()
+./graphql/middleware.ts:      timestamp: new Date().toISOString()
+./graphql/middleware.ts:      throw new Error('Authentication failed')
+./graphql/middleware.ts:    timestamp: new Date().toISOString()
+./graphql/middleware.ts:      timestamp: new Date().toISOString()
+./graphql/middleware.ts:    timestamp: new Date().toISOString()
+./graphql/middleware.ts:        timestamp: new Date().toISOString()
+./graphql/middleware.ts:      timestamp: new Date().toISOString(),
+./graphql/middleware.ts:      timestamp: new Date().toISOString(),
+./graphql/resolvers.ts:const pubsub = new PubSub()
+./graphql/resolvers.ts:const userLoader = new DataLoader(async (ids: string[]) => {
+./graphql/resolvers.ts:const assetLoader = new DataLoader(async (ids: string[]) => {
+./graphql/resolvers.ts:const auctionLoader = new DataLoader(async (ids: string[]) => {
+./graphql/resolvers.ts:const DateTime = new GraphQLScalarType({
+./graphql/resolvers.ts:    return new Date(value)
+./graphql/resolvers.ts:      return new Date(ast.value)
+./graphql/resolvers.ts:const JSON = new GraphQLScalarType({
+./graphql/resolvers.ts:const BigInt = new GraphQLScalarType({
+./graphql/resolvers.ts:        throw new AuthenticationError('Authentication required')
+./graphql/resolvers.ts:        throw new NotFoundError('User not found')
+./graphql/resolvers.ts:        throw new NotFoundError('Asset not found')
+./graphql/resolvers.ts:        throw new AuthenticationError('Authentication required')
+./graphql/resolvers.ts:        throw new NotFoundError('Auction not found')
+./graphql/resolvers.ts:      const query: any = { visibility: 'public', status: 'active', endTime: { $gt: new Date() } }
+./graphql/resolvers.ts:          const endTime = new Date(Date.now() + 24 * 60 * 60 * 1000)
+./graphql/resolvers.ts:          query.endTime = { $lte: endTime, $gt: new Date() }
+./graphql/resolvers.ts:        throw new AuthenticationError('Authentication required')
+./graphql/resolvers.ts:      const query = { status: 'active', visibility: 'public', endTime: { $gt: new Date() } }
+./graphql/resolvers.ts:      const endTime = new Date(Date.now() + hours * 60 * 60 * 1000)
+./graphql/resolvers.ts:        endTime: { $lte: endTime, $gt: new Date() } 
+./graphql/resolvers.ts:      const query = { featured: true, status: 'active', visibility: 'public', endTime: { $gt: new Date() } }
+./graphql/resolvers.ts:        throw new NotFoundError('Bid not found')
+./graphql/resolvers.ts:        throw new NotFoundError('Auction not found')
+./graphql/resolvers.ts:        throw new AuthenticationError('Authentication required')
+./graphql/resolvers.ts:        endTime: { $gt: new Date() }
+./graphql/resolvers.ts:        throw new AuthenticationError('Authentication required')
+./graphql/resolvers.ts:        activeAuctions: await Auction.countDocuments({ status: 'active', endTime: { $gt: new Date() } }),
+./graphql/resolvers.ts:          'security.lastLoginAt': { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+./graphql/resolvers.ts:          createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
+./graphql/resolvers.ts:          createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
+./graphql/resolvers.ts:        throw new AuthenticationError('Invalid credentials')
+./graphql/resolvers.ts:        throw new AuthenticationError('Account is deactivated')
+./graphql/resolvers.ts:      user.security.lastLoginAt = new Date()
+./graphql/resolvers.ts:        throw new AuthenticationError('User already exists')
+./graphql/resolvers.ts:      const user = new User({
+./graphql/resolvers.ts:        throw new AuthenticationError('Authentication required')
+./graphql/resolvers.ts:      const asset = new Asset({
+./graphql/resolvers.ts:            acquisitionDate: new Date(),
+./graphql/resolvers.ts:        throw new AuthenticationError('Authentication required')
+./graphql/resolvers.ts:        throw new NotFoundError('Asset not found')
+./graphql/resolvers.ts:        throw new AuthorizationError('Access denied')
+./graphql/resolvers.ts:        throw new AuthenticationError('Authentication required')
+./graphql/resolvers.ts:        throw new NotFoundError('Asset not found')
+./graphql/resolvers.ts:        throw new AuthorizationError('Access denied')
+./graphql/resolvers.ts:        throw new AuthenticationError('Authentication required')
+./graphql/resolvers.ts:      const auction = new Auction({
+./graphql/resolvers.ts:        throw new AuthenticationError('Authentication required')
+./graphql/resolvers.ts:        throw new NotFoundError('Auction not found')
+./graphql/resolvers.ts:        throw new AuthenticationError('Auction is not active')
+./graphql/resolvers.ts:      if (new Date() > auction.endTime) {
+./graphql/resolvers.ts:        throw new AuthenticationError('Auction has ended')
+./graphql/resolvers.ts:        throw new AuthenticationError('Invalid bid amount')
+./graphql/dataloader.ts:export const userLoader = new DataLoader(async (ids: string[]) => {
+./graphql/dataloader.ts:  const objectIds = ids.map(id => new ObjectId(id))
+./graphql/dataloader.ts:      throw new Error(`User with id ${id} not found`)
+./graphql/dataloader.ts:export const assetLoader = new DataLoader(async (ids: string[]) => {
+./graphql/dataloader.ts:  const objectIds = ids.map(id => new ObjectId(id))
+./graphql/dataloader.ts:      throw new Error(`Asset with id ${id} not found`)
+./graphql/dataloader.ts:export const auctionLoader = new DataLoader(async (ids: string[]) => {
+./graphql/dataloader.ts:  const objectIds = ids.map(id => new ObjectId(id))
+./graphql/dataloader.ts:      throw new Error(`Auction with id ${id} not found`)
+./graphql/dataloader.ts:export const bidLoader = new DataLoader(async (auctionIds: string[]) => {
+./graphql/dataloader.ts:  const objectIds = auctionIds.map(id => new ObjectId(id))
+./graphql/dataloader.ts:      throw new Error(`Auction with id ${auctionId} not found`)
+./graphql/dataloader.ts:export const userAssetsLoader = new DataLoader(async (userIds: string[]) => {
+./graphql/dataloader.ts:  const objectIds = userIds.map(id => new ObjectId(id))
+./graphql/dataloader.ts:export const userAuctionsLoader = new DataLoader(async (userIds: string[]) => {
+./graphql/dataloader.ts:  const objectIds = userIds.map(id => new ObjectId(id))
+./graphql/dataloader.ts:export const userBidsLoader = new DataLoader(async (userIds: string[]) => {
+./graphql/dataloader.ts:  const objectIds = userIds.map(id => new ObjectId(id))
+./graphql/dataloader.ts:export const featuredAssetsLoader = new DataLoader(async (params: any[]) => {
+./graphql/dataloader.ts:export const activeAuctionsLoader = new DataLoader(async (params: any[]) => {
+./graphql/dataloader.ts:    endTime: { $gt: new Date() } 
+./graphql/dataloader.ts:export const endingSoonAuctionsLoader = new DataLoader(async (params: any[]) => {
+./graphql/dataloader.ts:  const endTime = new Date(Date.now() + hours * 60 * 60 * 1000)
+./graphql/dataloader.ts:    endTime: { $lte: endTime, $gt: new Date() } 
+./graphql/dataloader.ts:export const searchAssetsLoader = new DataLoader(async (params: any[]) => {
+./graphql/dataloader.ts:export const searchAuctionsLoader = new DataLoader(async (params: any[]) => {
+./graphql/dataloader.ts:    endTime: { $gt: new Date() }
+./graphql/dataloader.ts:export const categoryStatsLoader = new DataLoader(async () => {
+./graphql/dataloader.ts:  const combinedStats = new Map()
+./graphql/dataloader.ts:export const locationStatsLoader = new DataLoader(async () => {
+./graphql/dataloader.ts:  const combinedStats = new Map()
+./graphql/server.ts:const pubsub = new PubSub()
+./graphql/server.ts:      throw new Error(`Query complexity exceeds maximum allowed complexity of ${maxComplexity}`)
+./graphql/server.ts:  return new ApolloServer({
+./graphql/server.ts:            throw new Error('Authentication failed')
+./graphql/server.ts:      timestamp: new Date().toISOString(),
+./graphql/server.ts:      timestamp: new Date().toISOString(),
+./payments/reconciliationService.ts:        const threshold = new Date(Date.now() - 24 * 60 * 60 * 1000) // 24 hours ago
+./payments/reconciliationService.ts:export const paymentReconciliationService = new PaymentReconciliationService()
+./payments/paymentService.test.ts:        paymentService = new PaymentService()
+./payments/paymentService.test.ts:        it('should create and save a new payment', async () => {
+./payments/paymentService.ts:     * Create a new payment record
+./payments/paymentService.ts:        const payment = new Payment(data)
+./payments/paymentService.ts:export const paymentService = new PaymentService()
+./payments/refundService.ts:        const refund = new Payment({
+./payments/refundService.ts:        const refund = new Payment({
+./payments/refundService.ts:export const refundService = new RefundService()
+./payments/financialService.test.ts:        financialService = new FinancialService()
+./payments/financialService.test.ts:            const startDate = new Date('2024-01-01')
+./payments/financialService.test.ts:            const endDate = new Date('2024-01-31')
+./payments/financialService.test.ts:            const breakdown = await financialService.getFeeBreakdown(new Date(), new Date())
+./payments/financialService.test.ts:                    createdAt: new Date('2024-01-01T10:00:00Z'),
+./payments/financialService.test.ts:            const csv = await financialService.exportToCSV(new Date(), new Date())
+./payments/feeService.test.ts:        feeService = new FeeService()
+./payments/refundService.test.ts:        refundService = new RefundService()
+./payments/feeService.ts:            throw new Error('Auction not found')
+./payments/feeService.ts:export const feeService = new FeeService()
+./payments/financialService.ts:export const financialService = new FinancialService()
+./new_calls.txt:./routes/financial.ts:        const startDate = req.query.startDate ? new Date(req.query.startDate as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+./new_calls.txt:./routes/financial.ts:        const endDate = req.query.endDate ? new Date(req.query.endDate as string) : new Date()
+./new_calls.txt:./routes/financial.ts:        const startDate = req.query.startDate ? new Date(req.query.startDate as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+./new_calls.txt:./routes/financial.ts:        const endDate = req.query.endDate ? new Date(req.query.endDate as string) : new Date()
+./new_calls.txt:./routes/financial.ts:        const startDate = req.query.startDate ? new Date(req.query.startDate as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+./new_calls.txt:./routes/financial.ts:        const endDate = req.query.endDate ? new Date(req.query.endDate as string) : new Date()
+./new_calls.txt:./routes/auth.ts:// Register new user
+./new_calls.txt:./routes/auth.ts:    const user = new User({
+./new_calls.txt:./routes/auth.ts:      timestamp: new Date()
+./new_calls.txt:./routes/auth.ts:    user.lastLoginAt = new Date()
+./new_calls.txt:./routes/auth.ts:      timestamp: new Date()
+./new_calls.txt:./routes/auth.ts:    // Generate new access token
+./new_calls.txt:./routes/auth.ts:    user.passwordResetExpires = new Date(Date.now() + 3600000) // 1 hour
+./new_calls.txt:./routes/auth.ts:    // Hash new password
+./new_calls.txt:./routes/auth.ts:    user.passwordChangedAt = new Date()
+./new_calls.txt:./routes/auth.ts:    // Hash new password
+./new_calls.txt:./routes/auth.ts:    user.passwordChangedAt = new Date()
+./new_calls.txt:./routes/auth.ts:    // Generate new verification token
+./new_calls.txt:./routes/auth.ts:    user.emailVerificationExpires = new Date(Date.now() + 86400000) // 24 hours
+./new_calls.txt:./routes/assets.ts:// Create new asset
+./new_calls.txt:./routes/assets.ts:      acquisitionDate: new Date(),
+./new_calls.txt:./routes/assets.ts:  const asset = new Asset(assetData)
+./new_calls.txt:./routes/assets.ts:    timestamp: new Date()
+./new_calls.txt:./routes/assets.ts:    timestamp: new Date()
+./new_calls.txt:./routes/assets.ts:    timestamp: new Date()
+./new_calls.txt:./routes/assets.ts:    timestamp: new Date()
+./new_calls.txt:./routes/assets.ts:    timestamp: new Date()
+./new_calls.txt:./routes/assets.ts:    asset.publishedAt = new Date()
+./new_calls.txt:./routes/assets.ts:    timestamp: new Date()
+./new_calls.txt:./routes/payments.test.ts:        it('should create a new payment', async () => {
+./new_calls.txt:./routes/users.ts:    timestamp: new Date()
+./new_calls.txt:./routes/users.ts:    timestamp: new Date()
+./new_calls.txt:./routes/users.ts:    timestamp: new Date()
+./new_calls.txt:./routes/users.ts:    timestamp: new Date()
+./new_calls.txt:./routes/users.ts:    timestamp: new Date()
+./new_calls.txt:./graphql/middleware.ts:            timestamp: new Date().toISOString()
+./new_calls.txt:./graphql/middleware.ts:      timestamp: new Date().toISOString()
+./new_calls.txt:./graphql/middleware.ts:      throw new Error('Authentication failed')
+./new_calls.txt:./graphql/middleware.ts:    timestamp: new Date().toISOString()
+./new_calls.txt:./graphql/middleware.ts:      timestamp: new Date().toISOString()
+./new_calls.txt:./graphql/middleware.ts:    timestamp: new Date().toISOString()
+./new_calls.txt:./graphql/middleware.ts:        timestamp: new Date().toISOString()
+./new_calls.txt:./graphql/middleware.ts:      timestamp: new Date().toISOString(),
+./new_calls.txt:./graphql/middleware.ts:      timestamp: new Date().toISOString(),
+./new_calls.txt:./graphql/resolvers.ts:const pubsub = new PubSub()
+./new_calls.txt:./graphql/resolvers.ts:const userLoader = new DataLoader(async (ids: string[]) => {
+./new_calls.txt:./graphql/resolvers.ts:const assetLoader = new DataLoader(async (ids: string[]) => {
+./new_calls.txt:./graphql/resolvers.ts:const auctionLoader = new DataLoader(async (ids: string[]) => {
+./new_calls.txt:./graphql/resolvers.ts:const DateTime = new GraphQLScalarType({
+./new_calls.txt:./graphql/resolvers.ts:    return new Date(value)
+./new_calls.txt:./graphql/resolvers.ts:      return new Date(ast.value)
+./new_calls.txt:./graphql/resolvers.ts:const JSON = new GraphQLScalarType({
+./new_calls.txt:./graphql/resolvers.ts:const BigInt = new GraphQLScalarType({
+./new_calls.txt:./graphql/resolvers.ts:        throw new AuthenticationError('Authentication required')
+./new_calls.txt:./graphql/resolvers.ts:        throw new NotFoundError('User not found')
+./new_calls.txt:./graphql/resolvers.ts:        throw new NotFoundError('Asset not found')
+./new_calls.txt:./graphql/resolvers.ts:        throw new AuthenticationError('Authentication required')
+./new_calls.txt:./graphql/resolvers.ts:        throw new NotFoundError('Auction not found')
+./new_calls.txt:./graphql/resolvers.ts:      const query: any = { visibility: 'public', status: 'active', endTime: { $gt: new Date() } }
+./db/redis.ts:const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379')
+./db/prisma.ts:const prisma = new PrismaClient()
+./auth/walletSignatureVerification.ts:  private signatureRequests: Map<string, SignatureRequest> = new Map();
+./auth/walletSignatureVerification.ts:  private userRequests: Map<string, string[]> = new Map();
+./auth/walletSignatureVerification.ts:  private nonces: Map<string, { nonce: string; used: boolean; expiresAt: Date }> = new Map();
+./auth/walletSignatureVerification.ts:  private rateLimitTracker: Map<string, { count: number; windowStart: Date }> = new Map();
+./auth/walletSignatureVerification.ts:  private verificationCache: Map<string, VerificationResult> = new Map();
+./auth/walletSignatureVerification.ts:      throw new Error(`Unsupported wallet type: ${walletType}`);
+./auth/walletSignatureVerification.ts:    const now = new Date();
+./auth/walletSignatureVerification.ts:      expiresAt: new Date(now.getTime() + this.config.defaultExpiry * 60 * 1000),
+./auth/walletSignatureVerification.ts:      throw new Error('Signature request not found');
+./auth/walletSignatureVerification.ts:      throw new Error(`Request is ${request.status}`);
+./auth/walletSignatureVerification.ts:    if (new Date() > request.expiresAt) {
+./auth/walletSignatureVerification.ts:      throw new Error('Signature request expired');
+./auth/walletSignatureVerification.ts:      request.failedAt = new Date();
+./auth/walletSignatureVerification.ts:      throw new Error('Maximum attempts exceeded');
+./auth/walletSignatureVerification.ts:        request.verifiedAt = new Date();
+./auth/walletSignatureVerification.ts:            timestamp: new Date(),
+./auth/walletSignatureVerification.ts:        request.failedAt = new Date();
+./auth/walletSignatureVerification.ts:        throw new Error('Invalid signature');
+./auth/walletSignatureVerification.ts:      request.failedAt = new Date();
+./auth/walletSignatureVerification.ts:    const now = new Date();
+./auth/walletSignatureVerification.ts:      expiresAt: new Date(now.getTime() + 60 * 60 * 1000), // 1 hour for transactions
+./auth/walletSignatureVerification.ts:      timestamp: new Date(),
+./auth/walletSignatureVerification.ts:    const now = new Date();
+./auth/walletSignatureVerification.ts:    const windowStart = new Date(now.getTime() - this.config.rateLimitWindow * 60 * 1000);
+./auth/walletSignatureVerification.ts:        throw new Error('Rate limit exceeded');
+./auth/walletSignatureVerification.ts:            throw new Error('EIP-712 requires domain, types, and value');
+./auth/walletSignatureVerification.ts:          throw new Error(`Unsupported signature type: ${type}`);
+./auth/walletSignatureVerification.ts:    const now = new Date();
+./auth/walletSignatureVerification.ts:      const cacheExpiryTime = new Date(now.getTime() - this.config.cacheExpiry * 60 * 1000);
+./auth/multiFactorAuthentication.ts:  private mfaConfigs: Map<string, MFAConfig> = new Map();
+./auth/multiFactorAuthentication.ts:  private verifications: Map<string, MFAVerification> = new Map();
+./auth/multiFactorAuthentication.ts:  private challenges: Map<string, MFAChallenge> = new Map();
+./auth/multiFactorAuthentication.ts:  private trustedSessions: Map<string, MFASession> = new Map();
+./auth/multiFactorAuthentication.ts:  private rateLimitTracker: Map<string, { count: number; windowStart: Date }> = new Map();
+./auth/multiFactorAuthentication.ts:        createdAt: new Date(),
+./auth/multiFactorAuthentication.ts:        updatedAt: new Date()
+./auth/multiFactorAuthentication.ts:          throw new Error('Phone number and country code required for SMS MFA');
+./auth/multiFactorAuthentication.ts:          throw new Error('Email required for email MFA');
+./auth/multiFactorAuthentication.ts:          throw new Error('Push device ID and token required for push MFA');
+./auth/multiFactorAuthentication.ts:          throw new Error('Hardware token ID required for hardware token MFA');
+./auth/multiFactorAuthentication.ts:    mfaConfig.updatedAt = new Date();
+./auth/multiFactorAuthentication.ts:    mfaConfig.updatedAt = new Date();
+./auth/multiFactorAuthentication.ts:      throw new Error('MFA not configured for user');
+./auth/multiFactorAuthentication.ts:    mfaConfig.updatedAt = new Date();
+./auth/multiFactorAuthentication.ts:      throw new Error('MFA method not available for user');
+./auth/multiFactorAuthentication.ts:      throw new Error('MFA is locked for this user');
+./auth/multiFactorAuthentication.ts:    const now = new Date();
+./auth/multiFactorAuthentication.ts:      expiresAt: new Date(now.getTime() + 10 * 60 * 1000), // 10 minutes
+./auth/multiFactorAuthentication.ts:      throw new Error('Challenge not found');
+./auth/multiFactorAuthentication.ts:      throw new Error('Challenge is not active');
+./auth/multiFactorAuthentication.ts:      throw new Error('Challenge expired');
+./auth/multiFactorAuthentication.ts:    const now = new Date();
+./auth/multiFactorAuthentication.ts:      expiresAt: new Date(now.getTime() + 5 * 60 * 1000), // 5 minutes
+./auth/multiFactorAuthentication.ts:      throw new Error('MFA not configured for user');
+./auth/multiFactorAuthentication.ts:      expiresAt: new Date(Date.now() + mfaConfig.trustedDeviceExpiry * 24 * 60 * 60 * 1000),
+./auth/multiFactorAuthentication.ts:      createdAt: new Date(),
+./auth/multiFactorAuthentication.ts:      lastUsedAt: new Date()
+./auth/multiFactorAuthentication.ts:    trustedSession.lastUsedAt = new Date();
+./auth/multiFactorAuthentication.ts:    mfaConfig.lockedAt = new Date();
+./auth/multiFactorAuthentication.ts:    mfaConfig.unlockedAt = new Date();
+./auth/multiFactorAuthentication.ts:    const now = new Date();
+./auth/multiFactorAuthentication.ts:    const windowStart = new Date(now.getTime() - 15 * 60 * 1000); // 15 minutes
+./auth/multiFactorAuthentication.ts:        throw new Error('Rate limit exceeded');
+./auth/multiFactorAuthentication.ts:    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+./auth/roleBasedAccessControl.ts:  private roles: Map<string, RoleDefinition> = new Map();
+./auth/roleBasedAccessControl.ts:  private userRoles: Map<string, UserRole[]> = new Map();
+./auth/roleBasedAccessControl.ts:  private policies: Map<string, PermissionPolicy> = new Map();
+./auth/roleBasedAccessControl.ts:  private accessRequests: Map<string, AccessRequest> = new Map();
+./auth/roleBasedAccessControl.ts:  private resourceOwners: Map<string, { resourceType: ResourceType; resourceId: string; ownerId: string }> = new Map();
+./auth/roleBasedAccessControl.ts:  private accessCache: Map<string, AccessDecision> = new Map();
+./auth/roleBasedAccessControl.ts:      createdAt: new Date(),
+./auth/roleBasedAccessControl.ts:      updatedAt: new Date()
+./auth/roleBasedAccessControl.ts:      throw new Error('Role not found');
+./auth/roleBasedAccessControl.ts:      throw new Error('Cannot modify system role');
+./auth/roleBasedAccessControl.ts:    role.updatedAt = new Date();
+./auth/roleBasedAccessControl.ts:      throw new Error('Cannot delete system role');
+./auth/roleBasedAccessControl.ts:        throw new Error('Cannot delete role that is assigned to users');
+./auth/roleBasedAccessControl.ts:      throw new Error('Role not found or inactive');
+./auth/roleBasedAccessControl.ts:    const activeRoles = userRoleList.filter(ur => ur.isActive && (!ur.expiresAt || ur.expiresAt > new Date()));
+./auth/roleBasedAccessControl.ts:      throw new Error(`Maximum roles per user (${this.config.maxRolesPerUser}) exceeded`);
+./auth/roleBasedAccessControl.ts:      throw new Error('User already has this role');
+./auth/roleBasedAccessControl.ts:      assignedAt: new Date(),
+./auth/roleBasedAccessControl.ts:    userRole.metadata.revokedAt = new Date();
+./auth/roleBasedAccessControl.ts:        ur.isActive && (!ur.expiresAt || ur.expiresAt > new Date())
+./auth/roleBasedAccessControl.ts:    const permissions = new Set<Permission>();
+./auth/roleBasedAccessControl.ts:      throw new Error(`Access denied: ${decision.reason}`);
+./auth/roleBasedAccessControl.ts:      createdAt: new Date(),
+./auth/roleBasedAccessControl.ts:      updatedAt: new Date()
+./auth/roleBasedAccessControl.ts:      throw new Error('Policy not found');
+./auth/roleBasedAccessControl.ts:    policy.updatedAt = new Date();
+./auth/roleBasedAccessControl.ts:    const now = new Date();
+./auth/roleBasedAccessControl.ts:      expiresAt: new Date(now.getTime() + expiresIn * 60 * 60 * 1000),
+./auth/roleBasedAccessControl.ts:      throw new Error('Access request not found');
+./auth/roleBasedAccessControl.ts:      throw new Error('Request already reviewed');
+./auth/roleBasedAccessControl.ts:    request.reviewedAt = new Date();
+./auth/roleBasedAccessControl.ts:          evaluatedAt: new Date(),
+./auth/roleBasedAccessControl.ts:        evaluatedAt: new Date(),
+./auth/roleBasedAccessControl.ts:            evaluatedAt: new Date(),
+./auth/roleBasedAccessControl.ts:      evaluatedAt: new Date(),
+./auth/roleBasedAccessControl.ts:          const hour = new Date().getHours();
+./auth/roleBasedAccessControl.ts:    const inheritedPermissions = new Set<Permission>();
+./auth/roleBasedAccessControl.ts:      createdAt: new Date(),
+./auth/roleBasedAccessControl.ts:      updatedAt: new Date()
+./auth/roleBasedAccessControl.ts:      createdAt: new Date(),
+./auth/roleBasedAccessControl.ts:      updatedAt: new Date()
+./auth/roleBasedAccessControl.ts:      createdAt: new Date(),
+./auth/roleBasedAccessControl.ts:      updatedAt: new Date()
+./auth/roleBasedAccessControl.ts:      createdAt: new Date(),
+./auth/roleBasedAccessControl.ts:      updatedAt: new Date()
+./auth/roleBasedAccessControl.ts:      createdAt: new Date(),
+./auth/roleBasedAccessControl.ts:      updatedAt: new Date()
+./auth/roleBasedAccessControl.ts:      createdAt: new Date(),
+./auth/roleBasedAccessControl.ts:      updatedAt: new Date()
+./auth/roleBasedAccessControl.ts:    const now = new Date();
+./auth/oauthIntegration.ts:  private configs: Map<OAuthProvider, OAuthConfig> = new Map();
+./auth/oauthIntegration.ts:  private connections: Map<string, OAuthConnection> = new Map();
+./auth/oauthIntegration.ts:  private userConnections: Map<string, string[]> = new Map();
+./auth/oauthIntegration.ts:  private states: Map<string, OAuthState> = new Map();
+./auth/oauthIntegration.ts:      throw new Error(`OAuth provider ${provider} is not configured or enabled`);
+./auth/oauthIntegration.ts:    const now = new Date();
+./auth/oauthIntegration.ts:      expiresAt: new Date(now.getTime() + 10 * 60 * 1000), // 10 minutes
+./auth/oauthIntegration.ts:    const params = new URLSearchParams({
+./auth/oauthIntegration.ts:      throw new Error('Invalid or expired OAuth state');
+./auth/oauthIntegration.ts:      throw new Error('OAuth state expired');
+./auth/oauthIntegration.ts:      throw new Error(`OAuth provider ${oauthState.provider} not configured`);
+./auth/oauthIntegration.ts:    const now = new Date();
+./auth/oauthIntegration.ts:        ? new Date(now.getTime() + tokenResponse.expires_in * 1000)
+./auth/oauthIntegration.ts:    connection.disconnectedAt = new Date();
+./auth/oauthIntegration.ts:      throw new Error('Connection not found');
+./auth/oauthIntegration.ts:      throw new Error('No refresh token available');
+./auth/oauthIntegration.ts:      throw new Error(`OAuth provider ${connection.provider} not configured`);
+./auth/oauthIntegration.ts:      // Update connection with new tokens
+./auth/oauthIntegration.ts:        ? new Date(Date.now() + tokenResponse.expires_in * 1000)
+./auth/oauthIntegration.ts:      connection.lastUsedAt = new Date();
+./auth/oauthIntegration.ts:    const usersWithOAuth = new Set(connections.map(c => c.userId)).size;
+./auth/jwtTokenManagement.ts:  private tokens: Map<string, TokenRecord> = new Map();
+./auth/jwtTokenManagement.ts:  private userTokens: Map<string, string[]> = new Map();
+./auth/jwtTokenManagement.ts:  private blacklistedTokens: Set<string> = new Set();
+./auth/jwtTokenManagement.ts:      createdAt: new Date(),
+./auth/jwtTokenManagement.ts:      expiresAt: new Date(expiry * 1000)
+./auth/jwtTokenManagement.ts:    token.revokedAt = new Date();
+./auth/jwtTokenManagement.ts:    // Generate new access token
+./auth/jwtTokenManagement.ts:    token.lastUsedAt = new Date();
+./auth/sessionManagement.ts:  private sessions: Map<string, UserSession> = new Map();
+./auth/sessionManagement.ts:  private userSessions: Map<string, string[]> = new Map();
+./auth/sessionManagement.ts:  private trustedDevices: Map<string, { userId: string; expiresAt: Date }> = new Map();
+./auth/sessionManagement.ts:  private sessionEvents: Map<string, SessionEvent[]> = new Map();
+./auth/sessionManagement.ts:    const now = new Date();
+./auth/sessionManagement.ts:      expiresAt: new Date(now.getTime() + expiry * 60 * 1000),
+./auth/sessionManagement.ts:    session.terminatedAt = new Date();
+./auth/sessionManagement.ts:    const expiresAt = new Date();
+./auth/sessionManagement.ts:    return trustedDevice.userId === userId && trustedDevice.expiresAt > new Date();
+./auth/sessionManagement.ts:      const knownDevices = new Set(userSessions.map(s => s.deviceId));
+./auth/sessionManagement.ts:    const hour = new Date().getHours();
+./auth/sessionManagement.ts:      timestamp: new Date(),
+./blockchain/eventParser.ts:    this.contractInterfaces = new Map()
+./blockchain/eventParser.ts:      const auctionInterface = new ethers.utils.Interface(ABI.AUCTION_CONTRACT)
+./blockchain/eventParser.ts:      const assetInterface = new ethers.utils.Interface(ABI.ASSET_CONTRACT)
+./blockchain/eventParser.ts:      const paymentInterface = new ethers.utils.Interface(ABI.PAYMENT_CONTRACT)
+./blockchain/eventParser.ts:      const userInterface = new ethers.utils.Interface(ABI.USER_CONTRACT)
+./blockchain/eventParser.ts:      const timestamp = block ? new Date(parseInt(block.timestamp, 16) * 1000) : new Date()
+./blockchain/eventParser.ts:        timestamp: new Date(),
+./blockchain/eventParser.ts:        endTime: new Date(parsedLog.args.endTime.toNumber() * 1000),
+./blockchain/eventParser.ts:        endTime: new Date(),
+./blockchain/eventParser.ts:        timestamp: new Date(parsedLog.args.timestamp.toNumber() * 1000),
+./blockchain/eventParser.ts:        timestamp: new Date(parsedLog.args.timestamp.toNumber() * 1000),
+./blockchain/eventParser.ts:        timestamp: new Date(parsedLog.args.timestamp.toNumber() * 1000)
+./blockchain/eventParser.ts:        timestamp: new Date(parsedLog.args.timestamp.toNumber() * 1000)
+./blockchain/eventParser.ts:        timestamp: new Date(parsedLog.args.timestamp.toNumber() * 1000)
+./blockchain/eventParser.ts:        timestamp: new Date(parsedLog.args.timestamp.toNumber() * 1000)
+./blockchain/eventParser.ts:        timestamp: new Date(parsedLog.args.timestamp.toNumber() * 1000)
+./blockchain/eventParser.ts:        timestamp: new Date(parsedLog.args.timestamp.toNumber() * 1000)
+./blockchain/eventParser.ts:        timestamp: new Date(parsedLog.args.timestamp.toNumber() * 1000)
+./blockchain/eventParser.ts:      timeRange: { start: new Date(), end: new Date(0) }
+./blockchain/eventParser.ts:  // Add new contract interface
+./blockchain/eventParser.ts:      const interface = new ethers.utils.Interface(abi)
+./blockchain/baseFeeService.ts:    private oracleContracts: Map<number, ethers.Contract> = new Map();
+./blockchain/baseFeeService.ts:            throw new Error(`Chain configuration not found for chainId: ${chainId}`);
+./blockchain/baseFeeService.ts:        const provider = new ethers.providers.JsonRpcProvider(config.rpcUrl);
+./blockchain/baseFeeService.ts:        const contract = new ethers.Contract(GAS_PRICE_ORACLE_ADDRESS, GAS_PRICE_ORACLE_ABI, provider);
+./blockchain/transactionBuilder.ts:  private nonceCache: Map<string, { nonce: number; timestamp: Date }> = new Map()
+./blockchain/transactionBuilder.ts:  private gasPriceCache: Map<number, { price: string; timestamp: Date }> = new Map()
+./blockchain/transactionBuilder.ts:        createdAt: new Date()
+./blockchain/transactionBuilder.ts:      const contract = new ethers.Contract(options.contractCall.contractAddress, options.contractCall.abi, provider)
+./blockchain/transactionBuilder.ts:        createdAt: new Date()
+./blockchain/transactionBuilder.ts:        createdAt: new Date()
+./blockchain/transactionBuilder.ts:        throw new Error(`Batch transaction exceeds gas limit: ${totalEstimatedGas} > ${maxGasLimit}`)
+./blockchain/transactionBuilder.ts:        createdAt: new Date()
+./blockchain/transactionBuilder.ts:        createdAt: new Date()
+./blockchain/transactionBuilder.ts:      const wallet = new ethers.Wallet(privateKey)
+./blockchain/transactionBuilder.ts:        timestamp: new Date()
+./blockchain/transactionBuilder.ts:        timestamp: new Date()
+./blockchain/transactionBuilder.ts:      throw new Error(`Chain configuration not found: ${chainId}`)
+./blockchain/transactionBuilder.ts:    return new ethers.providers.JsonRpcProvider(chainConfig.rpcUrl)
+./blockchain/transactionBuilder.ts:      timestamp: new Date().toISOString(),
+./blockchain/transactionBuilder.ts:      lastActivity: new Date(),
+./blockchain/transactionAlerting.ts:  private alerts: Map<string, Alert> = new Map()
+./blockchain/transactionAlerting.ts:  private alertRules: Map<string, AlertRule> = new Map()
+./blockchain/transactionAlerting.ts:  private notificationChannels: Map<string, NotificationChannel> = new Map()
+./blockchain/transactionAlerting.ts:      timestamp: new Date(),
+./blockchain/transactionAlerting.ts:      a.timestamp > new Date(Date.now() - 60000) // Within last minute
+./blockchain/transactionAlerting.ts:    const now = new Date()
+./blockchain/transactionAlerting.ts:    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
+./blockchain/transactionAlerting.ts:    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+./blockchain/transactionAlerting.ts:      channel.lastUsed = new Date()
+./blockchain/transactionAlerting.ts:      rule.lastTriggered = new Date()
+./blockchain/transactionAlerting.ts:      throw new Error(`Alert not found: ${alertId}`)
+./blockchain/transactionAlerting.ts:    alert.resolvedAt = new Date()
+./blockchain/transactionAlerting.ts:      throw new Error(`Alert rule not found: ${ruleId}`)
+./blockchain/transactionAlerting.ts:      throw new Error(`Alert rule not found: ${ruleId}`)
+./blockchain/transactionAlerting.ts:      throw new Error(`Notification channel not found: ${channelId}`)
+./blockchain/transactionAlerting.ts:      throw new Error(`Notification channel not found: ${channelId}`)
+./blockchain/transactionAlerting.ts:      rule.lastTriggered = new Date()
+./blockchain/transactionAlerting.ts:    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+./blockchain/transactionAlerting.ts:      timestamp: new Date().toISOString(),
+./blockchain/transactionAlerting.ts:      lastAlert: this.alertHistory.length > 0 ? this.alertHistory[0].timestamp : new Date(),
+./blockchain/contractInteraction.ts:  private interactions: Map<string, ContractInteraction> = new Map()
+./blockchain/contractInteraction.ts:        createdAt: new Date(),
+./blockchain/contractInteraction.ts:        processedAt: new Date(),
+./blockchain/contractInteraction.ts:        completedAt: new Date(),
+./blockchain/contractInteraction.ts:        createdAt: new Date(),
+./blockchain/contractInteraction.ts:        processedAt: new Date(),
+./blockchain/contractInteraction.ts:        completedAt: new Date(),
+./blockchain/contractInteraction.ts:        createdAt: new Date(),
+./blockchain/contractInteraction.ts:        processedAt: new Date(),
+./blockchain/contractInteraction.ts:        completedAt: new Date(),
+./blockchain/contractInteraction.ts:        createdAt: new Date(),
+./blockchain/contractInteraction.ts:        processedAt: new Date(),
+./blockchain/contractInteraction.ts:        completedAt: new Date(),
+./blockchain/contractInteraction.ts:        createdAt: new Date(),
+./blockchain/contractInteraction.ts:        createdAt: new Date(),
+./blockchain/contractInteraction.ts:        processedAt: new Date(),
+./blockchain/contractInteraction.ts:        completedAt: new Date(),
+./blockchain/contractInteraction.ts:          throw new Error(`Invalid multi-sig operation: ${options.operationType}`)
+./blockchain/contractInteraction.ts:        createdAt: new Date(),
+./blockchain/contractInteraction.ts:        processedAt: new Date(),
+./blockchain/contractInteraction.ts:        completedAt: new Date(),
+./blockchain/contractInteraction.ts:        createdAt: new Date(),
+./blockchain/contractInteraction.ts:        processedAt: new Date(),
+./blockchain/contractInteraction.ts:        completedAt: new Date(),
+./blockchain/contractInteraction.ts:        createdAt: new Date(),
+./blockchain/contractInteraction.ts:        processedAt: new Date(),
+./blockchain/contractInteraction.ts:        completedAt: new Date(),
+./blockchain/contractInteraction.ts:        createdAt: new Date(),
+./blockchain/contractInteraction.ts:        processedAt: new Date(),
+./blockchain/contractInteraction.ts:        completedAt: new Date(),
+./blockchain/contractInteraction.ts:      timestamp: new Date(),
+./blockchain/contractInteraction.ts:    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+./blockchain/contractInteraction.ts:    const contractStats = new Map<string, {
+./blockchain/contractInteraction.ts:      timestamp: new Date().toISOString(),
+./blockchain/contractInteraction.ts:      lastActivity: new Date(),
+./blockchain/contractReader.ts:  private contracts: Map<string, Contract> = new Map()
+./blockchain/contractReader.ts:  private readCache: Map<string, { data: any; timestamp: Date; ttl: number }> = new Map()
+./blockchain/contractReader.ts:    const contractInstance = new ethers.Contract(contract.address, contract.abi, provider)
+./blockchain/contractReader.ts:        throw new Error(`Contract not found: ${contractKey}`)
+./blockchain/contractReader.ts:        timestamp: new Date(),
+./blockchain/contractReader.ts:        timestamp: new Date(),
+./blockchain/contractReader.ts:        timestamp: new Date()
+./blockchain/contractReader.ts:            new Promise((_, reject) => 
+./blockchain/contractReader.ts:              setTimeout(() => reject(new Error('Read timeout')), timeout)
+./blockchain/contractReader.ts:            timestamp: new Date()
+./blockchain/contractReader.ts:            timestamp: new Date()
+./blockchain/contractReader.ts:      await new Promise(resolve => setTimeout(resolve, 100))
+./blockchain/contractReader.ts:      throw new Error(`Contract not found: ${contractKey}`)
+./blockchain/contractReader.ts:        timestamp: new Date(),
+./blockchain/contractReader.ts:      throw new Error(`Contract not found: ${contractKey}`)
+./blockchain/contractReader.ts:        timestamp: new Date()
+./blockchain/contractReader.ts:        throw new Error('No contract code found at address')
+./blockchain/contractReader.ts:        const erc20Contract = new ethers.Contract(contractAddress, [
+./blockchain/contractReader.ts:      throw new Error(`Chain configuration not found: ${chainId}`)
+./blockchain/contractReader.ts:    return new ethers.providers.JsonRpcProvider(chainConfig.rpcUrl)
+./blockchain/contractReader.ts:      timestamp: new Date().toISOString(),
+./blockchain/contractReader.ts:      lastActivity: new Date(),
+./blockchain/transactionHistory.ts:  private history: Map<string, TransactionHistoryEntry> = new Map()
+./blockchain/transactionHistory.ts:  private auditTrail: Map<string, AuditEntry[]> = new Map()
+./blockchain/transactionHistory.ts:      failedAt: transaction.status === TransactionStatus.FAILED ? new Date() : undefined,
+./blockchain/transactionHistory.ts:      throw new Error(`History entry not found: ${entryId}`)
+./blockchain/transactionHistory.ts:      timestamp: new Date(),
+./blockchain/transactionHistory.ts:    entry.updatedAt = new Date()
+./blockchain/transactionHistory.ts:      entry.confirmedAt = new Date()
+./blockchain/transactionHistory.ts:      entry.failedAt = new Date()
+./blockchain/transactionHistory.ts:      throw new Error(`History entry not found: ${entryId}`)
+./blockchain/transactionHistory.ts:      timestamp: new Date(),
+./blockchain/transactionHistory.ts:        entry.createdAt >= (timeRange.from || new Date(0)) &&
+./blockchain/transactionHistory.ts:        entry.createdAt <= (timeRange.to || new Date())
+./blockchain/transactionHistory.ts:    const userStats = new Map<string, { count: number; volume: string; value: string }>()
+./blockchain/transactionHistory.ts:    const contractStats = new Map<string, { count: number; volume: string; gasUsed: string }>()
+./blockchain/transactionHistory.ts:    const dailyStats = new Map<string, { total: number; sum: number; max: number }>()
+./blockchain/transactionHistory.ts:    const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) // 90 days ago
+./blockchain/transactionHistory.ts:      timestamp: new Date().toISOString(),
+./blockchain/transactionHistory.ts:        new Date(),
+./blockchain/eventReplay.ts:      throw new Error('Replay is already in progress')
+./blockchain/eventReplay.ts:      const startTime = new Date()
+./blockchain/eventReplay.ts:        endTime: new Date()
+./blockchain/eventReplay.ts:        throw new Error('Invalid block range')
+./blockchain/eventReplay.ts:        estimatedEndTime: new Date(startTime.getTime() + (totalBlocks / batchSize) * delay)
+./blockchain/eventReplay.ts:        this.currentProgress.estimatedEndTime = new Date(
+./blockchain/eventReplay.ts:      stats.endTime = new Date()
+./blockchain/eventReplay.ts:        timestamp: new Date(Date.now() + i * 12000), // 12 seconds per block
+./blockchain/eventReplay.ts:      timestamp: new Date(block.timestamp),
+./blockchain/eventReplay.ts:      exportTime: new Date().toISOString()
+./blockchain/eventReplay.ts:    return new Promise(resolve => setTimeout(resolve, ms))
+./blockchain/transactionQueue.ts:  private queues: Map<string, QueueConfig> = new Map()
+./blockchain/transactionQueue.ts:  private queueTransactions: Map<string, Transaction[]> = new Map()
+./blockchain/transactionQueue.ts:  private queueStatistics: Map<string, QueueStatistics> = new Map()
+./blockchain/transactionQueue.ts:  private processingTimers: Map<string, NodeJS.Timeout> = new Map()
+./blockchain/transactionQueue.ts:      throw new Error(`Queue with ID ${config.id} already exists`)
+./blockchain/transactionQueue.ts:      lastProcessedAt: new Date(),
+./blockchain/transactionQueue.ts:      createdAt: new Date(),
+./blockchain/transactionQueue.ts:      updatedAt: new Date()
+./blockchain/transactionQueue.ts:      throw new Error(`Queue not found: ${queueId}`)
+./blockchain/transactionQueue.ts:      throw new Error(`Queue ${queueId} is full`)
+./blockchain/transactionQueue.ts:      createdAt: new Date(),
+./blockchain/transactionQueue.ts:      updatedAt: new Date(),
+./blockchain/transactionQueue.ts:        queue.completedAt = new Date()
+./blockchain/transactionQueue.ts:        transaction.updatedAt = new Date()
+./blockchain/transactionQueue.ts:        transaction.updatedAt = new Date()
+./blockchain/transactionQueue.ts:      const confirmedAt = new Date(Date.now() + Math.random() * 60000)
+./blockchain/transactionQueue.ts:        Math.max(...transactions.map(tx => tx.updatedAt.getTime())) : new Date(),
+./blockchain/transactionQueue.ts:      updatedAt: new Date()
+./blockchain/transactionQueue.ts:      throw new Error(`Queue not found: ${queueId}`)
+./blockchain/transactionQueue.ts:      throw new Error(`Queue not found: ${queueId}`)
+./blockchain/transactionQueue.ts:      throw new Error(`Queue not found: ${queueId}`)
+./blockchain/transactionQueue.ts:      throw new Error(`Queue not found: ${queueId}`)
+./blockchain/transactionQueue.ts:    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000) // 24 hours ago
+./blockchain/transactionQueue.ts:      timestamp: new Date().toISOString(),
+./blockchain/transactionQueue.ts:      lastActivity: new Date(),
+./blockchain/index.ts:  private activeConnections: Set<number> = new Set()
+./blockchain/index.ts:      throw new Error(`Chain configuration not found for chainId: ${chainId}`)
+./blockchain/index.ts:  // Add new chain configuration
+./blockchain/index.ts:      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+./blockchain/index.ts:        await new Promise(resolve => setTimeout(resolve, 1000))
+./blockchain/index.ts:      timestamp: new Date().toISOString(),
+./blockchain/index.ts:      timestamp: new Date().toISOString(),
+./blockchain/gasEstimator.ts:  private calculationCache: Map<string, { result: GasEstimationResult; timestamp: Date; ttl: number }> = new Map()
+./blockchain/gasEstimator.ts:  private gasHistory: Map<number, Array<{ price: string; timestamp: Date; blockNumber: number }>> = new Map()
+./blockchain/gasEstimator.ts:        timestamp: new Date(),
+./blockchain/gasEstimator.ts:      const contract = new ethers.Contract(options.contractAddress, abi, provider)
+./blockchain/gasEstimator.ts:        timestamp: new Date(),
+./blockchain/gasEstimator.ts:    const contractGroups = new Map<string, ContractGasEstimation[]>()
+./blockchain/gasEstimator.ts:      throw new Error(`Chain configuration not found: ${chainId}`)
+./blockchain/gasEstimator.ts:    return new ethers.providers.JsonRpcProvider(chainConfig.rpcUrl)
+./blockchain/gasEstimator.ts:          timestamp: new Date(),
+./blockchain/gasEstimator.ts:      timestamp: new Date().toISOString(),
+./blockchain/gasEstimator.ts:      lastActivity: new Date(),
+./blockchain/chainConfig.ts:    this.configs = new Map()
+./blockchain/chainConfig.ts:    this.activeChains = new Set()
+./blockchain/chainConfig.ts:      new URL(config.rpcUrl)
+./blockchain/chainConfig.ts:      new URL(config.wsUrl)
+./blockchain/chainConfig.ts:      new URL(config.blockExplorerUrl)
+./blockchain/chainConfig.ts:      throw new Error(`Chain configuration not found for chainId: ${chainId}`)
+./blockchain/chainConfig.ts:        throw new Error(`Invalid chain configuration: ${validation.errors.join(', ')}`)
+./blockchain/chainConfig.ts:      throw new Error(`Failed to import chain configuration: ${error.message}`)
+./blockchain/multiSig.ts:  private wallets: Map<string, MultiSigWallet> = new Map()
+./blockchain/multiSig.ts:  private transactions: Map<string, MultiSigTransaction> = new Map()
+./blockchain/multiSig.ts:  private configs: Map<string, MultiSigConfig> = new Map()
+./blockchain/multiSig.ts:        createdAt: new Date(),
+./blockchain/multiSig.ts:        updatedAt: new Date()
+./blockchain/multiSig.ts:        throw new Error(`Wallet not found: ${options.walletId}`)
+./blockchain/multiSig.ts:      const expiresAt = new Date(Date.now() + (options.timeout || this.defaultTimeout) * 1000)
+./blockchain/multiSig.ts:        createdAt: new Date(),
+./blockchain/multiSig.ts:        throw new Error(`Transaction not found: ${transactionId}`)
+./blockchain/multiSig.ts:        throw new Error(`Signer not authorized: ${signerAddress}`)
+./blockchain/multiSig.ts:        throw new Error(`Transaction already signed by: ${signerAddress}`)
+./blockchain/multiSig.ts:      if (transaction.expiresAt && new Date() > transaction.expiresAt) {
+./blockchain/multiSig.ts:        throw new Error('Transaction has expired')
+./blockchain/multiSig.ts:        throw new Error(`Transaction not found: ${transactionId}`)
+./blockchain/multiSig.ts:        throw new Error(`Transaction not ready for execution: ${transaction.status}`)
+./blockchain/multiSig.ts:      if (transaction.expiresAt && new Date() > transaction.expiresAt) {
+./blockchain/multiSig.ts:        throw new Error('Transaction has expired')
+./blockchain/multiSig.ts:      const transactionBuilder = new TransactionBuilder(this.logger)
+./blockchain/multiSig.ts:      transaction.executedAt = new Date()
+./blockchain/multiSig.ts:    const wallet = new ethers.Wallet(privateKey)
+./blockchain/multiSig.ts:      timestamp: new Date(),
+./blockchain/multiSig.ts:    const executorWallet = new ethers.Wallet(executorPrivateKey)
+./blockchain/multiSig.ts:      createdAt: new Date()
+./blockchain/multiSig.ts:      throw new Error('At least one owner is required')
+./blockchain/multiSig.ts:      throw new Error(`Maximum ${this.maxSigners} owners allowed`)
+./blockchain/multiSig.ts:      throw new Error('Invalid required signatures count')
+./blockchain/multiSig.ts:      throw new Error('Chain ID is required')
+./blockchain/multiSig.ts:        throw new Error('Daily limit exceeded')
+./blockchain/multiSig.ts:        throw new Error('Monthly limit exceeded')
+./blockchain/multiSig.ts:        throw new Error('Contract not allowed')
+./blockchain/multiSig.ts:      throw new Error(`Chain configuration not found: ${chainId}`)
+./blockchain/multiSig.ts:    return new ethers.providers.JsonRpcProvider(chainConfig.rpcUrl)
+./blockchain/multiSig.ts:    const now = new Date()
+./blockchain/multiSig.ts:          wallet.updatedAt = new Date()
+./blockchain/multiSig.ts:      timestamp: new Date().toISOString(),
+./blockchain/multiSig.ts:      lastActivity: new Date(),
+./blockchain/transactionAnalytics.ts:  private timeSeriesData: Map<string, TimeSeriesData[]> = new Map()
+./blockchain/transactionAnalytics.ts:  private userActivity: Map<string, UserActivity> = new Map()
+./blockchain/transactionAnalytics.ts:      lastActivity: new Date()
+./blockchain/transactionAnalytics.ts:    const now = new Date()
+./blockchain/transactionAnalytics.ts:    const from = timeRange?.from || new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+./blockchain/transactionAnalytics.ts:    const timeSeries = new Map()
+./blockchain/transactionAnalytics.ts:      const txDate = new Date(tx.createdAt)
+./blockchain/transactionAnalytics.ts:    const dailyData = new Map()
+./blockchain/transactionAnalytics.ts:      const date = new Date(transaction.createdAt)
+./blockchain/transactionAnalytics.ts:    const hourlyData = new Map()
+./blockchain/transactionAnalytics.ts:      const hour = new Date(transaction.createdAt)
+./blockchain/transactionAnalytics.ts:      timeSeriesData: Array.from(timeSeries.values()).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+./blockchain/transactionAnalytics.ts:    const now = new Date()
+./blockchain/transactionAnalytics.ts:    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+./blockchain/transactionAnalytics.ts:      const dataDate = new Date(date)
+./blockchain/transactionAnalytics.ts:        lastActivity: new Date()
+./blockchain/transactionAnalytics.ts:        timestamp: new Date().toISOString(),
+./blockchain/transactionAnalytics.ts:        timeSeriesData: Array.from(this.timeSeries.values()).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+./blockchain/transactionAnalytics.ts:      lastUpdate: new Date(),
+./blockchain/eventIndexer.ts:  private events: Map<string, IndexedEvent> = new Map()
+./blockchain/eventIndexer.ts:  private eventIndex: Map<string, Set<string>> = new Map()
+./blockchain/eventIndexer.ts:        indexedAt: new Date(),
+./blockchain/eventIndexer.ts:          indexedAt: new Date(),
+./blockchain/eventIndexer.ts:    return [...new Set(searchTerms)] // Remove duplicates
+./blockchain/eventIndexer.ts:        this.eventIndex.set(term, new Set())
+./blockchain/eventIndexer.ts:        start: timeRange?.start || new Date(0),
+./blockchain/eventIndexer.ts:        end: timeRange?.end || new Date()
+./blockchain/eventIndexer.ts:    const addressCounts = new Map<string, { count: number; lastSeen: Date }>()
+./blockchain/eventIndexer.ts:    const grouped = new Map()
+./blockchain/eventIndexer.ts:          uniqueAddresses: new Set(),
+./blockchain/eventIndexer.ts:      event.processedAt = processed ? new Date() : undefined
+./blockchain/eventIndexer.ts:            indexedAt: new Date(),
+./blockchain/transactionDashboard.ts:  private cache: Map<string, any> = new Map()
+./blockchain/transactionDashboard.ts:    const timestamp = new Date()
+./blockchain/transactionDashboard.ts:        lastUpdated: new Date()
+./blockchain/transactionDashboard.ts:        lastUpdated: new Date()
+./blockchain/transactionDashboard.ts:        lastUpdated: new Date()
+./blockchain/transactionDashboard.ts:        lastUpdated: new Date()
+./blockchain/transactionDashboard.ts:        lastUpdated: new Date()
+./blockchain/transactionDashboard.ts:        lastUpdated: new Date()
+./blockchain/transactionDashboard.ts:        lastUpdated: new Date()
+./blockchain/transactionDashboard.ts:        lastUpdated: new Date()
+./blockchain/transactionDashboard.ts:        lastUpdated: new Date()
+./blockchain/transactionDashboard.ts:      lastRefresh: new Date(),
+./blockchain/transactionMonitor.ts:  private transactions: Map<string, Transaction> = new Map()
+./blockchain/transactionMonitor.ts:  private transactionQueues: Map<string, TransactionQueue> = new Map()
+./blockchain/transactionMonitor.ts:  private gasPriceCache: Map<number, GasPriceInfo[]> = new Map()
+./blockchain/transactionMonitor.ts:  private confirmationMonitors: Map<string, NodeJS.Timeout> = new Map()
+./blockchain/transactionMonitor.ts:  private retryTimers: Map<string, NodeJS.Timeout> = new Map()
+./blockchain/transactionMonitor.ts:      createdAt: new Date(),
+./blockchain/transactionMonitor.ts:      updatedAt: new Date(),
+./blockchain/transactionMonitor.ts:      updatedAt: new Date()
+./blockchain/transactionMonitor.ts:    transaction.confirmedAt = new Date()
+./blockchain/transactionMonitor.ts:          timestamp: new Date()
+./blockchain/transactionMonitor.ts:        createdAt: new Date(),
+./blockchain/transactionMonitor.ts:        updatedAt: new Date(),
+./blockchain/transactionMonitor.ts:      createdAt: new Date(),
+./blockchain/transactionMonitor.ts:      queue.processedAt = new Date()
+./blockchain/transactionMonitor.ts:    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000) // 24 hours ago
+./blockchain/transactionMonitor.ts:      timestamp: new Date()
+./blockchain/transactionMonitor.ts:      lastActivity: new Date(),
+./blockchain/eventListener.ts:  private connections: Map<number, WebSocketConnection> = new Map()
+./blockchain/eventListener.ts:  private reconnectIntervals: Map<number, NodeJS.Timeout> = new Map()
+./blockchain/eventListener.ts:      lastActivity: new Date(),
+./blockchain/eventListener.ts:      subscriptions: new Map()
+./blockchain/eventListener.ts:      const provider = new ethers.providers.WebSocketProvider(config.wsUrl, {
+./blockchain/eventListener.ts:      const ws = new WebSocket(config.wsUrl)
+./blockchain/eventListener.ts:      connection.lastActivity = new Date()
+./blockchain/eventListener.ts:      connection.lastActivity = new Date()
+./blockchain/eventListener.ts:      connection.lastActivity = new Date()
+./blockchain/eventListener.ts:      connection.lastActivity = new Date()
+./blockchain/eventListener.ts:    return new Promise((resolve, reject) => {
+./blockchain/eventListener.ts:        reject(new Error('WebSocket not initialized'))
+./blockchain/eventListener.ts:        reject(new Error('WebSocket connection timeout'))
+./blockchain/eventListener.ts:    connection.lastActivity = new Date()
+./blockchain/eventListener.ts:      throw new Error(`No connection available for chain ${chainId}`)
+./blockchain/batchOperations.ts:  private batches: Map<string, BatchTransaction> = new Map()
+./blockchain/batchOperations.ts:  private configs: Map<string, BatchConfig> = new Map()
+./blockchain/batchOperations.ts:        createdAt: new Date(),
+./blockchain/batchOperations.ts:      throw new Error(`Batch not found: ${batchId}`)
+./blockchain/batchOperations.ts:      throw new Error(`Batch not in pending status: ${batch.status}`)
+./blockchain/batchOperations.ts:      batch.processedAt = new Date()
+./blockchain/batchOperations.ts:      batch.completedAt = new Date()
+./blockchain/batchOperations.ts:      batch.completedAt = new Date()
+./blockchain/batchOperations.ts:          await new Promise(resolve => setTimeout(resolve, 100))
+./blockchain/batchOperations.ts:          await new Promise(resolve => setTimeout(resolve, config?.retryDelay || this.retryDelay))
+./blockchain/batchOperations.ts:      const transactionBuilder = new TransactionBuilder(this.logger)
+./blockchain/batchOperations.ts:          throw new Error(`Unsupported operation type: ${operation.type}`)
+./blockchain/batchOperations.ts:    const contractGroups = new Map<string, BatchOperation[]>()
+./blockchain/batchOperations.ts:      throw new Error('At least one operation is required')
+./blockchain/batchOperations.ts:      throw new Error(`Maximum ${this.maxBatchSize} operations allowed per batch`)
+./blockchain/batchOperations.ts:        throw new Error(`Invalid from address: ${operation.from}`)
+./blockchain/batchOperations.ts:        throw new Error(`Invalid to address: ${operation.to}`)
+./blockchain/batchOperations.ts:        throw new Error(`Invalid value: ${operation.value}`)
+./blockchain/batchOperations.ts:    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+./blockchain/batchOperations.ts:      timestamp: new Date().toISOString(),
+./blockchain/batchOperations.ts:      lastActivity: new Date(),
+./blockchain/gasOptimizer.ts:  private gasPriceHistory: Map<number, GasPriceData[]> = new Map()
+./blockchain/gasOptimizer.ts:  private networkCongestion: Map<number, 'low' | 'medium' | 'high'> = new Map()
+./blockchain/gasOptimizer.ts:      timestamp: new Date(),
+./blockchain/gasOptimizer.ts:    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000) // 24 hours ago
+./blockchain/gasOptimizer.ts:      return this.gasPriceHistory.get(chainId) || new Map()
+./blockchain/gasOptimizer.ts:      lastOptimization: new Date()
+./blockchain/gasOptimizer.ts:      timestamp: new Date().toISOString(),
+./blockchain/gasOptimizer.ts:      lastUpdate: new Date(),
+./utils/logger.ts:  new winston.transports.Console(),
+./utils/logger.ts:  new winston.transports.File({
+./utils/logger.ts:  new winston.transports.File({
+./utils/alerts.ts:            timestamp: new Date().toISOString()
+./utils/alerts.ts:            timestamp: new Date().toISOString()
+./users/walletAddressLinking.ts:  private walletLinks: Map<string, WalletLink> = new Map();
+./users/walletAddressLinking.ts:  private verificationRequests: Map<string, VerificationRequest> = new Map();
+./users/walletAddressLinking.ts:  private userIdToWallets: Map<string, string[]> = new Map();
+./users/walletAddressLinking.ts:  private addressToUserId: Map<string, string> = new Map();
+./users/walletAddressLinking.ts:  private verificationAttempts: Map<string, { count: number; lastAttempt: Date }> = new Map();
+./users/walletAddressLinking.ts:      throw new Error('Wallet address already linked to another user');
+./users/walletAddressLinking.ts:      throw new Error(`Maximum wallet limit of ${this.config.maxWalletsPerUser} reached`);
+./users/walletAddressLinking.ts:        throw new Error('User already has a primary wallet');
+./users/walletAddressLinking.ts:      requestedAt: new Date(),
+./users/walletAddressLinking.ts:      expiresAt: new Date(Date.now() + this.config.verificationExpiry * 60 * 1000)
+./users/walletAddressLinking.ts:      throw new Error('Verification request not found');
+./users/walletAddressLinking.ts:      throw new Error('Verification request already processed');
+./users/walletAddressLinking.ts:    if (new Date() > request.expiresAt) {
+./users/walletAddressLinking.ts:      throw new Error('Verification request expired');
+./users/walletAddressLinking.ts:        request.failedAt = new Date();
+./users/walletAddressLinking.ts:      throw new Error('Invalid signature');
+./users/walletAddressLinking.ts:    request.verifiedAt = new Date();
+./users/walletAddressLinking.ts:      throw new Error('Invalid transaction verification');
+./users/walletAddressLinking.ts:      requestedAt: new Date(),
+./users/walletAddressLinking.ts:      expiresAt: new Date(Date.now() + this.config.verificationExpiry * 60 * 1000)
+./users/walletAddressLinking.ts:    verificationRequest.verifiedAt = new Date();
+./users/walletAddressLinking.ts:      throw new Error('Wallet not found');
+./users/walletAddressLinking.ts:        throw new Error('User already has a primary wallet');
+./users/walletAddressLinking.ts:    wallet.updatedAt = new Date();
+./users/walletAddressLinking.ts:        throw new Error('Cannot unlink primary wallet when it\'s the only wallet');
+./users/walletAddressLinking.ts:    wallet.revokedAt = new Date();
+./users/walletAddressLinking.ts:    wallet.updatedAt = new Date();
+./users/walletAddressLinking.ts:      throw new Error('Wallet delegation is not enabled');
+./users/walletAddressLinking.ts:      throw new Error('Wallet not found');
+./users/walletAddressLinking.ts:    const expiryDate = new Date();
+./users/walletAddressLinking.ts:    wallet.updatedAt = new Date();
+./users/walletAddressLinking.ts:    wallet.updatedAt = new Date();
+./users/walletAddressLinking.ts:      throw new Error('Wallet not found');
+./users/walletAddressLinking.ts:    wallet.updatedAt = new Date();
+./users/walletAddressLinking.ts:        const now = new Date();
+./users/walletAddressLinking.ts:    wallet.lastUsedAt = new Date();
+./users/walletAddressLinking.ts:      throw new Error(`Wallet type ${type} is not supported`);
+./users/walletAddressLinking.ts:      throw new Error('Invalid wallet address format');
+./users/walletAddressLinking.ts:    const attempts = this.verificationAttempts.get(address) || { count: 0, lastAttempt: new Date() };
+./users/walletAddressLinking.ts:      throw new Error('Maximum verification attempts exceeded');
+./users/walletAddressLinking.ts:    attempts.lastAttempt = new Date();
+./users/walletAddressLinking.ts:    const now = new Date();
+./users/userRegistration.ts:        throw new Error('Email already registered');
+./users/userRegistration.ts:        throw new Error('Username already taken');
+./users/userRegistration.ts:        verificationExpiresAt: new Date(Date.now() + this.config.verificationTokenExpiry * 60 * 60 * 1000),
+./users/userRegistration.ts:        requestedAt: new Date(),
+./users/userRegistration.ts:        throw new Error('Wallet address already registered');
+./users/userRegistration.ts:        throw new Error('Username already taken');
+./users/userRegistration.ts:        requestedAt: new Date(),
+./users/userRegistration.ts:        requestedAt: new Date(),
+./users/userRegistration.ts:      throw new Error('Registration request not found');
+./users/userRegistration.ts:      throw new Error('Registration request already processed');
+./users/userRegistration.ts:      throw new Error('Invalid verification token');
+./users/userRegistration.ts:    if (request.verificationExpiresAt && new Date() > request.verificationExpiresAt) {
+./users/userRegistration.ts:      throw new Error('Verification token expired');
+./users/userRegistration.ts:        processedAt: new Date(),
+./users/userRegistration.ts:      throw new Error('Registration request not found');
+./users/userRegistration.ts:      throw new Error('Registration request already processed');
+./users/userRegistration.ts:    if (request.verificationExpiresAt && new Date() > request.verificationExpiresAt) {
+./users/userRegistration.ts:      // Generate new token
+./users/userRegistration.ts:      verificationExpiresAt = new Date(Date.now() + this.config.verificationTokenExpiry * 60 * 60 * 1000);
+./users/userRegistration.ts:      throw new Error('Registration request not found');
+./users/userRegistration.ts:      throw new Error('Registration request already processed');
+./users/userRegistration.ts:        processedAt: new Date(),
+./users/userRegistration.ts:      throw new Error('Registration request not found');
+./users/userRegistration.ts:      throw new Error('Registration request already processed');
+./users/userRegistration.ts:        processedAt: new Date(),
+./users/userRegistration.ts:      throw new Error('Invalid email address');
+./users/userRegistration.ts:      throw new Error('Password must be at least 8 characters');
+./users/userRegistration.ts:      throw new Error('Invalid username');
+./users/userRegistration.ts:      throw new Error('Wallet signature validation failed');
+./users/userRegistration.ts:      throw new Error('Too many registration attempts. Please try again later.');
+./users/userRegistration.ts:    const now = new Date();
+./users/userRegistration.ts:    const dailyMap = new Map<string, { date: Date; count: number; method: RegistrationMethod }>();
+./users/activityTracking.ts:  private activities: Map<string, UserActivity> = new Map();
+./users/activityTracking.ts:  private sessions: Map<string, ActivitySession> = new Map();
+./users/activityTracking.ts:  private aggregations: Map<string, ActivityAggregation> = new Map();
+./users/activityTracking.ts:  private userIdToActivities: Map<string, string[]> = new Map();
+./users/activityTracking.ts:    const timestamp = new Date();
+./users/activityTracking.ts:      startTime: new Date(),
+./users/activityTracking.ts:    session.endTime = new Date();
+./users/activityTracking.ts:    const timelineMap = new Map<string, ActivityAggregation['timelineData'][0]>();
+./users/activityTracking.ts:          uniqueTypes: new Set([activity.type]),
+./users/activityTracking.ts:    const countryCounts = new Map<string, number>();
+./users/activityTracking.ts:        const weekStart = new Date(date);
+./users/activityTracking.ts:        start: new Date(activity.timestamp.getTime() - 60 * 60 * 1000), // Last hour
+./users/activityTracking.ts:    const previousCountries = new Set(userSessions.map(s => s.country));
+./users/activityTracking.ts:    const uniqueUsers = new Set(activities.map(a => a.userId)).size;
+./users/activityTracking.ts:    const dailyMap = new Map<string, { date: Date; activityCount: number }>();
+./users/activityTracking.ts:    const countryCounts = new Map<string, number>();
+./users/activityTracking.ts:        activity.processedAt = new Date();
+./users/userAnalytics.ts:  private analytics: Map<string, UserAnalytics> = new Map();
+./users/userAnalytics.ts:  private cohorts: Map<string, CohortAnalysis> = new Map();
+./users/userAnalytics.ts:  private funnels: Map<string, FunnelAnalysis> = new Map();
+./users/userAnalytics.ts:  private behaviors: Map<string, UserBehaviorAnalysis> = new Map();
+./users/userAnalytics.ts:  private reports: Map<string, AnalyticsReport> = new Map();
+./users/userAnalytics.ts:      lastActiveAt: new Date(),
+./users/userAnalytics.ts:      calculatedAt: new Date(),
+./users/userAnalytics.ts:      calculatedAt: new Date()
+./users/userAnalytics.ts:      calculatedAt: new Date()
+./users/userAnalytics.ts:      calculatedAt: new Date()
+./users/userAnalytics.ts:      generatedAt: new Date(),
+./users/profileManagement.ts:  private profiles: Map<string, UserProfile> = new Map();
+./users/profileManagement.ts:  private profileUpdates: Map<string, ProfileUpdate> = new Map();
+./users/profileManagement.ts:  private userIdToProfileId: Map<string, string> = new Map();
+./users/profileManagement.ts:  private editHistory: Map<string, ProfileUpdate[]> = new Map();
+./users/profileManagement.ts:  private dailyEditCounts: Map<string, { count: number; date: string }> = new Map();
+./users/profileManagement.ts:    const now = new Date();
+./users/profileManagement.ts:      throw new Error('User already has a profile');
+./users/profileManagement.ts:      throw new Error('Profile not found');
+./users/profileManagement.ts:    profile.updatedAt = new Date();
+./users/profileManagement.ts:    profile.updatedAt = new Date();
+./users/profileManagement.ts:    profile.metadata.deletedAt = new Date();
+./users/profileManagement.ts:      throw new Error('Profile not found');
+./users/profileManagement.ts:      verifiedAt: new Date(),
+./users/profileManagement.ts:    profile.updatedAt = new Date();
+./users/profileManagement.ts:    profile.updatedAt = new Date();
+./users/profileManagement.ts:      throw new Error('Profile not found');
+./users/profileManagement.ts:      throw new Error('Invalid URL format');
+./users/profileManagement.ts:      throw new Error(`${platform} link already exists`);
+./users/profileManagement.ts:      addedAt: new Date()
+./users/profileManagement.ts:    profile.updatedAt = new Date();
+./users/profileManagement.ts:    profile.updatedAt = new Date();
+./users/profileManagement.ts:      throw new Error('Profile not found');
+./users/profileManagement.ts:    profile.updatedAt = new Date();
+./users/profileManagement.ts:    profile.updatedAt = new Date();
+./users/profileManagement.ts:      throw new Error('Profile not found');
+./users/profileManagement.ts:    profile.updatedAt = new Date();
+./users/profileManagement.ts:    profile.updatedAt = new Date();
+./users/profileManagement.ts:      profile.updatedAt = new Date();
+./users/profileManagement.ts:    update.reviewedAt = new Date();
+./users/profileManagement.ts:    update.reviewedAt = new Date();
+./users/profileManagement.ts:      throw new Error('Display name is required');
+./users/profileManagement.ts:      throw new Error('Real name is required');
+./users/profileManagement.ts:      throw new Error(`Bio cannot exceed ${this.config.maxBioLength} characters`);
+./users/profileManagement.ts:      throw new Error('External links are not allowed');
+./users/profileManagement.ts:        throw new Error('Display name is required');
+./users/profileManagement.ts:      throw new Error(`Bio cannot exceed ${this.config.maxBioLength} characters`);
+./users/profileManagement.ts:          throw new Error(`Invalid URL for ${link.platform}`);
+./users/profileManagement.ts:        throw new Error(`Please wait ${remainingTime} minutes before making another edit`);
+./users/profileManagement.ts:    const today = new Date().toISOString().substring(0, 10);
+./users/profileManagement.ts:      throw new Error(`Daily edit limit of ${this.config.maxEditsPerDay} exceeded`);
+./users/profileManagement.ts:          createdAt: new Date()
+./users/profileManagement.ts:      createdAt: new Date()
+./users/profileManagement.ts:      new URL(url);
+./users/userPreferences.ts:  private preferences: Map<string, UserPreferences> = new Map();
+./users/userPreferences.ts:  private templates: Map<string, PreferenceTemplate> = new Map();
+./users/userPreferences.ts:  private preferenceHistory: Map<string, UserPreferences[]> = new Map();
+./users/userPreferences.ts:      lastUpdated: new Date(),
+./users/userPreferences.ts:      lastUpdated: new Date(),
+./users/userPreferences.ts:      createdAt: new Date(),
+./users/userPreferences.ts:      updatedAt: new Date()
+./users/userPreferences.ts:      throw new Error('Template not found');
+./users/userPreferences.ts:      throw new Error('No preference history found');
+./users/userPreferences.ts:      throw new Error(`Preference version ${version} not found`);
+./users/userPreferences.ts:      lastUpdated: new Date(),
+./users/userPreferences.ts:        throw new Error('Invalid JSON format');
+./users/userPreferences.ts:        throw new Error(`Unsupported language: ${updates.localization.language}`);
+./users/userPreferences.ts:        throw new Error(`Unsupported currency: ${updates.localization.currency}`);
+./users/userPreferences.ts:        throw new Error(`Unsupported timezone: ${updates.localization.timezone}`);
+./users/userPreferences.ts:      throw new Error(`Too many custom preferences (max: ${this.config.maxCustomPreferences})`);
+./users/userPreferences.ts:      lastUpdated: new Date(),
+./users/userPreferences.ts:    const languageCounts = new Map<string, number>();
+./users/userPreferences.ts:    const themeCounts = new Map<ThemeMode, number>();
+./users/userPreferences.ts:    const currencyCounts = new Map<string, number>();
+./assets/imageProcessing.ts:  private images: Map<string, ImageInfo> = new Map();
+./assets/imageProcessing.ts:  private processingJobs: Map<string, ProcessingJob> = new Map();
+./assets/imageProcessing.ts:        createdAt: new Date(),
+./assets/imageProcessing.ts:        updatedAt: new Date()
+./assets/imageProcessing.ts:    image.updatedAt = new Date();
+./assets/imageProcessing.ts:      throw new Error('Image not found');
+./assets/imageProcessing.ts:      createdAt: new Date()
+./assets/imageProcessing.ts:      job.startedAt = new Date();
+./assets/imageProcessing.ts:        throw new Error('Image not found');
+./assets/imageProcessing.ts:        throw new Error('Failed to download original image');
+./assets/imageProcessing.ts:        throw new Error('Failed to store processed image');
+./assets/imageProcessing.ts:      job.completedAt = new Date();
+./assets/imageProcessing.ts:      image.updatedAt = new Date();
+./assets/imageProcessing.ts:      job.completedAt = new Date();
+./assets/imageProcessing.ts:    await new Promise(resolve => setTimeout(resolve, 100));
+./assets/imageProcessing.ts:    return new Promise((resolve) => {
+./assets/imageProcessing.ts:          image.updatedAt = new Date();
+./assets/imageProcessing.ts:      const variant = await new Promise<SizeVariant | null>((resolve) => {
+./assets/imageProcessing.ts:    return new Promise((resolve) => {
+./assets/imageProcessing.ts:            image.updatedAt = new Date();
+./assets/imageProcessing.ts:      throw new Error('CDN not configured');
+./assets/imageProcessing.ts:      throw new Error('CDN not configured');
+./assets/imageProcessing.ts:    // Extract new metadata
+./assets/imageProcessing.ts:    image.updatedAt = new Date();
+./assets/imageProcessing.ts:    job.completedAt = new Date();
+./assets/assetLifecycle.ts:  private workflows: Map<string, LifecycleWorkflow> = new Map()
+./assets/assetLifecycle.ts:  private lifecycleEvents: Map<string, LifecycleEvent> = new Map()
+./assets/assetLifecycle.ts:  private lifecycleTracking: Map<string, LifecycleTracking> = new Map()
+./assets/assetLifecycle.ts:        throw new Error(`Workflow not found: ${workflowId}`)
+./assets/assetLifecycle.ts:          enteredAt: new Date(),
+./assets/assetLifecycle.ts:          changedAt: new Date(),
+./assets/assetLifecycle.ts:      throw new Error(`Lifecycle tracking not found for asset: ${assetId}`)
+./assets/assetLifecycle.ts:        throw new Error(`Workflow not found for asset: ${assetId}`)
+./assets/assetLifecycle.ts:            enteredAt: new Date(),
+./assets/assetLifecycle.ts:      throw new Error(`Lifecycle tracking not found for asset: ${assetId}`)
+./assets/assetLifecycle.ts:            changedAt: new Date(),
+./assets/assetLifecycle.ts:      createdAt: new Date(),
+./assets/assetLifecycle.ts:      updatedAt: new Date()
+./assets/assetLifecycle.ts:      throw new Error(`Workflow not found: ${workflowId}`)
+./assets/assetLifecycle.ts:      updatedAt: new Date(),
+./assets/assetLifecycle.ts:      timestamp: new Date()
+./assets/assetLifecycle.ts:      throw new Error(`Invalid transition: ${fromStage} -> ${toStage}`)
+./assets/assetLifecycle.ts:            throw new Error(`Transition timeout exceeded for stage: ${fromStage}`)
+./assets/assetLifecycle.ts:        checkedAt: new Date(),
+./assets/assetLifecycle.ts:        dueDate: condition.required ? new Date(Date.now() + 86400000) : undefined // 24 hours
+./assets/assetLifecycle.ts:        throw new Error(`Required condition not met: ${condition.description}`)
+./assets/assetLifecycle.ts:      throw new Error(`Lifecycle tracking not found for asset: ${assetId}`)
+./assets/assetLifecycle.ts:    return new Date(Date.now() + totalDuration * 24 * 60 * 60 * 1000)
+./assets/assetLifecycle.ts:      timestamp: new Date().toISOString(),
+./assets/assetLifecycle.ts:      lastActivity: new Date(),
+./assets/assetRegistry.ts:  private assets: Map<string, Asset> = new Map()
+./assets/assetRegistry.ts:  private assetIndex: Map<string, Set<string>> = new Map()
+./assets/assetRegistry.ts:  private categoryIndex: Map<string, Set<string>> = new Map()
+./assets/assetRegistry.ts:  private tagIndex: Map<string, Set<string>> = new Map()
+./assets/assetRegistry.ts:  private ownerIndex: Map<string, Set<string>> = new Map()
+./assets/assetRegistry.ts:        createdAt: new Date(),
+./assets/assetRegistry.ts:        updatedAt: new Date(),
+./assets/assetRegistry.ts:      throw new Error(`Asset not found: ${assetId}`)
+./assets/assetRegistry.ts:      // Create new version
+./assets/assetRegistry.ts:        updatedAt: new Date(),
+./assets/assetRegistry.ts:      throw new Error(`Asset not found: ${assetId}`)
+./assets/assetRegistry.ts:      throw new Error(`Related asset not found: ${relationship.relatedAssetId}`)
+./assets/assetRegistry.ts:      createdAt: new Date(),
+./assets/assetRegistry.ts:      throw new Error(`Asset not found: ${assetId}`)
+./assets/assetRegistry.ts:      throw new Error(`Relationship not found: ${relationshipId}`)
+./assets/assetRegistry.ts:      throw new Error(`Asset not found: ${assetId}`)
+./assets/assetRegistry.ts:      uploadedAt: new Date()
+./assets/assetRegistry.ts:      throw new Error(`Asset not found: ${assetId}`)
+./assets/assetRegistry.ts:      throw new Error(`Document not found: ${documentId}`)
+./assets/assetRegistry.ts:      throw new Error(`Asset not found: ${assetId}`)
+./assets/assetRegistry.ts:        asset.validation.nextReviewDate < new Date()
+./assets/assetRegistry.ts:      throw new Error('Asset name is required')
+./assets/assetRegistry.ts:      throw new Error('Asset owner is required')
+./assets/assetRegistry.ts:      throw new Error('Asset metadata is required')
+./assets/assetRegistry.ts:      throw new Error('Maximum asset limit reached')
+./assets/assetRegistry.ts:      this.assetIndex.set(asset.type, new Set())
+./assets/assetRegistry.ts:        this.categoryIndex.set(category, new Set())
+./assets/assetRegistry.ts:        this.tagIndex.set(tag, new Set())
+./assets/assetRegistry.ts:      this.ownerIndex.set(asset.owner, new Set())
+./assets/assetRegistry.ts:      validationDate: new Date(),
+./assets/assetRegistry.ts:      nextReviewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+./assets/assetRegistry.ts:        valuationDate: new Date(),
+./assets/assetRegistry.ts:      validationDate: new Date(),
+./assets/assetRegistry.ts:      nextReviewDate: new Date(),
+./assets/assetRegistry.ts:      lastUpdated: new Date(),
+./assets/assetRegistry.ts:        timestamp: new Date().toISOString(),
+./assets/assetRegistry.ts:      lastActivity: new Date(),
+./assets/assetRelationships.ts:  private graphs: Map<string, RelationshipGraph> = new Map()
+./assets/assetRelationships.ts:  private relationshipRules: Map<string, RelationshipRule> = new Map()
+./assets/assetRelationships.ts:  private analyses: Map<string, RelationshipAnalysis> = new Map()
+./assets/assetRelationships.ts:        createdAt: new Date(),
+./assets/assetRelationships.ts:        updatedAt: new Date(),
+./assets/assetRelationships.ts:      throw new Error(`Graph not found: ${graphId}`)
+./assets/assetRelationships.ts:      graph.updatedAt = new Date()
+./assets/assetRelationships.ts:      throw new Error(`Graph not found: ${graphId}`)
+./assets/assetRelationships.ts:        createdAt: new Date()
+./assets/assetRelationships.ts:      graph.updatedAt = new Date()
+./assets/assetRelationships.ts:      throw new Error(`Graph not found: ${graphId}`)
+./assets/assetRelationships.ts:        throw new Error('Source or target asset not found in graph')
+./assets/assetRelationships.ts:      throw new Error(`Graph not found: ${graphId}`)
+./assets/assetRelationships.ts:        performedAt: new Date(),
+./assets/assetRelationships.ts:      throw new Error(`Graph not found: ${graphId}`)
+./assets/assetRelationships.ts:        throw new Error(`Asset not found in graph: ${assetId}`)
+./assets/assetRelationships.ts:      throw new Error('Graph name is required')
+./assets/assetRelationships.ts:      throw new Error(`Maximum nodes exceeded: ${graph.nodes.length} > ${this.maxGraphNodes}`)
+./assets/assetRelationships.ts:    const nodeIds = new Set(graph.nodes.map(node => node.id))
+./assets/assetRelationships.ts:        throw new Error(`Edge references non-existent node: ${edge.source} -> ${edge.target}`)
+./assets/assetRelationships.ts:      throw new Error('Source or target asset not found in graph')
+./assets/assetRelationships.ts:      throw new Error('Relationship already exists')
+./assets/assetRelationships.ts:    const visited = new Set<string>()
+./assets/assetRelationships.ts:        throw new Error(`Unknown analysis type: ${analysisType}`)
+./assets/assetRelationships.ts:    const connectionCounts = new Map<string, number>()
+./assets/assetRelationships.ts:    const connectedNodes = new Set<string>()
+./assets/assetRelationships.ts:      timestamp: new Date().toISOString(),
+./assets/assetRelationships.ts:      lastActivity: new Date(),
+./assets/ipfsIntegration.ts:  private files: Map<string, IPFSFile> = new Map()
+./assets/ipfsIntegration.ts:  private directories: Map<string, IPFSDirectory> = new Map()
+./assets/ipfsIntegration.ts:  private batchOperations: Map<string, IPFSBatchOperation> = new Map()
+./assets/ipfsIntegration.ts:      throw new Error('IPFS service is not running')
+./assets/ipfsIntegration.ts:        uploadedAt: new Date(),
+./assets/ipfsIntegration.ts:      throw new Error('IPFS service is not running')
+./assets/ipfsIntegration.ts:        throw new Error(`File not found: ${cid}`)
+./assets/ipfsIntegration.ts:          throw new Error('Checksum verification failed')
+./assets/ipfsIntegration.ts:      throw new Error('IPFS service is not running')
+./assets/ipfsIntegration.ts:        createdAt: new Date(),
+./assets/ipfsIntegration.ts:      throw new Error('IPFS service is not running')
+./assets/ipfsIntegration.ts:      throw new Error('IPFS service is not running')
+./assets/ipfsIntegration.ts:      throw new Error('IPFS service is not running')
+./assets/ipfsIntegration.ts:      startedAt: new Date(),
+./assets/ipfsIntegration.ts:      throw new Error(`IPFS connection failed: ${error.message}`)
+./assets/ipfsIntegration.ts:      throw new Error('File cannot be empty')
+./assets/ipfsIntegration.ts:      throw new Error(`File size exceeds maximum limit: ${this.maxFileSize} bytes`)
+./assets/ipfsIntegration.ts:      throw new Error('File name is required')
+./assets/ipfsIntegration.ts:      throw new Error('MIME type is required')
+./assets/ipfsIntegration.ts:      operation.completedAt = new Date()
+./assets/ipfsIntegration.ts:      operation.completedAt = new Date()
+./assets/ipfsIntegration.ts:          start: new Date(),
+./assets/ipfsIntegration.ts:          end: new Date()
+./assets/ipfsIntegration.ts:    const cutoffDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+./assets/ipfsIntegration.ts:      timestamp: new Date().toISOString(),
+./assets/ipfsIntegration.ts:      lastActivity: new Date()
+./assets/documentVersioning.ts:  private versions: Map<string, DocumentVersion> = new Map();
+./assets/documentVersioning.ts:  private branches: Map<string, VersionBranch> = new Map();
+./assets/documentVersioning.ts:  private merges: Map<string, VersionMerge> = new Map();
+./assets/documentVersioning.ts:  private documentVersions: Map<string, string[]> = new Map(); // documentId -> versionIds
+./assets/documentVersioning.ts:        throw new Error('Failed to store version content on IPFS');
+./assets/documentVersioning.ts:      // Create new version
+./assets/documentVersioning.ts:        createdAt: new Date(),
+./assets/documentVersioning.ts:      throw new Error(`Failed to create version: ${error instanceof Error ? error.message : 'Unknown error'}`);
+./assets/documentVersioning.ts:      throw new Error('Cannot delete active version');
+./assets/documentVersioning.ts:      throw new Error('One or both versions not found');
+./assets/documentVersioning.ts:      throw new Error('Failed to download version content');
+./assets/documentVersioning.ts:      comparedAt: new Date()
+./assets/documentVersioning.ts:    const allKeys = new Set([...Object.keys(metadata1), ...Object.keys(metadata2)]);
+./assets/documentVersioning.ts:      throw new Error('Invalid head version for branch');
+./assets/documentVersioning.ts:      createdAt: new Date(),
+./assets/documentVersioning.ts:      throw new Error('Cannot delete active branch with multiple versions');
+./assets/documentVersioning.ts:      throw new Error('Invalid branch IDs');
+./assets/documentVersioning.ts:      throw new Error('Cannot merge branches from different documents');
+./assets/documentVersioning.ts:      createdAt: new Date(),
+./assets/documentVersioning.ts:      throw new Error('Merge not found');
+./assets/documentVersioning.ts:      throw new Error('Merge is not in pending status');
+./assets/documentVersioning.ts:        throw new Error('Source or target version not found');
+./assets/documentVersioning.ts:        throw new Error('Failed to download version content');
+./assets/documentVersioning.ts:      merge.completedAt = new Date();
+./assets/documentVersioning.ts:      merge.completedAt = new Date();
+./assets/documentVersioning.ts:    const sevenDaysAgo = new Date();
+./assets/assetCategorization.ts:  private categories: Map<string, Category> = new Map()
+./assets/assetCategorization.ts:  private assetCategorizations: Map<string, AssetCategorization> = new Map()
+./assets/assetCategorization.ts:  private categorizationRules: Map<string, CategoryRule> = new Map()
+./assets/assetCategorization.ts:  private autoCategorizationRules: Map<string, AutoCategorizationRule> = new Map()
+./assets/assetCategorization.ts:          throw new Error(`Parent category not found: ${categoryData.parentId}`)
+./assets/assetCategorization.ts:        createdAt: new Date(),
+./assets/assetCategorization.ts:        updatedAt: new Date(),
+./assets/assetCategorization.ts:      throw new Error(`Category not found: ${categoryId}`)
+./assets/assetCategorization.ts:        updatedAt: new Date(),
+./assets/assetCategorization.ts:          assignedAt: new Date(),
+./assets/assetCategorization.ts:        categorizedAt: new Date(),
+./assets/assetCategorization.ts:        throw new Error('No categories matched for auto categorization')
+./assets/assetCategorization.ts:      throw new Error(`Asset categorization not found: ${assetId}`)
+./assets/assetCategorization.ts:    // Create new categorization
+./assets/assetCategorization.ts:      throw new Error(`Asset not found: ${assetId}`)
+./assets/assetCategorization.ts:      throw new Error('Category name is required')
+./assets/assetCategorization.ts:      throw new Error('Maximum category limit reached')
+./assets/assetCategorization.ts:      throw new Error(`Category name already exists at this level: ${category.name}`)
+./assets/assetCategorization.ts:      throw new Error('No valid categories found')
+./assets/assetCategorization.ts:    return [...new Set(tags)] // Remove duplicates
+./assets/assetCategorization.ts:    const categoryScores = new Map<string, number>()
+./assets/assetCategorization.ts:      timestamp: new Date().toISOString(),
+./assets/assetCategorization.ts:      lastActivity: new Date(),
+./assets/documentAccessControl.ts:  private policies: Map<string, AccessPolicy> = new Map();
+./assets/documentAccessControl.ts:  private roles: Map<string, RoleDefinition> = new Map();
+./assets/documentAccessControl.ts:  private groups: Map<string, UserGroup> = new Map();
+./assets/documentAccessControl.ts:  private requests: Map<string, AccessRequest> = new Map();
+./assets/documentAccessControl.ts:  private resourceOwners: Map<string, string> = new Map(); // resourceId -> userId
+./assets/documentAccessControl.ts:      createdAt: new Date(),
+./assets/documentAccessControl.ts:        timestamp: context?.timestamp || new Date()
+./assets/documentAccessControl.ts:        if (policy.expiresAt && policy.expiresAt < new Date()) {
+./assets/documentAccessControl.ts:          timestamp: context?.timestamp || new Date()
+./assets/documentAccessControl.ts:      timestamp: context?.timestamp || new Date()
+./assets/documentAccessControl.ts:          actualValue = context.timestamp || new Date();
+./assets/documentAccessControl.ts:      createdAt: new Date(),
+./assets/documentAccessControl.ts:      throw new Error('Cannot delete role that is in use');
+./assets/documentAccessControl.ts:      createdAt: new Date(),
+./assets/documentAccessControl.ts:      createdAt: new Date()
+./assets/documentAccessControl.ts:    request.reviewedAt = new Date();
+./assets/documentAccessControl.ts:    request.reviewedAt = new Date();
+./assets/documentAccessControl.ts:      timestamp: new Date()
+./assets/documentAccessControl.ts:    const accessCounts = new Map<string, number>();
+./assets/documentAccessControl.ts:      expiredPolicies: policies.filter(p => p.expiresAt && p.expiresAt < new Date()).length,
+./assets/documentAccessControl.ts:      throw new Error('Resource ID and type are required');
+./assets/documentAccessControl.ts:      throw new Error('Subject ID and type are required');
+./assets/documentAccessControl.ts:      throw new Error('At least one permission is required');
+./assets/documentAccessControl.ts:        createdAt: new Date(),
+./assets/assetSearch.ts:  private searchIndexes: Map<string, SearchIndex> = new Map()
+./assets/assetSearch.ts:  private searchHistory: Map<string, SearchHistoryEntry> = new Map()
+./assets/assetSearch.ts:      createdAt: new Date(),
+./assets/assetSearch.ts:      updatedAt: new Date(),
+./assets/assetSearch.ts:      lastIndexed: new Date(),
+./assets/assetSearch.ts:      throw new Error(`Search index not found: ${indexId}`)
+./assets/assetSearch.ts:      index.lastIndexed = new Date()
+./assets/assetSearch.ts:      index.updatedAt = new Date()
+./assets/assetSearch.ts:    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+./assets/assetSearch.ts:      throw new Error('Page number must be non-negative')
+./assets/assetSearch.ts:      throw new Error(`Page size must be between 1 and ${this.maxSearchResults}`)
+./assets/assetSearch.ts:      throw new Error('Minimum value cannot be greater than maximum value')
+./assets/assetSearch.ts:      throw new Error('Start date cannot be after end date')
+./assets/assetSearch.ts:      timestamp: new Date(),
+./assets/assetSearch.ts:    const today = new Date()
+./assets/assetSearch.ts:      timestamp: new Date().toISOString(),
+./assets/assetSearch.ts:      lastActivity: new Date(),
+./assets/documentVerification.ts:  private requests: Map<string, VerificationRequest> = new Map();
+./assets/documentVerification.ts:  private policies: Map<string, VerificationPolicy> = new Map();
+./assets/documentVerification.ts:  private certificates: Map<string, VerificationCertificate> = new Map();
+./assets/documentVerification.ts:  private documentVerifications: Map<string, string[]> = new Map(); // documentId -> verificationIds
+./assets/documentVerification.ts:      createdAt: new Date(),
+./assets/documentVerification.ts:        new Date(Date.now() + policy.expirationPeriod * 60 * 60 * 1000) : 
+./assets/documentVerification.ts:        new Date(Date.now() + 24 * 60 * 60 * 1000)), // Default 24 hours
+./assets/documentVerification.ts:      request.startedAt = new Date();
+./assets/documentVerification.ts:      request.completedAt = new Date();
+./assets/documentVerification.ts:      throw new Error('Verification request not found');
+./assets/documentVerification.ts:      throw new Error('Verification request is not in pending status');
+./assets/documentVerification.ts:      request.completedAt = new Date();
+./assets/documentVerification.ts:      request.completedAt = new Date();
+./assets/documentVerification.ts:      verifiedAt: new Date(),
+./assets/documentVerification.ts:        timestamp: new Date(),
+./assets/documentVerification.ts:      timestamp: new Date(),
+./assets/documentVerification.ts:      timestamp: new Date(),
+./assets/documentVerification.ts:      timestamp: new Date(),
+./assets/documentVerification.ts:      timestamp: new Date(),
+./assets/documentVerification.ts:      throw new Error('Invalid request or verification result');
+./assets/documentVerification.ts:      issuedAt: new Date(),
+./assets/documentVerification.ts:      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+./assets/documentVerification.ts:    if (certificate.expiresAt < new Date()) {
+./assets/documentVerification.ts:      createdAt: new Date(),
+./assets/documentVerification.ts:    const sevenDaysAgo = new Date();
+./assets/documentVerification.ts:    const documentCounts = new Map<string, { count: number; totalScore: number }>();
+./assets/documentVerification.ts:        createdAt: new Date(),
+./assets/assetValidation.ts:  private validationRules: Map<string, ValidationRule> = new Map()
+./assets/assetValidation.ts:  private validationTemplates: Map<string, ValidationTemplate> = new Map()
+./assets/assetValidation.ts:  private validationWorkflows: Map<string, ValidationWorkflow> = new Map()
+./assets/assetValidation.ts:  private validationReports: Map<string, ValidationReport> = new Map()
+./assets/assetValidation.ts:        throw new Error(`Validation template not found: ${templateId}`)
+./assets/assetValidation.ts:        validationDate: new Date(),
+./assets/assetValidation.ts:        nextReviewDate: new Date(),
+./assets/assetValidation.ts:          performedAt: new Date(),
+./assets/assetValidation.ts:        performedAt: new Date(),
+./assets/assetValidation.ts:        performedAt: new Date(),
+./assets/assetValidation.ts:        return new RegExp(expectedValue).test(String(fieldValue))
+./assets/assetValidation.ts:        return new Date(fieldValue) < new Date(expectedValue)
+./assets/assetValidation.ts:        return new Date(fieldValue) > new Date(expectedValue)
+./assets/assetValidation.ts:      reportedAt: new Date()
+./assets/assetValidation.ts:    return new Date(Date.now() + baseInterval * multiplier)
+./assets/assetValidation.ts:      createdAt: new Date(),
+./assets/assetValidation.ts:      updatedAt: new Date()
+./assets/assetValidation.ts:      throw new Error(`Validation template not found: ${templateId}`)
+./assets/assetValidation.ts:      updatedAt: new Date(),
+./assets/assetValidation.ts:    const now = new Date()
+./assets/assetValidation.ts:      timestamp: new Date().toISOString(),
+./assets/assetValidation.ts:      lastActivity: new Date(),
+./assets/metadataExtraction.ts:  private requests: Map<string, ExtractionRequest> = new Map();
+./assets/metadataExtraction.ts:  private extractors: Map<MetadataType, Extractor> = new Map();
+./assets/metadataExtraction.ts:      createdAt: new Date(),
+./assets/metadataExtraction.ts:      request.startedAt = new Date();
+./assets/metadataExtraction.ts:      request.completedAt = new Date();
+./assets/metadataExtraction.ts:        throw new Error(`No extractor found for resource type: ${request.resourceType}`);
+./assets/metadataExtraction.ts:        throw new Error('Failed to download resource from IPFS');
+./assets/metadataExtraction.ts:      request.completedAt = new Date();
+./assets/metadataExtraction.ts:      request.completedAt = new Date();
+./assets/metadataExtraction.ts:    this.extractors.set(MetadataType.DOCUMENT, new DocumentExtractor());
+./assets/metadataExtraction.ts:    this.extractors.set(MetadataType.IMAGE, new ImageExtractor());
+./assets/metadataExtraction.ts:    this.extractors.set(MetadataType.VIDEO, new VideoExtractor());
+./assets/metadataExtraction.ts:    this.extractors.set(MetadataType.AUDIO, new AudioExtractor());
+./assets/metadataExtraction.ts:    this.extractors.set(MetadataType.TEXT, new TextExtractor());
+./assets/metadataExtraction.ts:    this.extractors.set(MetadataType.PDF, new PdfExtractor());
+./assets/metadataExtraction.ts:    this.extractors.set(MetadataType.OFFICE, new OfficeExtractor());
+./assets/metadataExtraction.ts:    this.extractors.set(MetadataType.ARCHIVE, new ArchiveExtractor());
+./assets/metadataExtraction.ts:    this.extractors.set(MetadataType.CODE, new CodeExtractor());
+./assets/metadataExtraction.ts:    const sevenDaysAgo = new Date();
+./assets/metadataExtraction.ts:    const typeCounts = new Map<MetadataType, { count: number; success: number }>();
+./assets/metadataExtraction.ts:      extractedAt: new Date(),
+./assets/metadataExtraction.ts:        createdAt: new Date(),
+./assets/metadataExtraction.ts:        modifiedAt: new Date(),
+./assets/metadataExtraction.ts:      extractedAt: new Date(),
+./assets/metadataExtraction.ts:        createdAt: new Date(),
+./assets/metadataExtraction.ts:        modifiedAt: new Date(),
+./assets/metadataExtraction.ts:        dateTime: new Date(),
+./assets/metadataExtraction.ts:      extractedAt: new Date(),
+./assets/metadataExtraction.ts:        createdAt: new Date(),
+./assets/metadataExtraction.ts:        modifiedAt: new Date(),
+./assets/metadataExtraction.ts:      extractedAt: new Date(),
+./assets/metadataExtraction.ts:        createdAt: new Date(),
+./assets/metadataExtraction.ts:        modifiedAt: new Date(),
+./assets/metadataExtraction.ts:      extractedAt: new Date(),
+./assets/metadataExtraction.ts:        createdAt: new Date(),
+./assets/metadataExtraction.ts:        modifiedAt: new Date(),
+./assets/metadataExtraction.ts:      extractedAt: new Date(),
+./assets/metadataExtraction.ts:        createdAt: new Date(),
+./assets/metadataExtraction.ts:        modifiedAt: new Date(),
+./assets/metadataExtraction.ts:        creationDate: new Date(),
+./assets/metadataExtraction.ts:        modificationDate: new Date(),
+./assets/metadataExtraction.ts:      extractedAt: new Date(),
+./assets/metadataExtraction.ts:        createdAt: new Date(),
+./assets/metadataExtraction.ts:        modifiedAt: new Date(),
+./assets/metadataExtraction.ts:      extractedAt: new Date(),
+./assets/metadataExtraction.ts:        createdAt: new Date(),
+./assets/metadataExtraction.ts:        modifiedAt: new Date(),
+./assets/metadataExtraction.ts:            modifiedAt: new Date(),
+./assets/metadataExtraction.ts:      extractedAt: new Date(),
+./assets/metadataExtraction.ts:        createdAt: new Date(),
+./assets/metadataExtraction.ts:        modifiedAt: new Date(),
+./assets/documentStorage.ts:  private documents: Map<string, Document> = new Map()
+./assets/documentStorage.ts:  private collections: Map<string, DocumentCollection> = new Map()
+./assets/documentStorage.ts:      throw new Error('Document storage service is not running')
+./assets/documentStorage.ts:            timestamp: new Date(),
+./assets/documentStorage.ts:        createdAt: new Date(),
+./assets/documentStorage.ts:        updatedAt: new Date(),
+./assets/documentStorage.ts:      throw new Error('Document storage service is not running')
+./assets/documentStorage.ts:        throw new Error(`Document not found: ${documentId}`)
+./assets/documentStorage.ts:        timestamp: new Date(),
+./assets/documentStorage.ts:      throw new Error('Document storage service is not running')
+./assets/documentStorage.ts:        throw new Error(`Document not found: ${documentId}`)
+./assets/documentStorage.ts:        updatedAt: new Date(),
+./assets/documentStorage.ts:        timestamp: new Date(),
+./assets/documentStorage.ts:      throw new Error('Document storage service is not running')
+./assets/documentStorage.ts:        throw new Error(`Document not found: ${documentId}`)
+./assets/documentStorage.ts:        timestamp: new Date(),
+./assets/documentStorage.ts:      document.updatedAt = new Date()
+./assets/documentStorage.ts:      throw new Error('Document storage service is not running')
+./assets/documentStorage.ts:        createdAt: new Date(),
+./assets/documentStorage.ts:        updatedAt: new Date(),
+./assets/documentStorage.ts:      throw new Error('Document storage service is not running')
+./assets/documentStorage.ts:        throw new Error(`Collection not found: ${collectionId}`)
+./assets/documentStorage.ts:        throw new Error(`Document not found: ${documentId}`)
+./assets/documentStorage.ts:        collection.updatedAt = new Date()
+./assets/documentStorage.ts:      throw new Error('Document cannot be empty')
+./assets/documentStorage.ts:      throw new Error(`Document size exceeds maximum limit: ${this.maxDocumentSize} bytes`)
+./assets/documentStorage.ts:      throw new Error('Document name is required')
+./assets/documentStorage.ts:      throw new Error('MIME type is required')
+./assets/documentStorage.ts:      throw new Error('Invalid document type')
+./assets/documentStorage.ts:      throw new Error('Invalid document category')
+./assets/documentStorage.ts:      throw new Error(`Document type ${document.type} not allowed in collection`)
+./assets/documentStorage.ts:      throw new Error('Collection maximum documents reached')
+./assets/documentStorage.ts:      throw new Error('Collection maximum size exceeded')
+./assets/documentStorage.ts:          throw new Error(rule.errorMessage)
+./assets/documentStorage.ts:          throw new Error(rule.errorMessage)
+./assets/documentStorage.ts:    throw new Error('Permission denied: Cannot download document')
+./assets/documentStorage.ts:    throw new Error('Permission denied: Cannot update document')
+./assets/documentStorage.ts:    throw new Error('Permission denied: Cannot delete document')
+./assets/documentStorage.ts:    const now = new Date()
+./assets/documentStorage.ts:    const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+./assets/documentStorage.ts:    const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+./assets/documentStorage.ts:    const cutoffDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // 30 days ago
+./assets/documentStorage.ts:      timestamp: new Date().toISOString(),
+./assets/documentStorage.ts:      lastActivity: new Date()
+./assets/assetAnalytics.ts:  private metrics: Map<string, AnalyticsMetric> = new Map()
+./assets/assetAnalytics.ts:  private dashboards: Map<string, AnalyticsDashboard> = new Map()
+./assets/assetAnalytics.ts:  private reports: Map<string, AnalyticsReport> = new Map()
+./assets/assetAnalytics.ts:  private alerts: Map<string, AnalyticsAlert> = new Map()
+./assets/assetAnalytics.ts:  private metricValues: Map<string, MetricValue[]> = new Map()
+./assets/assetAnalytics.ts:      throw new Error(`Metric not found: ${metricId}`)
+./assets/assetAnalytics.ts:      createdAt: new Date(),
+./assets/assetAnalytics.ts:      updatedAt: new Date()
+./assets/assetAnalytics.ts:      throw new Error(`Dashboard not found: ${dashboardId}`)
+./assets/assetAnalytics.ts:                timestamp: new Date(),
+./assets/assetAnalytics.ts:        generatedAt: new Date()
+./assets/assetAnalytics.ts:      createdAt: new Date(),
+./assets/assetAnalytics.ts:      updatedAt: new Date()
+./assets/assetAnalytics.ts:      throw new Error(`Report not found: ${reportId}`)
+./assets/assetAnalytics.ts:        generatedAt: new Date(),
+./assets/assetAnalytics.ts:          start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+./assets/assetAnalytics.ts:          end: new Date()
+./assets/assetAnalytics.ts:        generatedAt: new Date()
+./assets/assetAnalytics.ts:      createdAt: new Date(),
+./assets/assetAnalytics.ts:      updatedAt: new Date(),
+./assets/assetAnalytics.ts:        throw new Error(`Unsupported calculation method: ${metric.calculation.method}`)
+./assets/assetAnalytics.ts:      timestamp: new Date(),
+./assets/assetAnalytics.ts:      timestamp: new Date(),
+./assets/assetAnalytics.ts:      timestamp: new Date(),
+./assets/assetAnalytics.ts:      timestamp: new Date(),
+./assets/assetAnalytics.ts:      timestamp: new Date(),
+./assets/assetAnalytics.ts:      createdAt: new Date(),
+./assets/assetAnalytics.ts:      updatedAt: new Date()
+./assets/assetAnalytics.ts:      timestamp: new Date().toISOString(),
+./assets/assetAnalytics.ts:      lastActivity: new Date()
+./index.ts:  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+./kyc/biometricVerification.ts:  private templates: Map<string, BiometricTemplate> = new Map();
+./kyc/biometricVerification.ts:  private userTemplates: Map<string, string[]> = new Map();
+./kyc/biometricVerification.ts:  private verifications: Map<string, BiometricVerification> = new Map();
+./kyc/biometricVerification.ts:      throw new Error(`Maximum templates per user (${this.config.maxTemplatesPerUser}) exceeded`);
+./kyc/biometricVerification.ts:    const now = new Date();
+./kyc/biometricVerification.ts:      expiresAt: new Date(now.getTime() + this.config.templateRetentionPeriod * 24 * 60 * 60 * 1000),
+./kyc/biometricVerification.ts:      throw new Error('Template not found');
+./kyc/biometricVerification.ts:          otherTemplate.updatedAt = new Date();
+./kyc/biometricVerification.ts:    template.updatedAt = new Date();
+./kyc/biometricVerification.ts:    template.updatedAt = new Date();
+./kyc/biometricVerification.ts:    const now = new Date();
+./kyc/biometricVerification.ts:      throw new Error('Template not found or inactive');
+./kyc/biometricVerification.ts:      throw new Error('Verification not found');
+./kyc/biometricVerification.ts:      verification.processedAt = new Date();
+./kyc/biometricVerification.ts:      startedAt: new Date()
+./kyc/biometricVerification.ts:          detectedAt: new Date(),
+./kyc/biometricVerification.ts:      step.completedAt = new Date();
+./kyc/biometricVerification.ts:      startedAt: new Date()
+./kyc/biometricVerification.ts:      step.completedAt = new Date();
+./kyc/biometricVerification.ts:      startedAt: new Date()
+./kyc/biometricVerification.ts:      step.completedAt = new Date();
+./kyc/biometricVerification.ts:      startedAt: new Date()
+./kyc/biometricVerification.ts:      step.completedAt = new Date();
+./kyc/biometricVerification.ts:      startedAt: new Date()
+./kyc/biometricVerification.ts:          detectedAt: new Date(),
+./kyc/biometricVerification.ts:      step.completedAt = new Date();
+./kyc/biometricVerification.ts:      timestamp: new Date()
+./kyc/biometricVerification.ts:      throw new Error('Verification not found');
+./kyc/biometricVerification.ts:    verification.reviewedAt = new Date();
+./kyc/thirdPartyKycIntegration.ts:  private providers: Map<KYCProvider, KYCProviderConfig> = new Map();
+./kyc/thirdPartyKycIntegration.ts:  private applicants: Map<string, KYCApplicant> = new Map();
+./kyc/thirdPartyKycIntegration.ts:  private userApplicants: Map<string, string[]> = new Map();
+./kyc/thirdPartyKycIntegration.ts:  private requests: Map<string, KYCVerificationRequest> = new Map();
+./kyc/thirdPartyKycIntegration.ts:  private rateLimitTracker: Map<KYCProvider, { count: number; windowStart: Date }> = new Map();
+./kyc/thirdPartyKycIntegration.ts:      throw new Error(`KYC provider ${provider} is not configured or enabled`);
+./kyc/thirdPartyKycIntegration.ts:    const now = new Date();
+./kyc/thirdPartyKycIntegration.ts:      dateOfBirth: applicantData.dateOfBirth || new Date(),
+./kyc/thirdPartyKycIntegration.ts:      throw new Error('Applicant not found');
+./kyc/thirdPartyKycIntegration.ts:    applicant.updatedAt = new Date();
+./kyc/thirdPartyKycIntegration.ts:    const now = new Date();
+./kyc/thirdPartyKycIntegration.ts:      throw new Error('Applicant not found');
+./kyc/thirdPartyKycIntegration.ts:      throw new Error('Provider configuration not found');
+./kyc/thirdPartyKycIntegration.ts:      const now = new Date();
+./kyc/thirdPartyKycIntegration.ts:        issueDate: new Date(),
+./kyc/thirdPartyKycIntegration.ts:          document.issueDate = new Date(providerDoc.extractedData.issueDate) || new Date();
+./kyc/thirdPartyKycIntegration.ts:            document.expiryDate = new Date(providerDoc.extractedData.expiryDate);
+./kyc/thirdPartyKycIntegration.ts:    applicant.updatedAt = new Date();
+./kyc/thirdPartyKycIntegration.ts:      throw new Error('Applicant not found');
+./kyc/thirdPartyKycIntegration.ts:    const now = new Date();
+./kyc/thirdPartyKycIntegration.ts:    applicant.updatedAt = new Date();
+./kyc/thirdPartyKycIntegration.ts:      throw new Error('Applicant not found');
+./kyc/thirdPartyKycIntegration.ts:      applicant.reviewedAt = new Date();
+./kyc/thirdPartyKycIntegration.ts:            document.verifiedAt = new Date();
+./kyc/thirdPartyKycIntegration.ts:      throw new Error('Applicant not found');
+./kyc/thirdPartyKycIntegration.ts:        applicant.updatedAt = new Date();
+./kyc/thirdPartyKycIntegration.ts:      createdAt: new Date()
+./kyc/thirdPartyKycIntegration.ts:      updatedAt: new Date()
+./kyc/thirdPartyKycIntegration.ts:    const now = new Date();
+./kyc/thirdPartyKycIntegration.ts:    const windowStart = new Date(now.getTime() - 1000); // 1 second window
+./kyc/thirdPartyKycIntegration.ts:        throw new Error('Rate limit exceeded');
+./kyc/complianceChecking.ts:  private rules: Map<string, ComplianceRule> = new Map();
+./kyc/complianceChecking.ts:  private checks: Map<string, ComplianceCheck> = new Map();
+./kyc/complianceChecking.ts:  private userChecks: Map<string, string[]> = new Map();
+./kyc/complianceChecking.ts:  private violations: Map<string, ComplianceViolation> = new Map();
+./kyc/complianceChecking.ts:      throw new Error('Rule not found');
+./kyc/complianceChecking.ts:    rule.lastUpdated = new Date();
+./kyc/complianceChecking.ts:    const now = new Date();
+./kyc/complianceChecking.ts:      throw new Error(`No applicable rules found for ${type} in ${jurisdiction}`);
+./kyc/complianceChecking.ts:      return new Date(b.deadline || b.id).getTime() - new Date(a.deadline || a.id).getTime();
+./kyc/complianceChecking.ts:      throw new Error('Violation not found');
+./kyc/complianceChecking.ts:    violation.resolvedAt = new Date();
+./kyc/complianceChecking.ts:    const now = new Date();
+./kyc/complianceChecking.ts:        (!rule.expiryDate || rule.expiryDate > new Date()) &&
+./kyc/complianceChecking.ts:        rule.effectiveDate <= new Date()
+./kyc/complianceChecking.ts:        const regex = new RegExp(condition.value);
+./kyc/complianceChecking.ts:      evaluatedAt: new Date()
+./kyc/complianceChecking.ts:      lastUpdated: new Date(),
+./kyc/complianceChecking.ts:      effectiveDate: new Date('2020-01-01'),
+./kyc/complianceChecking.ts:      lastUpdated: new Date(),
+./kyc/complianceChecking.ts:      effectiveDate: new Date('2018-05-25'),
+./kyc/complianceChecking.ts:        v.deadline && v.deadline < new Date() && v.status !== 'resolved'
+./kyc/riskAssessment.ts:  private assessments: Map<string, RiskAssessment> = new Map();
+./kyc/riskAssessment.ts:  private userAssessments: Map<string, string[]> = new Map();
+./kyc/riskAssessment.ts:  private models: Map<string, RiskModel> = new Map();
+./kyc/riskAssessment.ts:    const now = new Date();
+./kyc/riskAssessment.ts:      throw new Error('Assessment not found');
+./kyc/riskAssessment.ts:    assessment.updatedAt = new Date();
+./kyc/riskAssessment.ts:    const now = new Date();
+./kyc/riskAssessment.ts:      throw new Error('Model not found');
+./kyc/riskAssessment.ts:    model.updatedAt = new Date();
+./kyc/riskAssessment.ts:      throw new Error('Assessment not found');
+./kyc/riskAssessment.ts:    const now = new Date();
+./kyc/riskAssessment.ts:      throw new Error('Assessment not found');
+./kyc/riskAssessment.ts:      throw new Error('Mitigation measure not found');
+./kyc/riskAssessment.ts:    measure.updatedAt = new Date();
+./kyc/riskAssessment.ts:    assessment.updatedAt = new Date();
+./kyc/riskAssessment.ts:      const cutoffDate = new Date();
+./kyc/riskAssessment.ts:      createdAt: new Date(),
+./kyc/riskAssessment.ts:      updatedAt: new Date()
+./kyc/riskAssessment.ts:      createdAt: new Date(),
+./kyc/riskAssessment.ts:      updatedAt: new Date()
+./kyc/regulatoryComplianceTracking.ts:  private requirements: Map<string, ComplianceRequirement> = new Map();
+./kyc/regulatoryComplianceTracking.ts:  private assessments: Map<string, ComplianceAssessment> = new Map();
+./kyc/regulatoryComplianceTracking.ts:  private frameworks: Map<string, ComplianceFramework> = new Map();
+./kyc/regulatoryComplianceTracking.ts:  private reports: Map<string, ComplianceReport> = new Map();
+./kyc/regulatoryComplianceTracking.ts:        lastUpdated: new Date(),
+./kyc/regulatoryComplianceTracking.ts:        lastUpdated: new Date(),
+./kyc/regulatoryComplianceTracking.ts:        lastUpdated: new Date(),
+./kyc/regulatoryComplianceTracking.ts:        lastAssessed: new Date(),
+./kyc/regulatoryComplianceTracking.ts:        nextAssessment: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days from now
+./kyc/regulatoryComplianceTracking.ts:        lastAssessed: new Date(),
+./kyc/regulatoryComplianceTracking.ts:        nextAssessment: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000) // 60 days from now
+./kyc/regulatoryComplianceTracking.ts:        lastAssessed: new Date(),
+./kyc/regulatoryComplianceTracking.ts:        nextAssessment: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+./kyc/regulatoryComplianceTracking.ts:        lastAssessed: new Date(),
+./kyc/regulatoryComplianceTracking.ts:        nextAssessment: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000) // 45 days from now
+./kyc/regulatoryComplianceTracking.ts:      lastAssessed: new Date(),
+./kyc/regulatoryComplianceTracking.ts:      nextAssessment: data.nextAssessment || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+./kyc/regulatoryComplianceTracking.ts:      startDate: data.startDate || new Date(),
+./kyc/regulatoryComplianceTracking.ts:          lastAssessed: new Date()
+./kyc/regulatoryComplianceTracking.ts:    if (!requirement) throw new Error('Requirement not found');
+./kyc/regulatoryComplianceTracking.ts:      uploadedAt: new Date()
+./kyc/regulatoryComplianceTracking.ts:    if (!requirement) throw new Error('Requirement not found');
+./kyc/regulatoryComplianceTracking.ts:      generatedAt: new Date(),
+./kyc/regulatoryComplianceTracking.ts:    const now = new Date();
+./kyc/regulatoryComplianceTracking.ts:      lastUpdated: new Date()
+./kyc/jurisdictionManagement.ts:  private jurisdictions: Map<string, Jurisdiction> = new Map();
+./kyc/jurisdictionManagement.ts:        lastUpdated: new Date()
+./kyc/jurisdictionManagement.ts:        lastUpdated: new Date()
+./kyc/jurisdictionManagement.ts:        lastUpdated: new Date()
+./kyc/jurisdictionManagement.ts:      lastUpdated: new Date()
+./kyc/jurisdictionManagement.ts:      lastUpdated: new Date() 
+./kyc/jurisdictionManagement.ts:    if (!jurisdiction) throw new Error('Jurisdiction not found');
+./kyc/jurisdictionManagement.ts:      lastReviewed: new Date()
+./kyc/jurisdictionManagement.ts:    jurisdiction.lastUpdated = new Date();
+./kyc/jurisdictionManagement.ts:      lastReviewed: new Date()
+./kyc/jurisdictionManagement.ts:    jurisdiction.lastUpdated = new Date();
+./kyc/jurisdictionManagement.ts:    if (!jurisdiction) throw new Error('Jurisdiction not found');
+./kyc/jurisdictionManagement.ts:    jurisdiction.lastUpdated = new Date();
+./kyc/jurisdictionManagement.ts:    jurisdiction.lastUpdated = new Date();
+./kyc/jurisdictionManagement.ts:    if (!jurisdiction) throw new Error('Jurisdiction not found');
+./kyc/jurisdictionManagement.ts:    const now = new Date();
+./kyc/jurisdictionManagement.ts:    const futureDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+./kyc/jurisdictionManagement.ts:      lastUpdated: new Date()
+./kyc/watchlistScreening.ts:  private watchlists: Map<string, WatchlistEntity> = new Map();
+./kyc/watchlistScreening.ts:  private screeningRequests: Map<string, ScreeningRequest> = new Map();
+./kyc/watchlistScreening.ts:  private screeningResults: Map<string, ScreeningResult> = new Map();
+./kyc/watchlistScreening.ts:  private matches: Map<string, ScreeningMatch> = new Map();
+./kyc/watchlistScreening.ts:  private rules: Map<string, ScreeningRule> = new Map();
+./kyc/watchlistScreening.ts:  private configs: Map<WatchlistProvider, WatchlistConfig> = new Map();
+./kyc/watchlistScreening.ts:        lastUpdated: new Date(),
+./kyc/watchlistScreening.ts:        lastUpdated: new Date(),
+./kyc/watchlistScreening.ts:      createdAt: new Date(),
+./kyc/watchlistScreening.ts:      completedAt: new Date(),
+./kyc/watchlistScreening.ts:    request.completedAt = new Date();
+./kyc/watchlistScreening.ts:    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+./kyc/watchlistScreening.ts:        return new RegExp(condition.value, condition.caseSensitive ? 'g' : 'gi').test(compareValue);
+./kyc/watchlistScreening.ts:    const today = new Date().toISOString().split('T')[0];
+./kyc/watchlistScreening.ts:    match.reviewedAt = new Date();
+./kyc/watchlistScreening.ts:      lastUpdated: new Date()
+./kyc/watchlistScreening.ts:    const updatedEntity = { ...entity, ...updates, lastUpdated: new Date() };
+./kyc/watchlistScreening.ts:          await new Promise(resolve => setTimeout(resolve, 100));
+./kyc/watchlistScreening.ts:            lastCheck: new Date(),
+./kyc/watchlistScreening.ts:            lastCheck: new Date()
+./kyc/documentVerification.ts:  private documents: Map<string, Document> = new Map();
+./kyc/documentVerification.ts:  private userDocuments: Map<string, string[]> = new Map();
+./kyc/documentVerification.ts:    const now = new Date();
+./kyc/documentVerification.ts:      throw new Error('Document not found');
+./kyc/documentVerification.ts:      document.processedAt = new Date();
+./kyc/documentVerification.ts:      throw new Error('Document not found');
+./kyc/documentVerification.ts:    document.reviewedAt = new Date();
+./kyc/documentVerification.ts:      throw new Error(`File size exceeds maximum allowed size of ${this.config.maxFileSize} bytes`);
+./kyc/documentVerification.ts:      throw new Error(`File type ${fileData.mimeType} is not allowed`);
+./kyc/documentVerification.ts:      startedAt: new Date()
+./kyc/documentVerification.ts:          detectedAt: new Date(),
+./kyc/documentVerification.ts:      step.completedAt = new Date();
+./kyc/documentVerification.ts:      startedAt: new Date()
+./kyc/documentVerification.ts:        dateOfBirth: new Date('1990-01-01'),
+./kyc/documentVerification.ts:      step.completedAt = new Date();
+./kyc/documentVerification.ts:      startedAt: new Date()
+./kyc/documentVerification.ts:          detectedAt: new Date(),
+./kyc/documentVerification.ts:      step.completedAt = new Date();
+./kyc/documentVerification.ts:      startedAt: new Date()
+./kyc/documentVerification.ts:          detectedAt: new Date(),
+./kyc/documentVerification.ts:      step.completedAt = new Date();
+./kyc/documentVerification.ts:      startedAt: new Date()
+./kyc/documentVerification.ts:          detectedAt: new Date(),
+./kyc/documentVerification.ts:      step.completedAt = new Date();
+./kyc/documentVerification.ts:      startedAt: new Date()
+./kyc/documentVerification.ts:          detectedAt: new Date(),
+./kyc/documentVerification.ts:      if (document.expiryDate && document.expiryDate < new Date()) {
+./kyc/documentVerification.ts:          detectedAt: new Date(),
+./kyc/documentVerification.ts:            detectedAt: new Date(),
+./kyc/documentVerification.ts:      step.completedAt = new Date();
+./kyc/documentVerification.ts:    const today = new Date();
+./kyc/reportingGeneration.ts:  private templates: Map<string, ReportTemplate> = new Map();
+./kyc/reportingGeneration.ts:  private reports: Map<string, Report> = new Map();
+./kyc/reportingGeneration.ts:        createdAt: new Date()
+./kyc/reportingGeneration.ts:        createdAt: new Date()
+./kyc/reportingGeneration.ts:      createdAt: new Date()
+./kyc/reportingGeneration.ts:      throw new Error(`Template ${data.templateId} not found`);
+./kyc/reportingGeneration.ts:        throw new Error(`Template ${report.templateId} not found`);
+./kyc/reportingGeneration.ts:      report.generatedAt = new Date();
+./kyc/reportingGeneration.ts:      report.completedAt = new Date();
+./kyc/reportingGeneration.ts:      report.completedAt = new Date();
+./kyc/reportingGeneration.ts:    await new Promise(resolve => setTimeout(resolve, 2000));
+./kyc/reportingGeneration.ts:      generatedAt: new Date(),
+./kyc/reportingGeneration.ts:    await new Promise(resolve => setTimeout(resolve, 500));
+./kyc/reportingGeneration.ts:    await new Promise(resolve => setTimeout(resolve, 1000));
+./kyc/reportingGeneration.ts:        delivery.sentAt = new Date();
+./kyc/reportingGeneration.ts:        await new Promise(resolve => setTimeout(resolve, 1000));
+./kyc/reportingGeneration.ts:        await new Promise(resolve => setTimeout(resolve, 500));
+./kyc/reportingGeneration.ts:        await new Promise(resolve => setTimeout(resolve, 2000));
+./kyc/reportingGeneration.ts:    const templateUsage = new Map<string, number>();
+./kyc/reportingGeneration.ts:    report.lastDownloaded = new Date();
+./kyc/reportingGeneration.ts:      lastUpdated: new Date()
+./kyc/complianceRuleEngine.ts:  private rules: Map<string, Rule> = new Map();
+./kyc/complianceRuleEngine.ts:  private executions: Map<string, RuleExecution> = new Map();
+./kyc/complianceRuleEngine.ts:  private templates: Map<string, RuleTemplate> = new Map();
+./kyc/complianceRuleEngine.ts:        createdAt: new Date(),
+./kyc/complianceRuleEngine.ts:        createdAt: new Date(),
+./kyc/complianceRuleEngine.ts:      createdAt: new Date(),
+./kyc/complianceRuleEngine.ts:      updatedAt: new Date()
+./kyc/complianceRuleEngine.ts:      throw new Error(`Rule ${ruleId} not found`);
+./kyc/complianceRuleEngine.ts:      throw new Error(`Rule ${ruleId} is not active`);
+./kyc/complianceRuleEngine.ts:      startTime: new Date(),
+./kyc/complianceRuleEngine.ts:      execution.endTime = new Date();
+./kyc/complianceRuleEngine.ts:        execution.endTime = new Date();
+./kyc/complianceRuleEngine.ts:      execution.endTime = new Date();
+./kyc/complianceRuleEngine.ts:      execution.endTime = new Date();
+./kyc/complianceRuleEngine.ts:        result = new RegExp(conditionValue, condition.caseSensitive ? 'g' : 'gi').test(String(fieldValue));
+./kyc/complianceRuleEngine.ts:        throw new Error(`Unknown action type: ${action.type}`);
+./kyc/complianceRuleEngine.ts:      throw new Error(`Custom function ${functionName} not found`);
+./kyc/complianceRuleEngine.ts:    await new Promise(resolve => setTimeout(resolve, delay));
+./kyc/complianceRuleEngine.ts:        await new Promise(resolve => setTimeout(resolve, retryDelay * (i + 1)));
+./kyc/complianceRuleEngine.ts:      lastUpdated: new Date()
+./kyc/auditLogging.ts:  private logs: Map<string, AuditLog> = new Map();
+./kyc/auditLogging.ts:  private reports: Map<string, AuditReport> = new Map();
+./kyc/auditLogging.ts:  private retentionPolicies: Map<string, AuditRetentionPolicy> = new Map();
+./kyc/auditLogging.ts:  private alerts: Map<string, AuditAlert> = new Map();
+./kyc/auditLogging.ts:      timestamp: new Date(),
+./kyc/auditLogging.ts:            const windowStart = new Date(Date.now() - condition.timeWindow * 60 * 1000);
+./kyc/auditLogging.ts:    alert.lastTriggered = new Date();
+./kyc/auditLogging.ts:    const now = new Date();
+./kyc/auditLogging.ts:    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+./kyc/auditLogging.ts:    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+./kyc/auditLogging.ts:    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+./kyc/auditLogging.ts:    const userCounts = new Map<string, number>();
+./kyc/auditLogging.ts:    const userLastActivity = new Map<string, Date>();
+./kyc/auditLogging.ts:        lastActivity: userLastActivity.get(userId) || new Date()
+./kyc/auditLogging.ts:    const resourceCounts = new Map<string, number>();
+./kyc/auditLogging.ts:    const resourceLastAccess = new Map<string, Date>();
+./kyc/auditLogging.ts:        lastAccess: resourceLastAccess.get(resource) || new Date()
+./kyc/auditLogging.ts:        start: data.query.startDate || new Date(0),
+./kyc/auditLogging.ts:        end: data.query.endDate || new Date()
+./kyc/auditLogging.ts:      generatedAt: new Date(),
+./kyc/auditLogging.ts:    const counts = new Map<string, number>();
+./kyc/auditLogging.ts:      lastUpdated: new Date()
+./kyc/complianceAlerts.ts:  private alerts: Map<string, Alert> = new Map();
+./kyc/complianceAlerts.ts:  private rules: Map<string, AlertRule> = new Map();
+./kyc/complianceAlerts.ts:  private templates: Map<string, AlertTemplate> = new Map();
+./kyc/complianceAlerts.ts:        createdAt: new Date()
+./kyc/complianceAlerts.ts:        createdAt: new Date()
+./kyc/complianceAlerts.ts:        createdAt: new Date()
+./kyc/complianceAlerts.ts:        createdAt: new Date()
+./kyc/complianceAlerts.ts:      triggeredAt: new Date(),
+./kyc/complianceAlerts.ts:    const windowStart = new Date(Date.now() - this.config.deduplicationWindow * 60 * 1000);
+./kyc/complianceAlerts.ts:    const cooldownEnd = new Date(alert.triggeredAt.getTime() + rule.cooldownPeriod * 60 * 1000);
+./kyc/complianceAlerts.ts:    return new Date() < cooldownEnd;
+./kyc/complianceAlerts.ts:    alert.acknowledgedAt = new Date();
+./kyc/complianceAlerts.ts:      performedAt: new Date(),
+./kyc/complianceAlerts.ts:    alert.resolvedAt = new Date();
+./kyc/complianceAlerts.ts:      performedAt: new Date(),
+./kyc/complianceAlerts.ts:    const now = new Date();
+./kyc/complianceAlerts.ts:    let nextDate = new Date(now);
+./kyc/complianceAlerts.ts:    alert.escalatedAt = new Date();
+./kyc/complianceAlerts.ts:      performedAt: new Date(),
+./kyc/complianceAlerts.ts:        throw new Error(`Template ${notification.template} not found`);
+./kyc/complianceAlerts.ts:      notification.sentAt = new Date();
+./kyc/complianceAlerts.ts:        await new Promise(resolve => setTimeout(resolve, 1000));
+./kyc/complianceAlerts.ts:        await new Promise(resolve => setTimeout(resolve, 500));
+./kyc/complianceAlerts.ts:        await new Promise(resolve => setTimeout(resolve, 2000));
+./kyc/complianceAlerts.ts:        await new Promise(resolve => setTimeout(resolve, 1500));
+./kyc/complianceAlerts.ts:        await new Promise(resolve => setTimeout(resolve, 500));
+./kyc/complianceAlerts.ts:    this.metrics.overdueAlerts = alerts.filter(a => a.dueDate && a.dueDate < new Date() && a.status !== AlertStatus.RESOLVED).length;
+./kyc/complianceAlerts.ts:    const sourceCounts = new Map<string, number>();
+./kyc/complianceAlerts.ts:      lastUpdated: new Date()
+./bids/bidHistory.ts:  private history: Map<string, BidHistoryEntry> = new Map();
+./bids/bidHistory.ts:  private events: Map<string, HistoryEvent> = new Map();
+./bids/bidHistory.ts:  private auctionHistory: Map<string, string[]> = new Map(); // auctionId -> bidIds
+./bids/bidHistory.ts:  private bidderHistory: Map<string, string[]> = new Map(); // bidderId -> bidIds
+./bids/bidHistory.ts:    const timestamp = new Date();
+./bids/bidHistory.ts:    bid.statusChangedAt = new Date();
+./bids/bidHistory.ts:      timestamp: new Date(),
+./bids/bidHistory.ts:      throw new Error('No bid history found for analytics');
+./bids/bidHistory.ts:    const uniqueBidders = new Set(bids.map(b => b.bidderId)).size;
+./bids/bidHistory.ts:    const bidderMap = new Map<string, HistoryAnalytics['bidderStats'][0]>();
+./bids/bidHistory.ts:    const timelineMap = new Map<string, HistoryAnalytics['bidTimeline'][0]>();
+./bids/bidHistory.ts:      event.processedAt = new Date();
+./bids/bidHistory.ts:    // Set new bid as winning
+./bids/refundProcessing.ts:  private refunds: Map<string, RefundRequest> = new Map();
+./bids/refundProcessing.ts:  private policies: Map<string, RefundPolicy> = new Map();
+./bids/refundProcessing.ts:  private batches: Map<string, RefundBatch> = new Map();
+./bids/refundProcessing.ts:      requestedAt: new Date(),
+./bids/refundProcessing.ts:      refund.processedAt = new Date();
+./bids/refundProcessing.ts:      refund.completedAt = new Date();
+./bids/refundProcessing.ts:      createdAt: new Date(),
+./bids/refundProcessing.ts:      updatedAt: new Date()
+./bids/refundProcessing.ts:      createdAt: new Date()
+./bids/refundProcessing.ts:    batch.processedAt = new Date();
+./bids/refundProcessing.ts:      batch.completedAt = new Date();
+./bids/refundProcessing.ts:    const dailyMap = new Map<string, { count: number; amount: number }>();
+./bids/refundProcessing.ts:        date: new Date(date),
+./bids/refundProcessing.ts:      throw new Error('User ID is required');
+./bids/refundProcessing.ts:      throw new Error('Auction ID is required');
+./bids/refundProcessing.ts:      throw new Error('Refund amount must be greater than 0');
+./bids/refundProcessing.ts:      throw new Error(`Refund method ${refund.method} is not supported`);
+./bids/refundProcessing.ts:          throw new Error('Bid ID is required for outbid refunds');
+./bids/refundProcessing.ts:        throw new Error(`Refund does not meet policy conditions: ${condition.field}`);
+./bids/refundProcessing.ts:          throw new Error(`Unsupported refund method: ${refund.method}`);
+./bids/bidValidation.ts:  private validationCache: Map<string, ValidationResult> = new Map();
+./bids/bidValidation.ts:    this.ruleEngine = new ValidationRuleEngine(this.config);
+./bids/bidValidation.ts:        validatedAt: new Date()
+./bids/bidValidation.ts:        validatedAt: new Date()
+./bids/bidValidation.ts:  private rules: Map<ValidationRule, ValidationRuleFunction> = new Map();
+./bids/settlementAutomation.ts:  private settlements: Map<string, Settlement> = new Map();
+./bids/settlementAutomation.ts:  private rules: Map<string, SettlementRule> = new Map();
+./bids/settlementAutomation.ts:  private batches: Map<string, SettlementBatch> = new Map();
+./bids/settlementAutomation.ts:      initiatedAt: new Date(),
+./bids/settlementAutomation.ts:    if (options.scheduledFor && options.scheduledFor > new Date()) {
+./bids/settlementAutomation.ts:      settlement.completedAt = new Date();
+./bids/settlementAutomation.ts:      createdAt: new Date(),
+./bids/settlementAutomation.ts:      updatedAt: new Date()
+./bids/settlementAutomation.ts:      initiatedAt: new Date()
+./bids/settlementAutomation.ts:      batch.completedAt = new Date();
+./bids/settlementAutomation.ts:        startedAt: new Date()
+./bids/settlementAutomation.ts:        stepRecord.completedAt = new Date();
+./bids/settlementAutomation.ts:        stepRecord.completedAt = new Date();
+./bids/settlementAutomation.ts:      throw new Error('Winner and seller IDs are required');
+./bids/settlementAutomation.ts:      throw new Error('Winning amount must be greater than 0');
+./bids/settlementAutomation.ts:      throw new Error(`Payment method ${settlement.paymentMethod} is not supported`);
+./bids/settlementAutomation.ts:        throw new Error(`Unsupported payment method: ${settlement.paymentMethod}`);
+./bids/settlementAutomation.ts:    settlement.completedAt = new Date();
+./bids/settlementAutomation.ts:    const dailyMap = new Map<string, { count: number; amount: number }>();
+./bids/settlementAutomation.ts:        date: new Date(date),
+./bids/bidAggregationEnhanced.ts:  private aggregations: Map<string, BidAggregation> = new Map();
+./bids/bidAggregationEnhanced.ts:  private requests: Map<string, AggregationRequest> = new Map();
+./bids/bidAggregationEnhanced.ts:  private results: Map<string, AggregationResult> = new Map();
+./bids/bidAggregationEnhanced.ts:      createdAt: new Date()
+./bids/bidAggregationEnhanced.ts:      createdAt: new Date()
+./bids/bidAggregationEnhanced.ts:    const now = new Date();
+./bids/bidAggregationEnhanced.ts:    const endTime = new Date(now.getTime() + this.getPeriodMs(period));
+./bids/bidAggregationEnhanced.ts:    // Process new bid data
+./bids/bidAggregationEnhanced.ts:    aggregation.processedAt = new Date();
+./bids/bidAggregationEnhanced.ts:      createdAt: new Date(),
+./bids/bidAggregationEnhanced.ts:      processedAt: new Date(),
+./bids/bidAggregationEnhanced.ts:    aggregation.processedAt = new Date();
+./bids/bidAggregationEnhanced.ts:      createdAt: new Date()
+./bids/bidAggregationEnhanced.ts:      createdAt: new Date()
+./bids/bidAggregationEnhanced.ts:      createdAt: new Date()
+./bids/bidAggregationEnhanced.ts:      result.completedAt = new Date();
+./bids/bidAggregationEnhanced.ts:        dimension = new Date().toISOString();
+./bids/bidAggregationEnhanced.ts:        const bidderCounts = new Map<string, number>();
+./bids/bidAggregationEnhanced.ts:        const auctionCounts = new Map<string, number>();
+./bids/bidAggregationEnhanced.ts:      timestamp: new Date(),
+./bids/bidAggregationEnhanced.ts:    const timeGroups = new Map<string, BidHistoryEntry[]>();
+./bids/bidAggregationEnhanced.ts:    const date = new Date(timestamp);
+./bids/bidAggregationEnhanced.ts:        const weekStart = new Date(date);
+./bids/winnerDetermination.ts:  private determinations: Map<string, WinnerDetermination> = new Map();
+./bids/winnerDetermination.ts:  private disputes: Map<string, Dispute> = new Map();
+./bids/winnerDetermination.ts:        throw new Error('No valid bids found');
+./bids/winnerDetermination.ts:      timestamp: new Date(),
+./bids/winnerDetermination.ts:    determination.confirmedAt = new Date();
+./bids/winnerDetermination.ts:      raisedAt: new Date()
+./bids/winnerDetermination.ts:    dispute.resolvedAt = new Date();
+./bids/winnerDetermination.ts:      throw new Error('Auction ID is required');
+./bids/winnerDetermination.ts:      throw new Error('Auction type is required');
+./bids/winnerDetermination.ts:      throw new Error('Bids are required');
+./bids/winnerDetermination.ts:      throw new Error('Auction settings are required');
+./bids/winnerDetermination.ts:        throw new Error(`Unsupported determination method: ${method}`);
+./bids/winnerDetermination.ts:    const amountCounts = new Map<number, BidData[]>();
+./bids/winnerDetermination.ts:    const now = new Date();
+./auctions/auctionScheduling.ts:  private schedules: Map<string, AuctionSchedule> = new Map();
+./auctions/auctionScheduling.ts:  private executions: Map<string, ScheduleExecution> = new Map();
+./auctions/auctionScheduling.ts:  private scheduledJobs: Map<string, NodeJS.Timeout> = new Map();
+./auctions/auctionScheduling.ts:    const now = new Date();
+./auctions/auctionScheduling.ts:      throw new Error('Cannot update active schedule');
+./auctions/auctionScheduling.ts:    schedule.updatedAt = new Date();
+./auctions/auctionScheduling.ts:      throw new Error('Schedule not found');
+./auctions/auctionScheduling.ts:      executionTime: new Date(),
+./auctions/auctionScheduling.ts:            timestamp: new Date(),
+./auctions/auctionScheduling.ts:          throw new Error('Conditions not met');
+./auctions/auctionScheduling.ts:      schedule.lastExecuted = new Date();
+./auctions/auctionScheduling.ts:        timestamp: new Date(),
+./auctions/auctionScheduling.ts:        const retryTime = new Date(Date.now() + schedule.executionSettings.retryDelay * 60 * 1000);
+./auctions/auctionScheduling.ts:        const currentHour = new Date().getHours();
+./auctions/auctionScheduling.ts:        const currentDay = new Date().getDay();
+./auctions/auctionScheduling.ts:      throw new Error('Schedule name is required');
+./auctions/auctionScheduling.ts:      throw new Error('Auction template is required');
+./auctions/auctionScheduling.ts:    if (schedule.startTime <= new Date()) {
+./auctions/auctionScheduling.ts:      throw new Error('Start time must be in the future');
+./auctions/auctionScheduling.ts:      throw new Error('Recurrence is disabled');
+./auctions/auctionScheduling.ts:      throw new Error('Conditional triggers are disabled');
+./auctions/auctionScheduling.ts:        throw new Error(`Maximum recurrence occurrences is ${this.config.maxRecurrenceOccurrences}`);
+./auctions/auctionScheduling.ts:      return new Date();
+./auctions/auctionScheduling.ts:    const nextTime = new Date(baseTime);
+./auctions/auctionScheduling.ts:    if (schedule.recurrence.endDate && new Date() > schedule.recurrence.endDate) {
+./auctions/auctionScheduling.ts:    // Schedule new job if time provided
+./auctions/auctionScheduling.ts:      .filter(s => s.nextExecution && s.nextExecution > new Date())
+./auctions/auctionScheduling.ts:    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+./auctions/auctionScheduling.ts:    const dailyData = new Map<string, { executions: number; successes: number; failures: number }>();
+./auctions/auctionScheduling.ts:        date: new Date(date),
+./auctions/auctionScheduling.ts:        if (schedule.nextExecution && schedule.nextExecution > new Date()) {
+./auctions/auctionAnalytics.ts:  private metrics: Map<string, AnalyticsMetric> = new Map();
+./auctions/auctionAnalytics.ts:  private reports: Map<string, AnalyticsReport> = new Map();
+./auctions/auctionAnalytics.ts:  private insights: Map<string, AnalyticsInsight> = new Map();
+./auctions/auctionAnalytics.ts:  private visualizations: Map<string, AnalyticsVisualization> = new Map();
+./auctions/auctionAnalytics.ts:  private models: Map<string, PredictiveModel> = new Map();
+./auctions/auctionAnalytics.ts:  private predictions: Map<string, PredictionResult> = new Map();
+./auctions/auctionAnalytics.ts:      timestamp: new Date(),
+./auctions/auctionAnalytics.ts:      generatedAt: new Date(),
+./auctions/auctionAnalytics.ts:          timestamp: new Date()
+./auctions/auctionAnalytics.ts:          timestamp: new Date()
+./auctions/auctionAnalytics.ts:        recommendations.push('Explore new revenue streams and monetization opportunities');
+./auctions/auctionAnalytics.ts:    return [...new Set(recommendations)]; // Remove duplicates
+./auctions/auctionAnalytics.ts:      lastTrained: new Date(),
+./auctions/auctionAnalytics.ts:        start: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // 90 days ago
+./auctions/auctionAnalytics.ts:        end: new Date()
+./auctions/auctionAnalytics.ts:    model.lastTrained = new Date();
+./auctions/auctionAnalytics.ts:      throw new Error('Model not found');
+./auctions/auctionAnalytics.ts:      generatedAt: new Date(),
+./auctions/auctionAnalytics.ts:      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+./auctions/auctionAnalytics.ts:        lastTrained: new Date(),
+./auctions/auctionAnalytics.ts:          start: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+./auctions/auctionAnalytics.ts:          end: new Date()
+./auctions/auctionAnalytics.ts:        lastTrained: new Date(),
+./auctions/auctionAnalytics.ts:          start: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+./auctions/auctionAnalytics.ts:          end: new Date()
+./auctions/auctionService.ts:  private auctions: Map<string, Auction> = new Map();
+./auctions/auctionService.ts:  private bids: Map<string, Bid> = new Map();
+./auctions/auctionService.ts:  private auctionBids: Map<string, string[]> = new Map(); // auctionId -> bidIds
+./auctions/auctionService.ts:  private userBids: Map<string, string[]> = new Map(); // userId -> bidIds
+./auctions/auctionService.ts:  private userAuctions: Map<string, string[]> = new Map(); // userId -> auctionIds
+./auctions/auctionService.ts:  private scheduledJobs: Map<string, NodeJS.Timeout> = new Map();
+./auctions/auctionService.ts:    const now = new Date();
+./auctions/auctionService.ts:      throw new Error('Cannot update active or ended auction');
+./auctions/auctionService.ts:    auction.updatedAt = new Date();
+./auctions/auctionService.ts:    if (updates.startTime && updates.startTime > new Date()) {
+./auctions/auctionService.ts:      throw new Error('Can only delete draft auctions');
+./auctions/auctionService.ts:      throw new Error('Auction cannot be started');
+./auctions/auctionService.ts:    auction.updatedAt = new Date();
+./auctions/auctionService.ts:      throw new Error('Only active auctions can be paused');
+./auctions/auctionService.ts:    auction.updatedAt = new Date();
+./auctions/auctionService.ts:      throw new Error('Only paused auctions can be resumed');
+./auctions/auctionService.ts:    auction.updatedAt = new Date();
+./auctions/auctionService.ts:      throw new Error('Only active auctions can be ended');
+./auctions/auctionService.ts:    auction.updatedAt = new Date();
+./auctions/auctionService.ts:      throw new Error('Cannot cancel ended or already cancelled auction');
+./auctions/auctionService.ts:    auction.updatedAt = new Date();
+./auctions/auctionService.ts:    const now = new Date();
+./auctions/auctionService.ts:      throw new Error('Auction not found');
+./auctions/auctionService.ts:    const bidderMap = new Map<string, { bidCount: number; totalAmount: number }>();
+./auctions/auctionService.ts:    const hourCounts = new Map<number, number>();
+./auctions/auctionService.ts:    const peakBiddingTime = new Date();
+./auctions/auctionService.ts:    const now = new Date();
+./auctions/auctionService.ts:    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+./auctions/auctionService.ts:    const categoryMap = new Map<string, { count: number; volume: number }>();
+./auctions/auctionService.ts:      throw new Error('Auction title is required');
+./auctions/auctionService.ts:      throw new Error('Asset ID is required');
+./auctions/auctionService.ts:      throw new Error('Starting price must be greater than 0');
+./auctions/auctionService.ts:      throw new Error('Reserve price cannot be less than starting price');
+./auctions/auctionService.ts:      throw new Error('Buy now price must be greater than starting price');
+./auctions/auctionService.ts:      throw new Error('End time must be after start time');
+./auctions/auctionService.ts:      throw new Error(`Auction duration cannot exceed ${this.config.maxAuctionDuration} hours`);
+./auctions/auctionService.ts:      throw new Error('Minimum bid increment must be greater than 0');
+./auctions/auctionService.ts:      auction.settlementCompletedAt = new Date();
+./auctions/auctionService.ts:    const now = new Date();
+./auctions/auctionStateSync.ts:  private snapshots: Map<string, StateSnapshot> = new Map();
+./auctions/auctionStateSync.ts:  private sessions: Map<string, SyncSession> = new Map();
+./auctions/auctionStateSync.ts:  private conflicts: Map<string, SyncConflict> = new Map();
+./auctions/auctionStateSync.ts:  private errors: Map<string, SyncError> = new Map();
+./auctions/auctionStateSync.ts:    const timestamp = new Date();
+./auctions/auctionStateSync.ts:      startTime: new Date(),
+./auctions/auctionStateSync.ts:    session.endTime = new Date();
+./auctions/auctionStateSync.ts:      timestamp: new Date(),
+./auctions/auctionStateSync.ts:          timestamp: new Date(),
+./auctions/auctionStateSync.ts:      // Create new snapshot with updated state
+./auctions/auctionStateSync.ts:        timestamp: new Date(),
+./auctions/auctionStateSync.ts:          timestamp: new Date(),
+./auctions/auctionStateSync.ts:            detectedAt: new Date(),
+./auctions/auctionStateSync.ts:      throw new Error('Real-time sync is disabled in configuration');
+./auctions/auctionStateSync.ts:        timestamp: new Date(),
+./auctions/auctionStateSync.ts:      this.currentSession.endTime = new Date();
+./auctions/auctionStateSync.ts:            timestamp: new Date(),
+./auctions/auctionStateSync.ts:      endTime: new Date(blockchainData.data.endTime * 1000),
+./auctions/auctionStateSync.ts:      timestamp: new Date(),
+./auctions/auctionNotifications.ts:  private notifications: Map<string, Notification> = new Map();
+./auctions/auctionNotifications.ts:  private templates: Map<string, NotificationTemplate> = new Map();
+./auctions/auctionNotifications.ts:  private preferences: Map<string, NotificationPreference> = new Map();
+./auctions/auctionNotifications.ts:  private rules: Map<string, NotificationRule> = new Map();
+./auctions/auctionNotifications.ts:  private rateLimitTracker: Map<string, number[]> = new Map();
+./auctions/auctionNotifications.ts:      throw new Error('User has disabled this notification type');
+./auctions/auctionNotifications.ts:      throw new Error('Rate limit exceeded');
+./auctions/auctionNotifications.ts:      createdAt: new Date(),
+./auctions/auctionNotifications.ts:    if (!options.scheduledFor || options.scheduledFor <= new Date()) {
+./auctions/auctionNotifications.ts:      createdAt: new Date(),
+./auctions/auctionNotifications.ts:      updatedAt: new Date()
+./auctions/auctionNotifications.ts:      createdAt: new Date(),
+./auctions/auctionNotifications.ts:      updatedAt: new Date()
+./auctions/auctionNotifications.ts:      updatedAt: new Date()
+./auctions/auctionNotifications.ts:      createdAt: new Date(),
+./auctions/auctionNotifications.ts:      updatedAt: new Date()
+./auctions/auctionNotifications.ts:      createdAt: new Date(),
+./auctions/auctionNotifications.ts:      updatedAt: new Date()
+./auctions/auctionNotifications.ts:        message: `A new bid of ${bid.amount} has been placed on your auction "${auction.title}"`,
+./auctions/auctionNotifications.ts:      notification.sentAt = new Date();
+./auctions/auctionNotifications.ts:      notification.deliveredAt = new Date();
+./auctions/bidAggregation.ts:  private aggregations: Map<string, BidAggregation> = new Map();
+./auctions/bidAggregation.ts:  private validations: Map<string, BidValidation> = new Map();
+./auctions/bidAggregation.ts:  private bidHistory: Map<string, Bid[]> = new Map(); // auctionId -> bids
+./auctions/bidAggregation.ts:      validation.processedAt = new Date();
+./auctions/bidAggregation.ts:        processedAt: new Date(),
+./auctions/bidAggregation.ts:      processedAt: new Date(),
+./auctions/bidAggregation.ts:    const now = new Date();
+./auctions/bidAggregation.ts:      throw new Error('No bids found for the specified period');
+./auctions/bidAggregation.ts:    const uniqueBidders = new Set(bids.map(b => b.bidderId)).size;
+./auctions/bidAggregation.ts:      throw new Error('No bids found for analytics generation');
+./auctions/bidAggregation.ts:      endTime: endTime || new Date(),
+./auctions/bidAggregation.ts:    const groupedBids = new Map<string, Bid[]>();
+./auctions/bidAggregation.ts:      const timestamp = new Date(timeKey);
+./auctions/bidAggregation.ts:    const bidderMap = new Map<string, BidAggregation['bidderActivity'][0]>();
+./auctions/bidAggregation.ts:    const uniqueBidders = new Set(bids.map(b => b.bidderId));
+./auctions/bidAggregation.ts:    const bidderMap = new Map<string, { bidCount: number; totalAmount: number }>();
+./auctions/bidAggregation.ts:    const hourlyData = new Map<number, { bidCount: number; totalAmount: number }>();
+./auctions/bidAggregation.ts:    const date = new Date(timestamp);
+./auctions/bidAggregation.ts:        const weekStart = new Date(date);
+./models/Payment.ts:const PaymentSchema = new Schema<IPayment>({
+./models/User.ts:const UserSchema = new Schema<IUser>({
+./models/Auction.ts:const AuctionSchema = new Schema<IAuction>({
+./models/Auction.ts:  this.metrics.uniqueBidders = new Set(this.bids.map(bid => bid.bidderId.toString())).size
+./models/Auction.ts:    id: new mongoose.Types.ObjectId().toString(),
+./models/Auction.ts:    timestamp: new Date(),
+./models/Auction.ts:  // Mark new bid as winning
+./models/Auction.ts:    const newEndTime = new Date(this.endTime.getTime() + this.settings.extendDuration * 60 * 1000)
+./models/Auction.ts:  this.timeline.endedAt = new Date()
+./models/Auction.ts:  this.timeline.endedAt = new Date()
+./models/Auction.ts:  if (new Date() > this.endTime) return false
+./models/Auction.ts:    endTime: { $gt: new Date() },
+./models/Auction.ts:  const endTime = new Date(Date.now() + hours * 60 * 60 * 1000)
+./models/Auction.ts:    endTime: { $lte: endTime, $gt: new Date() },
+./models/Auction.ts:    endTime: { $gt: new Date() }
+./models/Auction.ts:  return new Date() > this.endTime
+./models/Auction.ts:  const now = new Date()
+./models/Auction.ts:  const endTime = new Date(this.endTime)
+./models/Asset.ts:const AssetSchema = new Schema<IAsset>({
+./models/Asset.ts:      max: new Date().getFullYear() + 1
+./models/Asset.ts:    this.publishedAt = new Date()
+./models/Asset.ts:    acquisitionDate: new Date(),
+./models/Asset.ts:  return this.expiresAt && this.expiresAt < new Date()
+./services/email.ts:      throw new Error('Failed to send email')
+./services/email.ts:            <p>You've been outbid on "${data.auctionTitle}". The new highest bid is ${data.newBid} ETH.</p>
+./services/email.ts:export const emailService = new EmailService()
+./analytics/businessMetrics.ts:  private metrics: Map<string, BusinessMetric> = new Map();
+./analytics/businessMetrics.ts:  private definitions: Map<string, MetricDefinition> = new Map();
+./analytics/businessMetrics.ts:  private alerts: Map<string, MetricAlert> = new Map();
+./analytics/businessMetrics.ts:  private aggregationIntervals: Map<string, NodeJS.Timeout> = new Map();
+./analytics/businessMetrics.ts:    const pageConversions = new Map<string, number>();
+./analytics/businessMetrics.ts:    const uniquePages = new Set(pageViews.map(e => e.data.page));
+./analytics/businessMetrics.ts:    const now = new Date();
+./analytics/businessMetrics.ts:    alert.triggeredAt = new Date();
+./analytics/businessMetrics.ts:    action.executedAt = new Date();
+./analytics/businessMetrics.ts:        timestamp: new Date(),
+./analytics/businessMetrics.ts:      rule.lastRun = new Date();
+./analytics/businessMetrics.ts:    const cutoffDate = new Date(Date.now() - this.config.retentionDays * 24 * 60 * 60 * 1000);
+./analytics/businessMetrics.ts:        createdAt: new Date(),
+./analytics/businessMetrics.ts:        updatedAt: new Date()
+./analytics/businessMetrics.ts:        createdAt: new Date(),
+./analytics/businessMetrics.ts:        updatedAt: new Date()
+./analytics/businessMetrics.ts:        createdAt: new Date(),
+./analytics/businessMetrics.ts:        updatedAt: new Date()
+./analytics/businessMetrics.ts:      createdAt: new Date(),
+./analytics/businessMetrics.ts:      updatedAt: new Date()
+./analytics/eventTracking.ts:  private aggregations: Map<string, EventAggregation> = new Map();
+./analytics/eventTracking.ts:      throw new Error('Event sampled out');
+./analytics/eventTracking.ts:      timestamp: new Date(),
+./analytics/eventTracking.ts:          throw new Error(`Required field '${rule.field}' is missing or empty`);
+./analytics/eventTracking.ts:        const pattern = new RegExp(rule.config.pattern);
+./analytics/eventTracking.ts:          throw new Error(`Field '${rule.field}' does not match required format: ${rule.errorMessage}`);
+./analytics/eventTracking.ts:          throw new Error(`Field '${rule.field}' is out of valid range: ${rule.errorMessage}`);
+./analytics/eventTracking.ts:          throw new Error(`Field '${rule.field}' is not a valid enum value: ${rule.errorMessage}`);
+./analytics/eventTracking.ts:      lastSeen: new Date()
+./analytics/eventTracking.ts:        event.processedAt = new Date();
+./analytics/eventTracking.ts:      const cutoff = new Date(Date.now() - aggregation.timeWindow * 60 * 1000);
+./analytics/eventTracking.ts:        const uniqueValues = new Set(events.map(event => event.userId));
+./analytics/eventTracking.ts:    const uniqueUsers = new Set(this.events.map(e => e.userId).filter(Boolean));
+./analytics/eventTracking.ts:    const uniqueSessions = new Set(this.events.map(e => e.sessionId).filter(Boolean));
+./analytics/eventTracking.ts:    const eventTypeCounts = new Map<EventType, number>();
+./analytics/eventTracking.ts:    const now = new Date();
+./analytics/eventTracking.ts:        e.timestamp >= new Date(now.getTime() - 60000) // Last minute
+./analytics/eventTracking.ts:    const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+./analytics/eventTracking.ts:      createdAt: new Date(),
+./analytics/eventTracking.ts:      updatedAt: new Date()
+./analytics/userBehaviorAnalytics.ts:  private userBehaviors: Map<string, UserBehavior> = new Map();
+./analytics/userBehaviorAnalytics.ts:  private patterns: Map<string, BehaviorPattern> = new Map();
+./analytics/userBehaviorAnalytics.ts:  private journeys: Map<string, UserJourney> = new Map();
+./analytics/userBehaviorAnalytics.ts:    userBehavior.updatedAt = new Date();
+./analytics/userBehaviorAnalytics.ts:    const userEvents = new Map<string, TrackedEvent[]>();
+./analytics/userBehaviorAnalytics.ts:      userBehavior.updatedAt = new Date();
+./analytics/userBehaviorAnalytics.ts:      createdAt: new Date(),
+./analytics/userBehaviorAnalytics.ts:      updatedAt: new Date()
+./analytics/userBehaviorAnalytics.ts:      lastActivity: new Date(),
+./analytics/userBehaviorAnalytics.ts:      startDate: new Date(),
+./analytics/userBehaviorAnalytics.ts:        const pages = new Set(metrics.featureUsage.pages || []);
+./analytics/userBehaviorAnalytics.ts:    const pageSequences = new Map<string, number>();
+./analytics/userBehaviorAnalytics.ts:        createdAt: new Date()
+./analytics/userBehaviorAnalytics.ts:    const hourlyEngagement = new Map<number, number>();
+./analytics/userBehaviorAnalytics.ts:        createdAt: new Date()
+./analytics/userBehaviorAnalytics.ts:    const conversionPaths = new Map<string, number>();
+./analytics/userBehaviorAnalytics.ts:        createdAt: new Date()
+./analytics/userBehaviorAnalytics.ts:      // Add new pattern
+./analytics/userBehaviorAnalytics.ts:    // Create new journey if needed
+./analytics/userBehaviorAnalytics.ts:    const patternCounts = new Map<string, { count: number; confidence: number; }>();
+./analytics/userBehaviorAnalytics.ts:    const funnelGroups = new Map<string, UserJourney[]>();
+./analytics/userBehaviorAnalytics.ts:    const dropOffPoints = new Map<number, { count: number; total: number; }>();
+./middleware/errorHandler.ts:    timestamp: new Date().toISOString(),
+./middleware/errorHandler.ts:    error = new ValidationError(message, err.errors)
+./middleware/errorHandler.ts:    error = new ConflictError(`${field} '${value}' already exists`)
+./middleware/errorHandler.ts:    error = new ValidationError('Invalid data format', {
+./middleware/errorHandler.ts:    error = new AuthenticationError('Invalid token')
+./middleware/errorHandler.ts:    error = new AuthenticationError('Token expired')
+./middleware/errorHandler.ts:      error = new ValidationError('File too large', {
+./middleware/errorHandler.ts:      error = new ValidationError('Too many files', {
+./middleware/errorHandler.ts:      error = new ValidationError('File upload error', {
+./middleware/errorHandler.ts:      timestamp: new Date().toISOString(),
+./middleware/errorHandler.ts:        timestamp: new Date().toISOString()
+./middleware/errorHandler.ts:        timestamp: new Date().toISOString()
+./middleware/errorHandler.ts:  const error = new NotFoundError(`Route ${req.originalUrl} not found`)
+./middleware/errorHandler.ts:    timestamp: new Date().toISOString(),
+./middleware/errorHandler.ts:    timestamp: new Date().toISOString()
+./middleware/auth.ts:      { 'apiKeys.$.lastUsed': new Date() }
+./middleware/auth.ts:  const requests = new Map<string, { count: number; resetTime: number }>()
+./middleware/notFound.ts:    const error = new Error(`Not Found - ${req.originalUrl}`)
+./middleware/validation.ts:          const endTime = new Date(value)
+./middleware/validation.ts:          const now = new Date()
+./middleware/validation.ts:          const minEndTime = new Date(now.getTime() + 60 * 60 * 1000) // 1 hour from now
+./middleware/validation.ts:          const maxEndTime = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+./app.ts:    new Sentry.Integrations.Http({ tracing: true }),
+./app.ts:    new Sentry.Integrations.Express({ app }),
+./app.ts:const io = new Server(server, {
+./app.ts:    timestamp: new Date().toISOString(),
+./notifications/notificationTemplates.ts:  private templates: Map<string, NotificationTemplate> = new Map();
+./notifications/notificationTemplates.ts:  private versions: Map<string, TemplateVersion[]> = new Map();
+./notifications/notificationTemplates.ts:  private localizations: Map<string, TemplateLocalization[]> = new Map();
+./notifications/notificationTemplates.ts:  private previews: Map<string, TemplatePreview> = new Map();
+./notifications/notificationTemplates.ts:      createdAt: new Date(),
+./notifications/notificationTemplates.ts:        createdAt: new Date(),
+./notifications/notificationTemplates.ts:      updatedAt: new Date()
+./notifications/notificationTemplates.ts:    // Create new version if versioning is enabled
+./notifications/notificationTemplates.ts:        createdAt: new Date(),
+./notifications/notificationTemplates.ts:    template.updatedAt = new Date();
+./notifications/notificationTemplates.ts:    template.updatedAt = new Date();
+./notifications/notificationTemplates.ts:      throw new Error('Template not found');
+./notifications/notificationTemplates.ts:      createdAt: new Date()
+./notifications/notificationTemplates.ts:      throw new Error('Template not found');
+./notifications/notificationTemplates.ts:      generatedAt: new Date()
+./notifications/notificationTemplates.ts:              throw new Error(`Required variable '${variable.name}' not found in template`);
+./notifications/notificationTemplates.ts:            throw new Error(rule.errorMessage);
+./notifications/notificationTemplates.ts:              throw new Error('HTML content appears to be invalid');
+./notifications/notificationScheduling.ts:  private schedules: Map<string, Schedule> = new Map();
+./notifications/notificationScheduling.ts:  private executions: Map<string, ScheduleExecution[]> = new Map();
+./notifications/notificationScheduling.ts:          startDate: new Date(),
+./notifications/notificationScheduling.ts:        createdAt: new Date(),
+./notifications/notificationScheduling.ts:          startDate: new Date(),
+./notifications/notificationScheduling.ts:        createdAt: new Date(),
+./notifications/notificationScheduling.ts:      createdAt: new Date(),
+./notifications/notificationScheduling.ts:      updatedAt: new Date()
+./notifications/notificationScheduling.ts:    schedule.updatedAt = new Date();
+./notifications/notificationScheduling.ts:    schedule.updatedAt = new Date();
+./notifications/notificationScheduling.ts:    schedule.updatedAt = new Date();
+./notifications/notificationScheduling.ts:    const now = new Date();
+./notifications/notificationScheduling.ts:    let nextRun = new Date(baseDate);
+./notifications/notificationScheduling.ts:      return this.calculateNextRecurringRun(schedule, new Date(nextRun.getTime() + 60000));
+./notifications/notificationScheduling.ts:        const nextDate = new Date(date);
+./notifications/notificationScheduling.ts:    const nextDate = new Date(date);
+./notifications/notificationScheduling.ts:    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+./notifications/notificationScheduling.ts:    const now = new Date();
+./notifications/notificationScheduling.ts:      runAt: new Date(),
+./notifications/notificationScheduling.ts:      schedule.lastRun = new Date();
+./notifications/notificationScheduling.ts:        return new Date().toISOString().split('T')[0];
+./notifications/notificationScheduling.ts:        return new Date().toISOString();
+./notifications/notificationScheduling.ts:    if (schedule.scheduleConfig.endDate && new Date() > schedule.scheduleConfig.endDate) {
+./notifications/notificationScheduling.ts:      const cutoffDate = new Date(Date.now() - this.config.historyRetentionDays * 24 * 60 * 60 * 1000);
+./notifications/notificationScheduling.ts:      lastUpdated: new Date()
+./notifications/roomBasedCommunication.ts:  private rooms: Map<string, RoomInfo> = new Map();
+./notifications/roomBasedCommunication.ts:  private roomMembers: Map<string, Map<string, RoomMember>> = new Map();
+./notifications/roomBasedCommunication.ts:  private roomMessages: Map<string, RoomMessage[]> = new Map();
+./notifications/roomBasedCommunication.ts:  private permissions: Map<string, RoomPermissions> = new Map();
+./notifications/roomBasedCommunication.ts:      createdAt: new Date(),
+./notifications/roomBasedCommunication.ts:      updatedAt: new Date(),
+./notifications/roomBasedCommunication.ts:    this.roomMembers.set(room.id, new Map());
+./notifications/roomBasedCommunication.ts:    const defaultPermissions = new Set([
+./notifications/roomBasedCommunication.ts:    const rolePermissions = new Map<RoomRole, Set<RoomPermission>>();
+./notifications/roomBasedCommunication.ts:    rolePermissions.set(RoomRole.OWNER, new Set(Object.values(RoomPermission)));
+./notifications/roomBasedCommunication.ts:    rolePermissions.set(RoomRole.ADMIN, new Set([
+./notifications/roomBasedCommunication.ts:    rolePermissions.set(RoomRole.MODERATOR, new Set([
+./notifications/roomBasedCommunication.ts:      userPermissions: new Map()
+./notifications/roomBasedCommunication.ts:      throw new Error('Room not found');
+./notifications/roomBasedCommunication.ts:      joinedAt: new Date(),
+./notifications/roomBasedCommunication.ts:      lastActivity: new Date(),
+./notifications/roomBasedCommunication.ts:    room.updatedAt = new Date();
+./notifications/roomBasedCommunication.ts:        timestamp: new Date()
+./notifications/roomBasedCommunication.ts:    room.updatedAt = new Date();
+./notifications/roomBasedCommunication.ts:        timestamp: new Date()
+./notifications/roomBasedCommunication.ts:      throw new Error('Room not found');
+./notifications/roomBasedCommunication.ts:      throw new Error('No permission to send messages');
+./notifications/roomBasedCommunication.ts:      throw new Error('Rate limit exceeded');
+./notifications/roomBasedCommunication.ts:      throw new Error('Message too long');
+./notifications/roomBasedCommunication.ts:      createdAt: new Date(),
+./notifications/roomBasedCommunication.ts:      updatedAt: new Date()
+./notifications/roomBasedCommunication.ts:      member.lastActivity = new Date();
+./notifications/roomBasedCommunication.ts:      timestamp: new Date()
+./notifications/roomBasedCommunication.ts:    if (!room) return new Set();
+./notifications/roomBasedCommunication.ts:    if (!member) return new Set();
+./notifications/roomBasedCommunication.ts:    const userPerms = room.permissions.userPermissions.get(userId) || new Set();
+./notifications/roomBasedCommunication.ts:    const rolePerms = room.permissions.rolePermissions.get(member.role) || new Set();
+./notifications/roomBasedCommunication.ts:    return new Set([...userPerms, ...rolePerms, ...room.permissions.defaultPermissions]);
+./notifications/roomBasedCommunication.ts:      throw new Error('Room not found');
+./notifications/roomBasedCommunication.ts:      throw new Error('No permission to invite users');
+./notifications/roomBasedCommunication.ts:        timestamp: new Date(),
+./notifications/roomBasedCommunication.ts:        expiresAt: new Date(Date.now() + this.config.invitationTimeout)
+./notifications/roomBasedCommunication.ts:      throw new Error('Room not found');
+./notifications/roomBasedCommunication.ts:      throw new Error('No permission to kick users');
+./notifications/roomBasedCommunication.ts:    room.updatedAt = new Date();
+./notifications/roomBasedCommunication.ts:        timestamp: new Date()
+./notifications/roomBasedCommunication.ts:      throw new Error('Room not found');
+./notifications/roomBasedCommunication.ts:      throw new Error('No permission to ban users');
+./notifications/roomBasedCommunication.ts:    member.banExpiresAt = duration ? new Date(Date.now() + duration) : undefined;
+./notifications/roomBasedCommunication.ts:        timestamp: new Date()
+./notifications/roomBasedCommunication.ts:    const cutoffDate = new Date(now.getTime() - this.config.privacySettings.retentionPeriod * 24 * 60 * 60 * 1000);
+./notifications/roomBasedCommunication.ts:    const roleCounts = new Map<RoomRole, number>();
+./notifications/roomBasedCommunication.ts:    const hourlyCounts = new Array(24).fill(0);
+./notifications/roomBasedCommunication.ts:    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+./notifications/roomBasedCommunication.ts:    const logMessage = `[${new Date().toISOString()}] [${level.toUpperCase()}] ${message}`;
+./notifications/notificationPreferences.ts:  private preferences: Map<string, UserPreference> = new Map();
+./notifications/notificationPreferences.ts:  private templates: Map<string, PreferenceTemplate> = new Map();
+./notifications/notificationPreferences.ts:        createdAt: new Date()
+./notifications/notificationPreferences.ts:        createdAt: new Date()
+./notifications/notificationPreferences.ts:      createdAt: new Date(),
+./notifications/notificationPreferences.ts:      updatedAt: new Date()
+./notifications/notificationPreferences.ts:      updatedAt: new Date()
+./notifications/notificationPreferences.ts:    const now = new Date();
+./notifications/notificationPreferences.ts:    const userTime = new Date(now.toLocaleString("en-US", { timeZone: quietHours.timezone }));
+./notifications/notificationPreferences.ts:        throw new Error('Invalid quiet hours time format');
+./notifications/notificationPreferences.ts:        throw new Error('Daily limit must be positive');
+./notifications/notificationPreferences.ts:        throw new Error('Weekly limit must be positive');
+./notifications/notificationPreferences.ts:        throw new Error('Monthly limit must be positive');
+./notifications/notificationPreferences.ts:      throw new Error(`Maximum ${this.config.maxRulesPerUser} custom rules allowed`);
+./notifications/notificationPreferences.ts:      throw new Error('Template not found');
+./notifications/notificationPreferences.ts:        createdAt: new Date(),
+./notifications/notificationPreferences.ts:        updatedAt: new Date()
+./notifications/notificationPreferences.ts:    const uniqueUsers = new Set(preferences.map(p => p.userId));
+./notifications/notificationPreferences.ts:    const channelStats = new Map<NotificationChannel, { enabled: number; disabled: number }>();
+./notifications/notificationPreferences.ts:    const typeStats = new Map<NotificationType, { enabled: number; disabled: number }>();
+./notifications/notificationPreferences.ts:      lastUpdated: new Date()
+./notifications/notificationEngine.ts:  private notifications: Map<string, Notification> = new Map();
+./notifications/notificationEngine.ts:  private templates: Map<string, NotificationTemplate> = new Map();
+./notifications/notificationEngine.ts:  private preferences: Map<string, NotificationPreference> = new Map();
+./notifications/notificationEngine.ts:  private schedules: Map<string, NotificationSchedule> = new Map();
+./notifications/notificationEngine.ts:  private deliveryReports: Map<string, DeliveryReport> = new Map();
+./notifications/notificationEngine.ts:        description: 'Welcome email for new users',
+./notifications/notificationEngine.ts:        createdAt: new Date(),
+./notifications/notificationEngine.ts:        createdAt: new Date(),
+./notifications/notificationEngine.ts:        throw new Error(`User has disabled ${data.channel} notifications`);
+./notifications/notificationEngine.ts:        throw new Error(`Template ${data.templateId} not found`);
+./notifications/notificationEngine.ts:      status: data.scheduledAt && data.scheduledAt > new Date() ? NotificationStatus.PENDING : NotificationStatus.SENDING,
+./notifications/notificationEngine.ts:      createdAt: new Date(),
+./notifications/notificationEngine.ts:      updatedAt: new Date()
+./notifications/notificationEngine.ts:        throw new Error(`Required template variable '${variable.name}' is missing`);
+./notifications/notificationEngine.ts:    const windowStart = new Date(Date.now() - this.config.deduplicationWindow * 60 * 1000);
+./notifications/notificationEngine.ts:      notification.sentAt = new Date();
+./notifications/notificationEngine.ts:        throw new Error(`No provider found for channel ${notification.channel}`);
+./notifications/notificationEngine.ts:        throw new Error('Rate limit exceeded');
+./notifications/notificationEngine.ts:        notification.deliveredAt = new Date();
+./notifications/notificationEngine.ts:        throw new Error(result.error || 'Failed to send notification');
+./notifications/notificationEngine.ts:        notification.nextRetryAt = new Date(Date.now() + this.config.retryDelay);
+./notifications/notificationEngine.ts:          sentAt: notification.sentAt || new Date(),
+./notifications/notificationEngine.ts:    notification.updatedAt = new Date();
+./notifications/notificationEngine.ts:    await new Promise(resolve => setTimeout(resolve, 1000));
+./notifications/notificationEngine.ts:          timestamp: new Date().toISOString()
+./notifications/notificationEngine.ts:    const now = new Date();
+./notifications/notificationEngine.ts:    const today = new Date();
+./notifications/notificationEngine.ts:    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+./notifications/notificationEngine.ts:    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+./notifications/notificationEngine.ts:    const templateUsage = new Map<string, { count: number; success: number; }>();
+./notifications/notificationEngine.ts:      createdAt: new Date(),
+./notifications/notificationEngine.ts:      updatedAt: new Date()
+./notifications/notificationEngine.ts:      lastUpdated: new Date()
+./notifications/deliveryTracking.ts:  private tracking: Map<string, DeliveryTracking> = new Map();
+./notifications/deliveryTracking.ts:      createdAt: new Date(),
+./notifications/deliveryTracking.ts:      updatedAt: new Date(),
+./notifications/deliveryTracking.ts:    tracking.updatedAt = new Date();
+./notifications/deliveryTracking.ts:        timestamp: new Date(),
+./notifications/deliveryTracking.ts:      timestamp: new Date(),
+./notifications/deliveryTracking.ts:    tracking.updatedAt = new Date();
+./notifications/deliveryTracking.ts:        await new Promise(resolve => setTimeout(resolve, 100));
+./notifications/deliveryTracking.ts:    const failureReasons = new Map<string, number>();
+./notifications/deliveryTracking.ts:      lastUpdated: new Date()
+./notifications/messageQueuing.ts:  private queues: Map<QueueType, QueuedMessage[]> = new Map();
+./notifications/messageQueuing.ts:      createdAt: new Date(),
+./notifications/messageQueuing.ts:      if (this.config.enableExpiration && message.expiresAt && message.expiresAt < new Date()) {
+./notifications/messageQueuing.ts:      if (message.delayUntil && message.delayUntil > new Date()) {
+./notifications/messageQueuing.ts:      message.deliveredAt = new Date();
+./notifications/messageQueuing.ts:      failedAt: new Date(),
+./notifications/messageQueuing.ts:        (!msg.delayUntil || msg.delayUntil <= new Date())
+./notifications/messageQueuing.ts:        (!msg.delayUntil || msg.delayUntil <= new Date())
+./notifications/messageQueuing.ts:    const senderCounts = new Map<string, { count: number; success: number; }>();
+./notifications/messageQueuing.ts:      timestamp: new Date(),
+./notifications/messageQueuing.ts:    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+./notifications/connectionManagement.ts:  private challenges: Map<string, AuthenticationChallenge> = new Map();
+./notifications/connectionManagement.ts:  private sessions: Map<string, UserSession> = new Map();
+./notifications/connectionManagement.ts:  private policies: Map<string, ConnectionPolicy> = new Map();
+./notifications/connectionManagement.ts:  private connectionLimits: Map<string, number> = new Map(); // IP -> connection count
+./notifications/connectionManagement.ts:  private userConnections: Map<string, number> = new Map(); // User -> connection count
+./notifications/connectionManagement.ts:      expiresAt: new Date(Date.now() + this.config.authTimeout),
+./notifications/connectionManagement.ts:      createdAt: new Date(),
+./notifications/connectionManagement.ts:      timestamp: new Date()
+./notifications/connectionManagement.ts:      permissions: new Set([Permission.READ_MESSAGES]),
+./notifications/connectionManagement.ts:      authenticatedAt: new Date(),
+./notifications/connectionManagement.ts:      lastActivity: new Date(),
+./notifications/connectionManagement.ts:      expiresAt: new Date(Date.now() + this.config.sessionTimeout),
+./notifications/connectionManagement.ts:      authenticatedAt: new Date(),
+./notifications/connectionManagement.ts:      lastActivity: new Date(),
+./notifications/connectionManagement.ts:      expiresAt: new Date(Date.now() + this.config.sessionTimeout),
+./notifications/connectionManagement.ts:      [ConnectionRole.GUEST]: new Set([Permission.READ_MESSAGES]),
+./notifications/connectionManagement.ts:      [ConnectionRole.USER]: new Set([Permission.READ_MESSAGES, Permission.SEND_MESSAGES, Permission.JOIN_ROOMS]),
+./notifications/connectionManagement.ts:      [ConnectionRole.MODERATOR]: new Set([Permission.READ_MESSAGES, Permission.SEND_MESSAGES, Permission.JOIN_ROOMS, Permission.MODERATE_ROOMS]),
+./notifications/connectionManagement.ts:      [ConnectionRole.ADMIN]: new Set([Permission.READ_MESSAGES, Permission.SEND_MESSAGES, Permission.JOIN_ROOMS, Permission.CREATE_ROOMS, Permission.MODERATE_ROOMS, Permission.BROADCAST_GLOBAL, Permission.VIEW_ANALYTICS]),
+./notifications/connectionManagement.ts:      [ConnectionRole.SYSTEM]: new Set(Object.values(Permission))
+./notifications/connectionManagement.ts:    return permissions[role] || new Set();
+./notifications/connectionManagement.ts:        createdAt: new Date(),
+./notifications/connectionManagement.ts:        updatedAt: new Date()
+./notifications/connectionManagement.ts:        createdAt: new Date(),
+./notifications/connectionManagement.ts:        updatedAt: new Date()
+./notifications/connectionManagement.ts:    const ipCounts = new Map<string, { count: number; lastSeen: Date }>();
+./notifications/connectionManagement.ts:      const current = ipCounts.get(session.ipAddress) || { count: 0, lastSeen: new Date(0) };
+./notifications/connectionManagement.ts:    const logMessage = `[${new Date().toISOString()}] [${level.toUpperCase()}] ${message}`;
+./notifications/connectionManagement.ts:      createdAt: new Date(),
+./notifications/connectionManagement.ts:      updatedAt: new Date()
+./notifications/connectionManagement.ts:      updatedAt: new Date()
+./notifications/connectionManagement.ts:      lastActivity: new Date()
+./notifications/realTimeBroadcast.ts:  private broadcasts: Map<string, BroadcastMessage> = new Map();
+./notifications/realTimeBroadcast.ts:  private subscriptions: Map<string, BroadcastSubscription> = new Map();
+./notifications/realTimeBroadcast.ts:  private deliveryQueue: Map<string, BroadcastMessage[]> = new Map();
+./notifications/realTimeBroadcast.ts:    // Create default subscriptions for new connections
+./notifications/realTimeBroadcast.ts:      createdAt: new Date(),
+./notifications/realTimeBroadcast.ts:      throw new Error(`Message size (${messageSize}) exceeds maximum (${this.config.maxMessageSize})`);
+./notifications/realTimeBroadcast.ts:    const connectionCounts = new Map<string, number>();
+./notifications/realTimeBroadcast.ts:      throw new Error('Connection not ready');
+./notifications/realTimeBroadcast.ts:      timestamp: new Date()
+./notifications/realTimeBroadcast.ts:        subscription.lastActivity = new Date();
+./notifications/realTimeBroadcast.ts:      createdAt: new Date(),
+./notifications/realTimeBroadcast.ts:      lastActivity: new Date(),
+./notifications/realTimeBroadcast.ts:    const now = new Date();
+./notifications/realTimeBroadcast.ts:    const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+./notifications/notificationHistory.ts:  private history: Map<string, NotificationHistory> = new Map();
+./notifications/notificationHistory.ts:  private exports: Map<string, HistoryExport> = new Map();
+./notifications/notificationHistory.ts:  private searchIndex: Map<string, string[]> = new Map();
+./notifications/notificationHistory.ts:      createdAt: new Date(),
+./notifications/notificationHistory.ts:      updatedAt: new Date(),
+./notifications/notificationHistory.ts:      timestamp: new Date(),
+./notifications/notificationHistory.ts:    history.updatedAt = new Date();
+./notifications/notificationHistory.ts:      const matchingIds = new Set<string>();
+./notifications/notificationHistory.ts:      createdAt: new Date(),
+./notifications/notificationHistory.ts:      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+./notifications/notificationHistory.ts:      exportRecord.completedAt = new Date();
+./notifications/notificationHistory.ts:        throw new Error(`Unsupported export format: ${format}`);
+./notifications/notificationHistory.ts:    const now = new Date();
+./notifications/notificationHistory.ts:    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+./notifications/notificationHistory.ts:    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+./notifications/notificationHistory.ts:    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+./notifications/notificationHistory.ts:    const recipientCounts = new Map<string, { count: number; lastDate: Date }>();
+./notifications/notificationHistory.ts:    const cutoffDate = new Date(Date.now() - this.config.retentionDays * 24 * 60 * 60 * 1000);
+./notifications/notificationHistory.ts:      if (exportRecord.expiresAt && exportRecord.expiresAt < new Date()) {
+./notifications/notificationHistory.ts:      lastUpdated: new Date()
+./notifications/webSocketServer.ts:  private connections: Map<string, ConnectionInfo> = new Map();
+./notifications/webSocketServer.ts:  private rooms: Map<string, RoomInfo> = new Map();
+./notifications/webSocketServer.ts:  private presence: Map<string, PresenceInfo> = new Map();
+./notifications/webSocketServer.ts:  private messageQueue: Map<string, WebSocketMessage[]> = new Map();
+./notifications/webSocketServer.ts:    this.startTime = new Date();
+./notifications/webSocketServer.ts:        throw new Error('SSL enabled but key or certificate not provided');
+./notifications/webSocketServer.ts:    this.wss = new WebSocket.Server({
+./notifications/webSocketServer.ts:      connectedAt: new Date(),
+./notifications/webSocketServer.ts:      lastActivity: new Date(),
+./notifications/webSocketServer.ts:      rooms: new Set(),
+./notifications/webSocketServer.ts:    connection.lastActivity = new Date();
+./notifications/webSocketServer.ts:          lastSeen: new Date()
+./notifications/webSocketServer.ts:          timestamp: new Date()
+./notifications/webSocketServer.ts:    // Join new room
+./notifications/webSocketServer.ts:        timestamp: new Date()
+./notifications/webSocketServer.ts:        timestamp: new Date()
+./notifications/webSocketServer.ts:        timestamp: new Date()
+./notifications/webSocketServer.ts:      lastSeen: new Date(),
+./notifications/webSocketServer.ts:        timestamp: new Date()
+./notifications/webSocketServer.ts:      data: { error, timestamp: new Date() }
+./notifications/webSocketServer.ts:      lastSeen: new Date(),
+./notifications/webSocketServer.ts:      throw new Error('Invalid JSON message');
+./notifications/webSocketServer.ts:            timestamp: new Date()
+./notifications/webSocketServer.ts:        lastSeen: new Date()
+./notifications/webSocketServer.ts:      timestamp: new Date()
+./notifications/webSocketServer.ts:    const logMessage = `[${new Date().toISOString()}] [${level.toUpperCase()}] ${message}`;
+./notifications/webSocketServer.ts:      createdAt: new Date(),
+./notifications/webSocketServer.ts:      members: new Set(),
+./notifications/presenceTracking.ts:  private presence: Map<string, PresenceInfo> = new Map();
+./notifications/presenceTracking.ts:  private subscriptions: Map<string, PresenceSubscription> = new Map();
+./notifications/presenceTracking.ts:  private statusTimeouts: Map<string, NodeJS.Timeout> = new Map();
+./notifications/presenceTracking.ts:      lastSeen: new Date(),
+./notifications/presenceTracking.ts:      statusChangedAt: new Date(),
+./notifications/presenceTracking.ts:    presence.lastSeen = new Date();
+./notifications/presenceTracking.ts:    presence.statusChangedAt = new Date();
+./notifications/presenceTracking.ts:    // Update existing presence or create new one
+./notifications/presenceTracking.ts:      existingPresence.lastSeen = new Date();
+./notifications/presenceTracking.ts:      existingPresence.statusChangedAt = new Date();
+./notifications/presenceTracking.ts:    presence.lastSeen = new Date();
+./notifications/presenceTracking.ts:        timestamp: new Date()
+./notifications/presenceTracking.ts:    const now = new Date();
+./notifications/presenceTracking.ts:      timestamp: new Date(),
+./notifications/presenceTracking.ts:      createdAt: new Date(),
+./notifications/presenceTracking.ts:      lastActivity: new Date(),
+./notifications/presenceTracking.ts:      timestamp: new Date(),
+./notifications/presenceTracking.ts:      subscription.lastActivity = new Date();
+./notifications/presenceTracking.ts:          presence.statusChangedAt = new Date();
+./notifications/presenceTracking.ts:          presence.statusChangedAt = new Date();
+./notifications/presenceTracking.ts:    const cutoffDate = new Date(Date.now() - this.config.historyRetentionDays * 24 * 60 * 60 * 1000);
+./notifications/presenceTracking.ts:    const currentHour = new Date().getHours();
+./notifications/presenceTracking.ts:    const deviceCounts = new Map<string, number>();
+./notifications/presenceTracking.ts:    const geoCounts = new Map<string, number>();
+./notifications/presenceTracking.ts:    const logMessage = `[${new Date().toISOString()}] [${level.toUpperCase()}] ${message}`;
