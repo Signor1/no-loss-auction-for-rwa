@@ -1238,8 +1238,8 @@ export class AssetValuationService extends EventEmitter {
    * Get active schedule
    */
   private getActiveSchedule(assetId: string): ValuationSchedule | null {
-    const schedules = this.valuationSchedules.get(assetId) || []
-    return schedules.find(s => s.isActive) || null
+    const schedules = this.valuationSchedules.get(assetId)
+    return schedules ? schedules.find(s => s.isActive) || null : null
   }
 
   /**
