@@ -211,6 +211,66 @@ export interface BidMetadata {
 export type AuctionType =
   | 'english' | 'dutch' | 'sealed_bid' | ' Vickrey' | 'reverse' | 'no_loss'
 
+// Sealed Bid Auction specific interfaces
+export interface SealedBidAuctionConfig {
+  submissionStartTime: Date
+  submissionEndTime: Date
+  revealStartTime: Date
+  revealEndTime: Date
+  minimumBid?: number
+  maximumBid?: number
+  bidIncrement?: number
+  allowBidUpdates: boolean
+  bidUpdateWindow: number // minutes before submission end
+  revealRequired: boolean
+  autoReveal: boolean
+  confidentialityLevel: 'full' | 'partial' | 'none'
+}
+
+export interface SealedBid {
+  id: string
+  auctionId: string
+  bidder: AuctionParticipant
+  encryptedBid: string // Encrypted bid amount
+  bidHash: string // Hash of bid for verification
+  bidSalt: string // Random salt for hash
+  submissionTime: Date
+  revealTime?: Date
+  revealedAmount?: number
+  isRevealed: boolean
+  status: SealedBidStatus
+  bidSignature?: string
+  metadata: SealedBidMetadata
+}
+
+export interface SealedBidMetadata {
+  ipAddress?: string
+  userAgent?: string
+  deviceFingerprint?: string
+  bidStrategy?: string
+  confidence?: number
+  notes?: string
+}
+
+export interface SealedBidReveal {
+  bidId: string
+  revealedAmount: number
+  revealTime: Date
+  revealSignature: string
+  verificationHash: string
+}
+
+export interface AuctionPhase {
+  phase: 'submission' | 'reveal' | 'ended'
+  startTime: Date
+  endTime: Date
+  isActive: boolean
+  timeRemaining: number
+}
+
+export type SealedBidStatus =
+  | 'submitted' | 'revealed' | 'invalid' | 'withdrawn' | 'winner' | 'loser'
+
 // Dutch Auction specific interfaces
 export interface DutchAuctionConfig {
   startingPrice: number
@@ -275,6 +335,11 @@ export class NoLossAuctionService extends EventEmitter {
   // Dutch auction specific storage
   private dutchAuctionStates: Map<string, DutchAuctionState> = new Map()
   private dutchAuctionConfigs: Map<string, DutchAuctionConfig> = new Map()
+
+  // Sealed bid auction specific storage
+  private sealedBidAuctionConfigs: Map<string, SealedBidAuctionConfig> = new Map()
+  private sealedBids: Map<string, SealedBid[]> = new Map()
+  private auctionPhases: Map<string, AuctionPhase> = new Map()
 
   // Active auction monitoring
   private activeAuctions: Set<string> = new Set()
@@ -1132,6 +1197,569 @@ export class NoLossAuctionService extends EventEmitter {
    */
   getDutchAuctionConfig(auctionId: string): DutchAuctionConfig | null {
     return this.dutchAuctionConfigs.get(auctionId) || null
+  }
+
+  // ============ SEALED BID AUCTION SPECIFIC METHODS ============
+
+  /**
+   * Start sealed bid auction with phase management
+   */
+  async startSealedBidAuction(auctionId: string): Promise<Auction> {
+    try {
+      const auction = this.auctions.get(auctionId)
+      if (!auction) {
+        throw new Error(`Auction ${auctionId} not found`)
+      }
+
+      if (auction.auctionType !== 'sealed_bid') {
+        throw new Error('This method is only for sealed bid auctions')
+      }
+
+      const sealedConfig = this.sealedBidAuctionConfigs.get(auctionId)
+      if (!sealedConfig) {
+        throw new Error('Sealed bid auction configuration not found')
+      }
+
+      // Start the auction
+      auction.status = 'active'
+      auction.updatedAt = new Date()
+
+      // Add to active auctions monitoring
+      this.activeAuctions.add(auctionId)
+
+      // Start submission phase
+      await this.startSubmissionPhase(auctionId)
+
+      this.emit('sealed-bid-auction:started', { auction, sealedConfig })
+
+      return auction
+    } catch (error) {
+      this.logger.error(`Failed to start sealed bid auction ${auctionId}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Submit sealed bid
+   */
+  async submitSealedBid(
+    auctionId: string,
+    bidderId: string,
+    bidAmount: number,
+    bidSignature?: string,
+    metadata?: SealedBidMetadata
+  ): Promise<SealedBid> {
+    try {
+      const auction = this.auctions.get(auctionId)
+      if (!auction) {
+        throw new Error(`Auction ${auctionId} not found`)
+      }
+
+      if (auction.auctionType !== 'sealed_bid') {
+        throw new Error('This method is only for sealed bid auctions')
+      }
+
+      const bidder = this.participants.get(bidderId)
+      if (!bidder) {
+        throw new Error(`Bidder ${bidderId} not found`)
+      }
+
+      const sealedConfig = this.sealedBidAuctionConfigs.get(auctionId)
+      if (!sealedConfig) {
+        throw new Error('Sealed bid auction configuration not found')
+      }
+
+      const currentPhase = this.auctionPhases.get(auctionId)
+      if (!currentPhase || currentPhase.phase !== 'submission' || !currentPhase.isActive) {
+        throw new Error('Auction is not in active submission phase')
+      }
+
+      // Validate bid
+      await this.validateSealedBid(auction, bidder, bidAmount, sealedConfig)
+
+      // Generate salt for hash
+      const bidSalt = this.generateBidSalt()
+
+      // Create bid hash for verification
+      const bidData = `${bidderId}:${auctionId}:${bidAmount}:${bidSalt}`
+      const bidHash = this.hashBid(bidData)
+
+      // Encrypt the bid amount (simplified - in production use proper encryption)
+      const encryptedBid = this.encryptBid(bidAmount.toString(), bidSalt)
+
+      const sealedBid: SealedBid = {
+        id: `sealed-bid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        auctionId,
+        bidder,
+        encryptedBid,
+        bidHash,
+        bidSalt,
+        submissionTime: new Date(),
+        isRevealed: false,
+        status: 'submitted',
+        bidSignature,
+        metadata: metadata || {}
+      }
+
+      // Store sealed bid
+      if (!this.sealedBids.has(auctionId)) {
+        this.sealedBids.set(auctionId, [])
+      }
+      this.sealedBids.get(auctionId)!.push(sealedBid)
+
+      // Add bidder to auction participants if not already added
+      if (!auction.bidders.some(b => b.id === bidder.id)) {
+        auction.bidders.push(bidder)
+      }
+
+      this.emit('sealed-bid:submitted', { auction, sealedBid })
+
+      return sealedBid
+    } catch (error) {
+      this.logger.error(`Failed to submit sealed bid on auction ${auctionId}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Update sealed bid (if allowed)
+   */
+  async updateSealedBid(
+    auctionId: string,
+    bidderId: string,
+    newBidAmount: number,
+    bidSignature?: string,
+    metadata?: SealedBidMetadata
+  ): Promise<SealedBid> {
+    try {
+      const sealedConfig = this.sealedBidAuctionConfigs.get(auctionId)
+      if (!sealedConfig || !sealedConfig.allowBidUpdates) {
+        throw new Error('Bid updates not allowed for this auction')
+      }
+
+      const currentPhase = this.auctionPhases.get(auctionId)
+      if (!currentPhase || currentPhase.phase !== 'submission') {
+        throw new Error('Auction is not in submission phase')
+      }
+
+      // Check if update is within allowed window
+      const timeToEnd = currentPhase.endTime.getTime() - Date.now()
+      const updateWindowMs = sealedConfig.bidUpdateWindow * 60 * 1000
+      if (timeToEnd > updateWindowMs) {
+        throw new Error('Bid update window has expired')
+      }
+
+      // Find existing bid
+      const sealedBids = this.sealedBids.get(auctionId) || []
+      const existingBid = sealedBids.find(bid => bid.bidder.id === bidderId)
+
+      if (!existingBid) {
+        throw new Error('No existing bid found for bidder')
+      }
+
+      // Withdraw existing bid
+      existingBid.status = 'withdrawn'
+
+      // Submit new bid
+      return this.submitSealedBid(auctionId, bidderId, newBidAmount, bidSignature, metadata)
+    } catch (error) {
+      this.logger.error(`Failed to update sealed bid on auction ${auctionId}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Start reveal phase
+   */
+  async startRevealPhase(auctionId: string): Promise<void> {
+    try {
+      const auction = this.auctions.get(auctionId)
+      if (!auction) {
+        throw new Error(`Auction ${auctionId} not found`)
+      }
+
+      const sealedConfig = this.sealedBidAuctionConfigs.get(auctionId)
+      if (!sealedConfig) {
+        throw new Error('Sealed bid auction configuration not found')
+      }
+
+      const revealPhase: AuctionPhase = {
+        phase: 'reveal',
+        startTime: sealedConfig.revealStartTime,
+        endTime: sealedConfig.revealEndTime,
+        isActive: true,
+        timeRemaining: Math.max(0, sealedConfig.revealEndTime.getTime() - Date.now())
+      }
+
+      this.auctionPhases.set(auctionId, revealPhase)
+
+      // Auto-reveal bids if configured
+      if (sealedConfig.autoReveal) {
+        await this.autoRevealBids(auctionId)
+      }
+
+      this.emit('sealed-bid-auction:reveal-phase-started', { auction, revealPhase })
+    } catch (error) {
+      this.logger.error(`Failed to start reveal phase for auction ${auctionId}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Reveal sealed bid
+   */
+  async revealSealedBid(
+    auctionId: string,
+    bidderId: string,
+    revealedAmount: number,
+    revealSignature: string
+  ): Promise<SealedBid> {
+    try {
+      const auction = this.auctions.get(auctionId)
+      if (!auction) {
+        throw new Error(`Auction ${auctionId} not found`)
+      }
+
+      const currentPhase = this.auctionPhases.get(auctionId)
+      if (!currentPhase || currentPhase.phase !== 'reveal' || !currentPhase.isActive) {
+        throw new Error('Auction is not in active reveal phase')
+      }
+
+      // Find sealed bid
+      const sealedBids = this.sealedBids.get(auctionId) || []
+      const sealedBid = sealedBids.find(bid => bid.bidder.id === bidderId)
+
+      if (!sealedBid) {
+        throw new Error('Sealed bid not found')
+      }
+
+      if (sealedBid.isRevealed) {
+        throw new Error('Bid has already been revealed')
+      }
+
+      // Verify revealed amount matches encrypted bid
+      const decryptedAmount = this.decryptBid(sealedBid.encryptedBid, sealedBid.bidSalt)
+      if (parseFloat(decryptedAmount) !== revealedAmount) {
+        throw new Error('Revealed amount does not match submitted bid')
+      }
+
+      // Verify signature
+      const verificationData = `${auctionId}:${bidderId}:${revealedAmount}:${sealedBid.submissionTime.getTime()}`
+      if (!this.verifyRevealSignature(verificationData, revealSignature)) {
+        throw new Error('Invalid reveal signature')
+      }
+
+      // Update sealed bid
+      sealedBid.revealedAmount = revealedAmount
+      sealedBid.revealTime = new Date()
+      sealedBid.isRevealed = true
+      sealedBid.status = 'revealed'
+
+      // Create corresponding regular bid for winner determination
+      const regularBid: Bid = {
+        id: `bid-${sealedBid.id}`,
+        auctionId,
+        bidder: sealedBid.bidder,
+        amount: revealedAmount,
+        bidTime: sealedBid.revealTime,
+        bidType: 'manual',
+        status: 'active',
+        isWinning: false,
+        outbidNotificationSent: false,
+        metadata: sealedBid.metadata as BidMetadata
+      }
+
+      // Add to auction bids
+      if (!this.bids.has(auctionId)) {
+        this.bids.set(auctionId, [])
+      }
+      this.bids.get(auctionId)!.push(regularBid)
+      auction.bids.push(regularBid)
+
+      this.emit('sealed-bid:revealed', { auction, sealedBid, regularBid })
+
+      return sealedBid
+    } catch (error) {
+      this.logger.error(`Failed to reveal sealed bid on auction ${auctionId}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Auto-reveal bids
+   */
+  private async autoRevealBids(auctionId: string): Promise<void> {
+    try {
+      const sealedBids = this.sealedBids.get(auctionId) || []
+      const unrevealedBids = sealedBids.filter(bid => !bid.isRevealed && bid.status === 'submitted')
+
+      for (const sealedBid of unrevealedBids) {
+        try {
+          const decryptedAmount = parseFloat(this.decryptBid(sealedBid.encryptedBid, sealedBid.bidSalt))
+          const revealSignature = this.generateRevealSignature(sealedBid)
+
+          await this.revealSealedBid(auctionId, sealedBid.bidder.id, decryptedAmount, revealSignature)
+        } catch (error) {
+          this.logger.error(`Failed to auto-reveal bid ${sealedBid.id}:`, error)
+          sealedBid.status = 'invalid'
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Failed to auto-reveal bids for auction ${auctionId}:`, error)
+    }
+  }
+
+  /**
+   * End sealed bid auction and determine winner
+   */
+  async endSealedBidAuction(auctionId: string): Promise<Auction> {
+    try {
+      const auction = this.auctions.get(auctionId)
+      if (!auction) {
+        throw new Error(`Auction ${auctionId} not found`)
+      }
+
+      // End reveal phase
+      const endedPhase: AuctionPhase = {
+        phase: 'ended',
+        startTime: new Date(),
+        endTime: new Date(),
+        isActive: false,
+        timeRemaining: 0
+      }
+
+      this.auctionPhases.set(auctionId, endedPhase)
+
+      // Determine winner from revealed bids
+      await this.determineSealedBidWinner(auction)
+
+      // End auction
+      return this.endAuction(auctionId, 'Sealed bid reveal phase completed')
+    } catch (error) {
+      this.logger.error(`Failed to end sealed bid auction ${auctionId}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Determine winner from revealed sealed bids
+   */
+  private async determineSealedBidWinner(auction: Auction): Promise<void> {
+    const revealedBids = auction.bids.filter(bid => bid.status === 'active')
+
+    if (revealedBids.length === 0) {
+      auction.status = 'cancelled'
+      this.emit('auction:cancelled', { auction, reason: 'No valid bids revealed' })
+      return
+    }
+
+    // Find highest bid
+    const winningBid = revealedBids.sort((a, b) => b.amount - a.amount)[0]
+
+    auction.winner = winningBid.bidder
+    auction.finalPrice = winningBid.amount
+    auction.currentPrice = winningBid.amount
+    winningBid.isWinning = true
+    winningBid.status = 'winning'
+
+    // Mark other bids as lost
+    revealedBids.forEach(bid => {
+      if (bid.id !== winningBid.id) {
+        bid.status = 'outbid'
+      }
+    })
+
+    // Check reserve price
+    if (auction.reservePrice && auction.finalPrice < auction.reservePrice) {
+      auction.status = 'cancelled'
+      this.emit('auction:cancelled', { auction, reason: 'Winning bid below reserve price' })
+      return
+    }
+
+    this.emit('sealed-bid-auction:winner-determined', { auction, winningBid })
+  }
+
+  // ============ SEALED BID UTILITY METHODS ============
+
+  /**
+   * Start submission phase
+   */
+  private async startSubmissionPhase(auctionId: string): Promise<void> {
+    const sealedConfig = this.sealedBidAuctionConfigs.get(auctionId)
+    if (!sealedConfig) return
+
+    const submissionPhase: AuctionPhase = {
+      phase: 'submission',
+      startTime: sealedConfig.submissionStartTime,
+      endTime: sealedConfig.submissionEndTime,
+      isActive: true,
+      timeRemaining: Math.max(0, sealedConfig.submissionEndTime.getTime() - Date.now())
+    }
+
+    this.auctionPhases.set(auctionId, submissionPhase)
+
+    // Schedule phase transitions
+    this.scheduleSealedBidPhases(auctionId)
+  }
+
+  /**
+   * Schedule sealed bid phase transitions
+   */
+  private scheduleSealedBidPhases(auctionId: string): void {
+    const sealedConfig = this.sealedBidAuctionConfigs.get(auctionId)
+    if (!sealedConfig) return
+
+    // Schedule submission end and reveal start
+    const timeToRevealStart = sealedConfig.revealStartTime.getTime() - Date.now()
+    if (timeToRevealStart > 0) {
+      setTimeout(async () => {
+        await this.startRevealPhase(auctionId)
+      }, timeToRevealStart)
+    }
+
+    // Schedule reveal end and auction conclusion
+    const timeToRevealEnd = sealedConfig.revealEndTime.getTime() - Date.now()
+    if (timeToRevealEnd > 0) {
+      setTimeout(async () => {
+        await this.endSealedBidAuction(auctionId)
+      }, timeToRevealEnd)
+    }
+  }
+
+  /**
+   * Validate sealed bid
+   */
+  private async validateSealedBid(
+    auction: Auction,
+    bidder: AuctionParticipant,
+    bidAmount: number,
+    config: SealedBidAuctionConfig
+  ): Promise<void> {
+    // Check bidder eligibility
+    if (bidder.kycStatus === 'rejected') {
+      throw new Error('Bidder KYC not approved')
+    }
+
+    if (bidder.reputation < auction.rules.eligibilityRules.minimumReputation) {
+      throw new Error('Bidder reputation too low')
+    }
+
+    if (bidder.balance < bidAmount) {
+      throw new Error('Insufficient balance')
+    }
+
+    // Check bid limits
+    if (config.minimumBid && bidAmount < config.minimumBid) {
+      throw new Error(`Bid must be at least ${config.minimumBid}`)
+    }
+
+    if (config.maximumBid && bidAmount > config.maximumBid) {
+      throw new Error(`Bid cannot exceed ${config.maximumBid}`)
+    }
+
+    // Check bid increment if specified
+    if (config.bidIncrement) {
+      const minIncrement = config.minimumBid || 0
+      if ((bidAmount - minIncrement) % config.bidIncrement !== 0) {
+        throw new Error(`Bid must be in increments of ${config.bidIncrement}`)
+      }
+    }
+
+    // Check for existing bid from same bidder
+    const sealedBids = this.sealedBids.get(auction.id) || []
+    const existingBid = sealedBids.find(bid => bid.bidder.id === bidder.id && bid.status === 'submitted')
+
+    if (existingBid && !config.allowBidUpdates) {
+      throw new Error('Multiple bids not allowed')
+    }
+
+    // Check bidder participation limit
+    const bidderParticipationCount = auction.bidders.filter(b => b.id === bidder.id).length
+    if (bidderParticipationCount >= auction.rules.eligibilityRules.maximumParticipations) {
+      throw new Error('Maximum participations reached')
+    }
+  }
+
+  /**
+   * Generate bid salt
+   */
+  private generateBidSalt(): string {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  }
+
+  /**
+   * Hash bid for verification
+   */
+  private hashBid(data: string): string {
+    // Simplified hash - in production use crypto library
+    let hash = 0
+    for (let i = 0; i < data.length; i++) {
+      const char = data.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Convert to 32-bit integer
+    }
+    return hash.toString(16)
+  }
+
+  /**
+   * Encrypt bid (simplified)
+   */
+  private encryptBid(bidAmount: string, salt: string): string {
+    // Simplified encryption - in production use proper encryption
+    return Buffer.from(bidAmount + ':' + salt).toString('base64')
+  }
+
+  /**
+   * Decrypt bid (simplified)
+   */
+  private decryptBid(encryptedBid: string, salt: string): string {
+    // Simplified decryption - in production use proper decryption
+    const decrypted = Buffer.from(encryptedBid, 'base64').toString()
+    return decrypted.split(':')[0]
+  }
+
+  /**
+   * Generate reveal signature
+   */
+  private generateRevealSignature(sealedBid: SealedBid): string {
+    // Simplified signature generation - in production use proper signing
+    const data = `${sealedBid.auctionId}:${sealedBid.bidder.id}:${sealedBid.submissionTime.getTime()}`
+    return this.hashBid(data)
+  }
+
+  /**
+   * Verify reveal signature
+   */
+  private verifyRevealSignature(data: string, signature: string): boolean {
+    // Simplified signature verification - in production use proper verification
+    return this.hashBid(data) === signature
+  }
+
+  /**
+   * Get sealed bids for auction
+   */
+  getSealedBids(auctionId: string, bidderId?: string): SealedBid[] {
+    const allBids = this.sealedBids.get(auctionId) || []
+
+    if (bidderId) {
+      return allBids.filter(bid => bid.bidder.id === bidderId)
+    }
+
+    return allBids
+  }
+
+  /**
+   * Get auction phase
+   */
+  getAuctionPhase(auctionId: string): AuctionPhase | null {
+    return this.auctionPhases.get(auctionId) || null
+  }
+
+  /**
+   * Get sealed bid auction config
+   */
+  getSealedBidAuctionConfig(auctionId: string): SealedBidAuctionConfig | null {
+    return this.sealedBidAuctionConfigs.get(auctionId) || null
   }
 
   // ============ OVERRIDE METHODS FOR DUTCH AUCTION SUPPORT ============
