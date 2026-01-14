@@ -99,6 +99,7 @@ export interface AutomatedTrade {
   price: string
   marketplace: string
   status: 'pending' | 'executing' | 'completed' | 'failed' | 'cancelled'
+  actionType?: string // For additional action types
   transactionHash?: string
   executedAt?: Date
   profit?: string
@@ -614,12 +615,13 @@ export class NFTTradingAutomationService extends EventEmitter {
       const trade: AutomatedTrade = {
         id: `trade-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         ruleId,
-        type: action.type,
+        type: action.type as any, // Handle different action types
         contractAddress: action.parameters.contractAddress,
         tokenId: action.parameters.tokenId,
         price: action.parameters.price || '0',
         marketplace: action.marketplace || 'auto',
         status: 'pending',
+        actionType: action.type, // Store original action type
         metadata: action.parameters
       }
 
@@ -639,6 +641,12 @@ export class NFTTradingAutomationService extends EventEmitter {
           break
         case 'list':
           await this.executeListAction(trade)
+          break
+        case 'rebalance':
+          // Rebalance actions are handled differently - emit event for portfolio service
+          this.emit('rebalance:requested', { ownerAddress, action: action.parameters })
+          trade.status = 'completed'
+          trade.executedAt = new Date()
           break
         case 'alert':
           // Just emit alert, no execution needed
