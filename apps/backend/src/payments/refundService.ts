@@ -1,4 +1,5 @@
 import { Payment, IPayment } from '../models/Payment'
+import { runAuctionRefundJob } from '../jobs/auctionRefundJob'
 
 export class RefundService {
     /**
@@ -65,6 +66,14 @@ export class RefundService {
         await refund.save()
         return refund
     }
+
+    /**
+     * Trigger bulk refund for an auction (No-Loss Guarantee)
+     */
+    async processAuctionRefunds(auctionId: string): Promise<void> {
+        await runAuctionRefundJob(auctionId);
+    }
+}
 }
 
 export const refundService = new RefundService()
