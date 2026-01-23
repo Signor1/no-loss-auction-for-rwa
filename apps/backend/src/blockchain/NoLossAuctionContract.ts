@@ -62,6 +62,20 @@ export const NO_LOSS_AUCTION_ABI = [
     },
     {
         type: 'function',
+        name: 'endAuction',
+        inputs: [{ name: 'auctionId', type: 'uint256' }],
+        outputs: [],
+        stateMutability: 'nonpayable'
+    },
+    {
+        type: 'function',
+        name: 'triggerAutomaticSettlement',
+        inputs: [{ name: 'auctionId', type: 'uint256' }],
+        outputs: [],
+        stateMutability: 'nonpayable'
+    },
+    {
+        type: 'function',
         name: 'createAuction',
         inputs: [
             { name: 'assetToken', type: 'address' },
@@ -212,6 +226,29 @@ export class NoLossAuctionContract {
                 params.withdrawalLockPeriod,
                 params.secureEscrowEnabled
             ]
+        });
+    }
+    /**
+     * Ends an auction that has reached its end time
+     */
+    async endAuction(auctionId: string): Promise<Hash> {
+        return this.sdk.writeContract({
+            address: this.contractAddress,
+            abi: NO_LOSS_AUCTION_ABI as any,
+            functionName: 'endAuction',
+            args: [BigInt(auctionId)]
+        });
+    }
+
+    /**
+     * Triggers automatic settlement for an ended auction
+     */
+    async triggerAutomaticSettlement(auctionId: string): Promise<Hash> {
+        return this.sdk.writeContract({
+            address: this.contractAddress,
+            abi: NO_LOSS_AUCTION_ABI as any,
+            functionName: 'triggerAutomaticSettlement',
+            args: [BigInt(auctionId)]
         });
     }
 }
