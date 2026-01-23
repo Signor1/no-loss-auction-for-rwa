@@ -56,8 +56,15 @@ export interface IAuction extends Document {
     allowProxyBidding: boolean
     showBidderNames: boolean
     enableBuyNow: boolean
+    enableBuyNow: boolean
     enableReserve: boolean
+    withdrawalPenaltyBps: number
+    withdrawalLockPeriod: number
+    bidExpirationPeriod: number
+    autoSettle: boolean
+    secureEscrow: boolean
   }
+  paymentToken: string
   fees: {
     platformFee: number
     paymentProcessorFee: number
@@ -323,7 +330,35 @@ const AuctionSchema = new Schema<IAuction>({
     enableReserve: {
       type: Boolean,
       default: true
+    },
+    withdrawalPenaltyBps: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 10000
+    },
+    withdrawalLockPeriod: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    bidExpirationPeriod: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    autoSettle: {
+      type: Boolean,
+      default: false
+    },
+    secureEscrow: {
+      type: Boolean,
+      default: true
     }
+  },
+  paymentToken: {
+    type: String,
+    default: '0x0000000000000000000000000000000000000000' // ETH default
   },
   fees: {
     platformFee: {
@@ -365,7 +400,7 @@ const AuctionSchema = new Schema<IAuction>({
       type: String,
       required: true,
       validate: {
-        validator: function(v: string) {
+        validator: function (v: string) {
           return /^[A-Z]{2}$/.test(v)
         },
         message: 'Invalid country code (use ISO 3166-1 alpha-2)'
@@ -454,7 +489,7 @@ const AuctionSchema = new Schema<IAuction>({
 }, {
   timestamps: true,
   toJSON: {
-    transform: function(doc, ret) {
+    transform: function (doc, ret) {
       return ret
     }
   }
@@ -472,13 +507,13 @@ AuctionSchema.index({ 'metrics.uniqueBidders': -1 })
 AuctionSchema.index({ createdAt: -1 })
 
 // Pre-save middleware
-AuctionSchema.pre('save', function(next) {
+AuctionSchema.pre('save', function (next) {
   // Update metrics
   this.metrics.bids = this.bids.length
   this.metrics.uniqueBidders = new Set(this.bids.map(bid => bid.bidderId.toString())).size
   this.metrics.totalValue = this.bids.reduce((sum, bid) => sum + bid.amount, 0)
   this.metrics.averageBid = this.metrics.bids > 0 ? this.metrics.totalValue / this.metrics.bids : 0
-  
+
   // Update current bid
   if (this.bids.length > 0) {
     const highestBid = this.bids.reduce((max, bid) => bid.amount > max.amount ? bid : max)
@@ -497,7 +532,7 @@ AuctionSchema.pre('save', function(next) {
 })
 
 // Instance methods
-AuctionSchema.methods.addBid = function(bidderId: string, amount: number, transactionHash?: string) {
+AuctionSchema.methods.addBid = function (bidderId: string, amount: number, transactionHash?: string) {
   const bid = {
     id: new mongoose.Types.ObjectId().toString(),
     bidderId,
@@ -510,40 +545,40 @@ AuctionSchema.methods.addBid = function(bidderId: string, amount: number, transa
 
   // Mark previous winning bid as not winning
   this.bids.forEach(b => b.isWinning = false)
-  
+
   // Mark new bid as winning
   bid.isWinning = true
-  
+
   this.bids.push(bid)
   return this.save()
 }
 
-AuctionSchema.methods.removeBid = function(bidId: string) {
+AuctionSchema.methods.removeBid = function (bidId: string) {
   const bidIndex = this.bids.findIndex(bid => bid.id === bidId)
   if (bidIndex !== -1) {
     this.bids.splice(bidIndex, 1)
-    
+
     // Recalculate winning bid
     if (this.bids.length > 0) {
       const highestBid = this.bids.reduce((max, bid) => bid.amount > max.amount ? bid : max)
       highestBid.isWinning = true
     }
   }
-  
+
   return this.save()
 }
 
-AuctionSchema.methods.incrementViews = function() {
+AuctionSchema.methods.incrementViews = function () {
   this.metrics.views += 1
   return this.save()
 }
 
-AuctionSchema.methods.incrementWatchers = function() {
+AuctionSchema.methods.incrementWatchers = function () {
   this.metrics.watchers += 1
   return this.save()
 }
 
-AuctionSchema.methods.extendAuction = function() {
+AuctionSchema.methods.extendAuction = function () {
   if (this.settings.autoExtend && this.settings.currentExtensions < this.settings.maxExtensions) {
     const newEndTime = new Date(this.endTime.getTime() + this.settings.extendDuration * 60 * 1000)
     this.endTime = newEndTime
@@ -554,10 +589,10 @@ AuctionSchema.methods.extendAuction = function() {
   return Promise.resolve(this)
 }
 
-AuctionSchema.methods.endAuction = function() {
+AuctionSchema.methods.endAuction = function () {
   this.status = 'ended'
   this.timeline.endedAt = new Date()
-  
+
   if (this.bids.length > 0) {
     const winningBid = this.bids.find(bid => bid.isWinning)
     if (winningBid) {
@@ -570,54 +605,54 @@ AuctionSchema.methods.endAuction = function() {
       this.status = 'sold'
     }
   }
-  
+
   return this.save()
 }
 
-AuctionSchema.methods.cancelAuction = function(reason?: string) {
+AuctionSchema.methods.cancelAuction = function (reason?: string) {
   this.status = 'cancelled'
   this.metadata.cancellationReason = reason
   this.timeline.endedAt = new Date()
   return this.save()
 }
 
-AuctionSchema.methods.canBid = function(bidAmount: number) {
+AuctionSchema.methods.canBid = function (bidAmount: number) {
   // Check if auction is active
   if (this.status !== 'active') return false
-  
+
   // Check if auction has ended
   if (new Date() > this.endTime) return false
-  
+
   // Check if bid meets minimum increment
   const minBid = this.currentBid + this.minBidIncrement
   if (bidAmount < minBid) return false
-  
+
   // Check reserve price (if enabled)
   if (this.settings.enableReserve && this.reservePrice && bidAmount < this.reservePrice) {
     return false
   }
-  
+
   return true
 }
 
 // Static methods
-AuctionSchema.statics.findBySeller = function(sellerId: string) {
+AuctionSchema.statics.findBySeller = function (sellerId: string) {
   return this.find({ sellerId })
 }
 
-AuctionSchema.statics.findByCategory = function(category: string) {
+AuctionSchema.statics.findByCategory = function (category: string) {
   return this.find({ category, status: 'active' })
 }
 
-AuctionSchema.statics.findActive = function() {
-  return this.find({ 
-    status: 'active', 
+AuctionSchema.statics.findActive = function () {
+  return this.find({
+    status: 'active',
     endTime: { $gt: new Date() },
     visibility: 'public'
   })
 }
 
-AuctionSchema.statics.findEndingSoon = function(hours = 24) {
+AuctionSchema.statics.findEndingSoon = function (hours = 24) {
   const endTime = new Date(Date.now() + hours * 60 * 60 * 1000)
   return this.find({
     status: 'active',
@@ -626,17 +661,17 @@ AuctionSchema.statics.findEndingSoon = function(hours = 24) {
   }).sort({ endTime: 1 })
 }
 
-AuctionSchema.statics.findFeatured = function(limit = 10) {
-  return this.find({ 
-    featured: true, 
-    status: 'active', 
+AuctionSchema.statics.findFeatured = function (limit = 10) {
+  return this.find({
+    featured: true,
+    status: 'active',
     visibility: 'public'
   })
     .sort({ priority: -1, endTime: 1 })
     .limit(limit)
 }
 
-AuctionSchema.statics.searchAuctions = function(query: string, filters: any = {}) {
+AuctionSchema.statics.searchAuctions = function (query: string, filters: any = {}) {
   const searchQuery: any = {
     $text: { $search: query },
     status: 'active',
@@ -667,29 +702,29 @@ AuctionSchema.statics.searchAuctions = function(query: string, filters: any = {}
 }
 
 // Virtual fields
-AuctionSchema.virtual('isExpired').get(function() {
+AuctionSchema.virtual('isExpired').get(function () {
   return new Date() > this.endTime
 })
 
-AuctionSchema.virtual('timeRemaining').get(function() {
+AuctionSchema.virtual('timeRemaining').get(function () {
   const now = new Date()
   const endTime = new Date(this.endTime)
   return endTime.getTime() - now.getTime()
 })
 
-AuctionSchema.virtual('bidCount').get(function() {
+AuctionSchema.virtual('bidCount').get(function () {
   return this.bids.length
 })
 
-AuctionSchema.virtual('highestBid').get(function() {
+AuctionSchema.virtual('highestBid').get(function () {
   return this.bids.length > 0 ? Math.max(...this.bids.map(bid => bid.amount)) : this.startingBid
 })
 
-AuctionSchema.virtual('hasWinner').get(function() {
+AuctionSchema.virtual('hasWinner').get(function () {
   return !!this.winner
 })
 
-AuctionSchema.virtual('nextMinimumBid').get(function() {
+AuctionSchema.virtual('nextMinimumBid').get(function () {
   return this.currentBid + this.minBidIncrement
 })
 

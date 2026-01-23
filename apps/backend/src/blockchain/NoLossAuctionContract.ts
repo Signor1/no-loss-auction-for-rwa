@@ -59,6 +59,27 @@ export const NO_LOSS_AUCTION_ABI = [
         inputs: [{ name: 'auctionId', type: 'uint256' }],
         outputs: [],
         stateMutability: 'nonpayable'
+    },
+    {
+        type: 'function',
+        name: 'createAuction',
+        inputs: [
+            { name: 'assetToken', type: 'address' },
+            { name: 'assetTokenId', type: 'uint256' },
+            { name: 'assetAmount', type: 'uint256' },
+            { name: 'reservePrice', type: 'uint256' },
+            { name: 'startTime', type: 'uint256' },
+            { name: 'endTime', type: 'uint256' },
+            { name: 'minBidIncrement', type: 'uint256' },
+            { name: 'paymentToken', type: 'address' },
+            { name: 'bidExpirationPeriod', type: 'uint256' },
+            { name: 'withdrawalPenaltyBps', type: 'uint256' },
+            { name: 'autoSettleEnabled', type: 'bool' },
+            { name: 'withdrawalLockPeriod', type: 'uint256' },
+            { name: 'secureEscrowEnabled', type: 'bool' }
+        ],
+        outputs: [{ name: 'auctionId', type: 'uint256' }],
+        stateMutability: 'nonpayable'
     }
 ] as const;
 
@@ -86,7 +107,7 @@ export class NoLossAuctionContract {
     async refundLosingBidders(auctionId: string): Promise<Hash> {
         return this.sdk.writeContract({
             address: this.contractAddress,
-            abi: NO_LOSS_AUCTION_ABI,
+            abi: NO_LOSS_AUCTION_ABI as any,
             functionName: 'refundLosingBidders',
             args: [BigInt(auctionId)]
         });
@@ -98,7 +119,7 @@ export class NoLossAuctionContract {
     async waitForRefundEvents(hash: Hash) {
         const receipt = await this.sdk.waitForTransaction(hash);
         return parseEventLogs({
-            abi: NO_LOSS_AUCTION_ABI,
+            abi: NO_LOSS_AUCTION_ABI as any,
             eventName: 'BidRefunded',
             logs: receipt.logs,
         });
@@ -110,7 +131,7 @@ export class NoLossAuctionContract {
     async getEscrowAmount(auctionId: string, bidder: Address): Promise<bigint> {
         return this.sdk.readContract({
             address: this.contractAddress,
-            abi: NO_LOSS_AUCTION_ABI,
+            abi: NO_LOSS_AUCTION_ABI as any,
             functionName: 'escrow',
             args: [BigInt(auctionId), bidder]
         });
@@ -122,7 +143,7 @@ export class NoLossAuctionContract {
     async getEscrowLock(auctionId: string, bidder: Address): Promise<EscrowLock> {
         const [amount, unlockTime, locked, paymentToken] = await this.sdk.readContract({
             address: this.contractAddress,
-            abi: NO_LOSS_AUCTION_ABI,
+            abi: NO_LOSS_AUCTION_ABI as any,
             functionName: 'escrowLocks',
             args: [BigInt(auctionId), bidder]
         }) as [bigint, bigint, boolean, Address];
@@ -136,7 +157,7 @@ export class NoLossAuctionContract {
     async withdrawBid(auctionId: string, bidIndex: number): Promise<Hash> {
         return this.sdk.writeContract({
             address: this.contractAddress,
-            abi: NO_LOSS_AUCTION_ABI,
+            abi: NO_LOSS_AUCTION_ABI as any,
             functionName: 'withdrawBid',
             args: [BigInt(auctionId), BigInt(bidIndex)]
         });
@@ -148,9 +169,49 @@ export class NoLossAuctionContract {
     async withdrawAllBids(auctionId: string): Promise<Hash> {
         return this.sdk.writeContract({
             address: this.contractAddress,
-            abi: NO_LOSS_AUCTION_ABI,
+            abi: NO_LOSS_AUCTION_ABI as any,
             functionName: 'withdrawAllBids',
             args: [BigInt(auctionId)]
+        });
+    }
+
+    /**
+     * Create a new auction with configurable parameters
+     */
+    async createAuction(params: {
+        assetToken: string;
+        assetTokenId: bigint;
+        assetAmount: bigint;
+        reservePrice: bigint;
+        startTime: bigint;
+        endTime: bigint;
+        minBidIncrement: bigint;
+        paymentToken: string;
+        bidExpirationPeriod: bigint;
+        withdrawalPenaltyBps: bigint;
+        autoSettleEnabled: boolean;
+        withdrawalLockPeriod: bigint;
+        secureEscrowEnabled: boolean;
+    }): Promise<Hash> {
+        return this.sdk.writeContract({
+            address: this.contractAddress,
+            abi: NO_LOSS_AUCTION_ABI as any,
+            functionName: 'createAuction',
+            args: [
+                params.assetToken as Address,
+                params.assetTokenId,
+                params.assetAmount,
+                params.reservePrice,
+                params.startTime,
+                params.endTime,
+                params.minBidIncrement,
+                params.paymentToken as Address,
+                params.bidExpirationPeriod,
+                params.withdrawalPenaltyBps,
+                params.autoSettleEnabled,
+                params.withdrawalLockPeriod,
+                params.secureEscrowEnabled
+            ]
         });
     }
 }
