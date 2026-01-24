@@ -33,6 +33,8 @@ export interface IAuditLog extends Document {
     userAgent?: string;
     correlationId?: string;
     source: string;
+    hash: string; // Cryptographic hash of the current record
+    previousHash?: string; // Link to previous audit record for chaining
     metadata: Record<string, any>;
     createdAt: Date;
 }
