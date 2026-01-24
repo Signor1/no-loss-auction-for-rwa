@@ -6,13 +6,20 @@ import { validateRequest } from '../middleware/validation'
 import { asyncHandler } from '../middleware/errorHandler'
 import { upload } from '../services/upload'
 import { io } from '../app'
+import * as userSecurityController from '../controllers/userSecurityController'
 
 const router = express.Router()
+
+// User Security
+router.post('/security/2fa/setup', authenticate, userSecurityController.setup2FA)
+router.post('/security/2fa/verify', authenticate, userSecurityController.verify2FA)
+router.get('/security/recovery-codes', authenticate, userSecurityController.getRecoveryCodes)
+router.get('/security/check-url', authenticate, userSecurityController.checkUrl)
 
 // Get current user profile
 router.get('/profile', authenticate, asyncHandler(async (req: Request, res: Response) => {
   const user = req.user!
-  
+
   res.json({
     user: {
       id: user.id,
@@ -154,7 +161,7 @@ router.post('/profile/picture', [
   validateRequest
 ], asyncHandler(async (req: Request, res: Response) => {
   const user = req.user!
-  
+
   if (!req.file) {
     return res.status(400).json({
       error: 'No file uploaded',
@@ -180,7 +187,7 @@ router.get('/:id', [
   const { id } = req.params
 
   const user = await User.findById(id).select('-password -refreshTokens -emailVerificationToken -passwordResetToken -twoFactorSecret')
-  
+
   if (!user) {
     return res.status(404).json({
       error: 'User not found',
@@ -246,7 +253,7 @@ router.put('/wallet', [
   const { walletAddress } = req.body
 
   // Check if wallet address is already in use
-  const existingUser = await User.findOne({ 
+  const existingUser = await User.findOne({
     walletAddress: walletAddress.toLowerCase(),
     _id: { $ne: user.id }
   })
@@ -407,7 +414,7 @@ router.get('/', [
 
   // Build query
   const query: any = {}
-  
+
   if (search) {
     query.$or = [
       { firstName: { $regex: search, $options: 'i' } },
@@ -415,11 +422,11 @@ router.get('/', [
       { email: { $regex: search, $options: 'i' } }
     ]
   }
-  
+
   if (role) {
     query.role = role
   }
-  
+
   if (status) {
     query.isActive = status === 'active'
   }
