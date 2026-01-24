@@ -16,6 +16,11 @@ export interface IUser extends Document {
   emailVerificationExpires?: Date
   twoFactorEnabled: boolean
   twoFactorSecret?: string
+  recoveryCodes: string[]
+  securityQuestions: Array<{
+    question: string
+    answer: string
+  }>
   kycVerified: boolean
   kycDocuments?: Array<{
     type: string
@@ -101,7 +106,7 @@ const UserSchema = new Schema<IUser>({
   walletAddress: {
     type: String,
     validate: {
-      validator: function(v: string) {
+      validator: function (v: string) {
         return /^0x[a-fA-F0-9]{40}$/.test(v)
       },
       message: 'Invalid Ethereum address format'
@@ -137,6 +142,17 @@ const UserSchema = new Schema<IUser>({
     type: String,
     select: false
   },
+  recoveryCodes: [{
+    type: String,
+    select: false
+  }],
+  securityQuestions: [{
+    question: String,
+    answer: {
+      type: String,
+      select: false
+    }
+  }],
   kycVerified: {
     type: Boolean,
     default: false
@@ -169,7 +185,7 @@ const UserSchema = new Schema<IUser>({
     phone: {
       type: String,
       validate: {
-        validator: function(v: string) {
+        validator: function (v: string) {
           return /^\+?[1-9]\d{1,14}$/.test(v)
         },
         message: 'Invalid phone number format'
@@ -178,7 +194,7 @@ const UserSchema = new Schema<IUser>({
     country: {
       type: String,
       validate: {
-        validator: function(v: string) {
+        validator: function (v: string) {
           return /^[A-Z]{2}$/.test(v)
         },
         message: 'Invalid country code (use ISO 3166-1 alpha-2)'
@@ -191,7 +207,7 @@ const UserSchema = new Schema<IUser>({
       type: String,
       default: 'en',
       validate: {
-        validator: function(v: string) {
+        validator: function (v: string) {
           return /^[a-z]{2}(-[A-Z]{2})?$/.test(v)
         },
         message: 'Invalid language code format'
@@ -290,7 +306,7 @@ const UserSchema = new Schema<IUser>({
 }, {
   timestamps: true,
   toJSON: {
-    transform: function(doc, ret) {
+    transform: function (doc, ret) {
       delete ret.password
       delete ret.refreshTokens
       delete ret.emailVerificationToken
@@ -310,7 +326,7 @@ UserSchema.index({ 'apiKeys.key': 1 })
 UserSchema.index({ createdAt: -1 })
 
 // Pre-save middleware for password hashing
-UserSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next()
 
   try {
@@ -323,11 +339,11 @@ UserSchema.pre('save', async function(next) {
 })
 
 // Instance methods
-UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password)
 }
 
-UserSchema.methods.incrementLoginAttempts = async function(): Promise<void> {
+UserSchema.methods.incrementLoginAttempts = async function (): Promise<void> {
   // If we have a previous lock that has expired, restart at 1
   if (this.security.lockUntil && this.security.lockUntil < Date.now()) {
     return this.updateOne({
@@ -335,36 +351,36 @@ UserSchema.methods.incrementLoginAttempts = async function(): Promise<void> {
       $set: { 'security.loginAttempts': 1 }
     })
   }
-  
+
   const updates: any = { $inc: { 'security.loginAttempts': 1 } }
-  
+
   // Lock account after 5 failed attempts for 2 hours
   if (this.security.loginAttempts + 1 >= 5 && !this.security.lockUntil) {
     updates.$set = { 'security.lockUntil': Date.now() + 2 * 60 * 60 * 1000 }
   }
-  
+
   return this.updateOne(updates)
 }
 
-UserSchema.methods.isLocked = function(): boolean {
+UserSchema.methods.isLocked = function (): boolean {
   return !!(this.security.lockUntil && this.security.lockUntil > Date.now())
 }
 
 // Static methods
-UserSchema.statics.findByEmail = function(email: string) {
+UserSchema.statics.findByEmail = function (email: string) {
   return this.findOne({ email: email.toLowerCase() })
 }
 
-UserSchema.statics.findByWalletAddress = function(walletAddress: string) {
+UserSchema.statics.findByWalletAddress = function (walletAddress: string) {
   return this.findOne({ walletAddress: walletAddress.toLowerCase() })
 }
 
 // Virtual fields
-UserSchema.virtual('fullName').get(function() {
+UserSchema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName}`
 })
 
-UserSchema.virtual('isAccountLocked').get(function() {
+UserSchema.virtual('isAccountLocked').get(function () {
   return this.isLocked()
 })
 
