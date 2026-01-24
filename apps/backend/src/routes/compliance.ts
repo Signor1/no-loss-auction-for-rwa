@@ -1,7 +1,8 @@
 import express from 'express';
-import { authenticate } from '../middleware/auth';
+import { authenticate, authorize } from '../middleware/auth';
 import { upload } from '../services/upload';
 import * as complianceController from '../controllers/complianceController';
+import * as jurisdictionController from '../controllers/jurisdictionController';
 
 const router = express.Router();
 
@@ -20,8 +21,20 @@ router.post('/risk/assess', authenticate, complianceController.triggerRiskAssess
 router.get('/risk/history', authenticate, complianceController.getRiskAssessments);
 router.get('/risk/latest', authenticate, complianceController.getLatestRiskAssessment);
 
-// Watchlist Screening (Admin only is enforced in controller)
-router.post('/screenings', authenticate, complianceController.performScreening);
-router.get('/screenings', authenticate, complianceController.getScreeningResults);
+// Jurisdiction Management
+router.get('/jurisdictions', authenticate, jurisdictionController.getJurisdictions);
+router.post('/jurisdictions', authenticate, authorize('admin'), jurisdictionController.createJurisdiction);
+
+// Compliance Rules
+router.get('/rules', authenticate, jurisdictionController.getRules);
+router.post('/rules', authenticate, authorize('admin'), jurisdictionController.createRule);
+
+// Reporting
+router.get('/reports', authenticate, jurisdictionController.getReports);
+router.post('/reports/generate', authenticate, authorize('admin'), jurisdictionController.generateReport);
+
+// Watchlist Screening
+router.post('/screenings', authenticate, authorize('admin'), complianceController.performScreening);
+router.get('/screenings', authenticate, authorize('admin'), complianceController.getScreeningResults);
 
 export default router;
