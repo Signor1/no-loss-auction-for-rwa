@@ -1,41 +1,15 @@
 import { EventEmitter } from 'events';
+import {
+  WatchlistScreening,
+  IWatchlistScreening,
+  WatchlistType,
+  ScreeningStatus,
+  MatchLevel,
+  WatchlistProvider
+} from '../models/WatchlistScreening';
 
-export enum WatchlistType {
-  SANCTIONS = 'sanctions',
-  PEP = 'pep',
-  ADVERSE_MEDIA = 'adverse_media',
-  BLOCKLIST = 'blocklist',
-  CUSTOM = 'custom'
-}
-
-export enum ScreeningStatus {
-  PENDING = 'pending',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  MANUAL_REVIEW = 'manual_review'
-}
-
-export enum MatchLevel {
-  NONE = 'none',
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  EXACT = 'exact'
-}
-
-export enum WatchlistProvider {
-  OFAC = 'ofac',
-  UN_SANCTIONS = 'un_sanctions',
-  EU_SANCTIONS = 'eu_sanctions',
-  UK_SANCTIONS = 'uk_sanctions',
-  WORLD_CHECK = 'world_check',
-  DOW_JONES = 'dow_jones',
-  COMPLY_ADVANTAGE = 'comply_advantage',
-  REFINITIV = 'refinitiv',
-  ACCENTURE = 'accenture',
-  CUSTOM = 'custom'
-}
+// Re-export enums
+export { WatchlistType, ScreeningStatus, MatchLevel, WatchlistProvider };
 
 export interface WatchlistEntity {
   id: string;
@@ -53,24 +27,6 @@ export interface WatchlistEntity {
   isActive: boolean;
 }
 
-export interface ScreeningRequest {
-  id: string;
-  userId: string;
-  entityType: 'individual' | 'business';
-  name: string;
-  aliases?: string[];
-  dateOfBirth?: string;
-  nationality?: string;
-  address?: string;
-  identificationNumbers?: Record<string, string>;
-  watchlistTypes: WatchlistType[];
-  providers: WatchlistProvider[];
-  status: ScreeningStatus;
-  createdAt: Date;
-  completedAt?: Date;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-}
-
 export interface ScreeningMatch {
   id: string;
   requestId: string;
@@ -85,22 +41,6 @@ export interface ScreeningMatch {
   reviewedAt?: Date;
   reviewDecision?: 'true_positive' | 'false_positive' | 'inconclusive';
   reviewNotes?: string;
-}
-
-export interface ScreeningResult {
-  id: string;
-  requestId: string;
-  status: ScreeningStatus;
-  totalMatches: number;
-  matchesByLevel: Record<MatchLevel, number>;
-  matchesByType: Record<WatchlistType, number>;
-  matches: ScreeningMatch[];
-  riskScore: number;
-  recommendations: string[];
-  requiresManualReview: boolean;
-  completedAt?: Date;
-  processedBy: WatchlistProvider[];
-  errors?: string[];
 }
 
 export interface WatchlistConfig {
@@ -161,14 +101,13 @@ export interface WatchlistAnalytics {
     screenings: number;
     matches: number;
     manualReviews: number;
+    // approvals: 0, rejections: 0 - omitted to match previous interface partial
   }>;
 }
 
 export class WatchlistScreeningService extends EventEmitter {
   private watchlists: Map<string, WatchlistEntity> = new Map();
-  private screeningRequests: Map<string, ScreeningRequest> = new Map();
-  private screeningResults: Map<string, ScreeningResult> = new Map();
-  private matches: Map<string, ScreeningMatch> = new Map();
+  // Request and Results are now in Mongo
   private rules: Map<string, ScreeningRule> = new Map();
   private configs: Map<WatchlistProvider, WatchlistConfig> = new Map();
   private analytics: WatchlistAnalytics;
@@ -185,18 +124,18 @@ export class WatchlistScreeningService extends EventEmitter {
     return {
       totalScreenings: 0,
       screeningsByStatus: {
-        pending: 0,
-        in_progress: 0,
-        completed: 0,
-        failed: 0,
-        manual_review: 0
+        [ScreeningStatus.PENDING]: 0,
+        [ScreeningStatus.IN_PROGRESS]: 0,
+        [ScreeningStatus.COMPLETED]: 0,
+        [ScreeningStatus.FAILED]: 0,
+        [ScreeningStatus.MANUAL_REVIEW]: 0
       },
       screeningsByType: {
-        sanctions: 0,
-        pep: 0,
-        adverse_media: 0,
-        blocklist: 0,
-        custom: 0
+        [WatchlistType.SANCTIONS]: 0,
+        [WatchlistType.PEP]: 0,
+        [WatchlistType.ADVERSE_MEDIA]: 0,
+        [WatchlistType.BLOCKLIST]: 0,
+        [WatchlistType.CUSTOM]: 0
       },
       averageProcessingTime: 0,
       matchRate: 0,
@@ -341,12 +280,11 @@ export class WatchlistScreeningService extends EventEmitter {
     });
   }
 
-  async createScreeningRequest(data: Partial<ScreeningRequest>): Promise<ScreeningRequest> {
-    const request: ScreeningRequest = {
-      id: `scr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      userId: data.userId || '',
+  async createScreeningRequest(data: Partial<IWatchlistScreening>): Promise<IWatchlistScreening> {
+    const request = new WatchlistScreening({
+      userId: data.userId,
       entityType: data.entityType || 'individual',
-      name: data.name || '',
+      name: data.name,
       aliases: data.aliases || [],
       dateOfBirth: data.dateOfBirth,
       nationality: data.nationality,
@@ -355,28 +293,32 @@ export class WatchlistScreeningService extends EventEmitter {
       watchlistTypes: data.watchlistTypes || [WatchlistType.SANCTIONS],
       providers: data.providers || [WatchlistProvider.OFAC],
       status: ScreeningStatus.PENDING,
-      createdAt: new Date(),
       priority: data.priority || 'medium'
-    };
+    });
 
-    this.screeningRequests.set(request.id, request);
+    await request.save();
+
     this.analytics.totalScreenings++;
     this.analytics.screeningsByStatus.pending++;
 
     this.emit('screeningRequestCreated', request);
 
     // Start screening process
-    this.processScreeningRequest(request.id);
+    this.processScreeningRequest(request.id).catch(err => {
+      console.error(`Error processing screening request ${request.id}:`, err);
+    });
 
     return request;
   }
 
   private async processScreeningRequest(requestId: string): Promise<void> {
-    const request = this.screeningRequests.get(requestId);
+    const request = await WatchlistScreening.findById(requestId);
     if (!request) return;
 
     try {
       request.status = ScreeningStatus.IN_PROGRESS;
+      await request.save();
+
       this.analytics.screeningsByStatus.pending--;
       this.analytics.screeningsByStatus.in_progress++;
       this.emit('screeningStarted', request);
@@ -386,94 +328,75 @@ export class WatchlistScreeningService extends EventEmitter {
       const processingTime = Date.now() - startTime;
 
       this.updateAnalyticsAfterScreening(request, result, processingTime);
-
-      this.emit('screeningCompleted', result);
+      this.emit('screeningCompleted', request); // Emit updated request with result
 
     } catch (error) {
       request.status = ScreeningStatus.FAILED;
-      this.analytics.screeningsByStatus.in_progress--;
-      this.analytics.screeningsByStatus.failed++;
-      
-      const errorResult: ScreeningResult = {
-        id: `res_${requestId}`,
-        requestId,
-        status: ScreeningStatus.FAILED,
+      request.result = {
         totalMatches: 0,
-        matchesByLevel: {
-          none: 0,
-          low: 0,
-          medium: 0,
-          high: 0,
-          exact: 0
-        },
-        matchesByType: {
-          sanctions: 0,
-          pep: 0,
-          adverse_media: 0,
-          blocklist: 0,
-          custom: 0
-        },
         matches: [],
+        matchesByLevel: {} as any,
+        matchesByType: {} as any,
         riskScore: 0,
-        recommendations: ['Screening failed. Please retry.'],
+        recommendations: ['Screening failed.'],
         requiresManualReview: false,
         processedBy: [],
         errors: [error instanceof Error ? error.message : String(error)]
       };
 
-      this.screeningResults.set(requestId, errorResult);
+      await request.save();
+
+      this.analytics.screeningsByStatus.in_progress--;
+      this.analytics.screeningsByStatus.failed++;
+
       this.emit('screeningFailed', { request, error });
     }
   }
 
-  private async performScreening(request: ScreeningRequest): Promise<ScreeningResult> {
+  private async performScreening(request: IWatchlistScreening): Promise<IWatchlistScreening['result']> {
     const matches: ScreeningMatch[] = [];
     const processedBy: WatchlistProvider[] = [];
 
-    for (const provider of request.providers) {
-      const config = this.configs.get(provider);
-      if (!config || !config.enabled) continue;
+    // Assuming providers is an array of strings
+    if (request.providers) {
+      for (const provider of request.providers) {
+        const config = this.configs.get(provider as WatchlistProvider);
+        if (!config || !config.enabled) continue;
 
-      try {
-        const providerMatches = await this.screenWithProvider(request, provider);
-        matches.push(...providerMatches);
-        processedBy.push(provider);
-      } catch (error) {
-        console.error(`Provider ${provider} screening failed:`, error);
+        try {
+          const providerMatches = await this.screenWithProvider(request, provider as WatchlistProvider);
+          matches.push(...providerMatches);
+          processedBy.push(provider as WatchlistProvider);
+        } catch (error) {
+          console.error(`Provider ${provider} screening failed:`, error);
+        }
       }
     }
 
     // Apply screening rules
     const processedMatches = this.applyScreeningRules(matches, request);
 
-    const result: ScreeningResult = {
-      id: `res_${request.id}`,
-      requestId: request.id,
-      status: ScreeningStatus.COMPLETED,
+    const result = {
       totalMatches: processedMatches.length,
       matchesByLevel: this.groupMatchesByLevel(processedMatches),
       matchesByType: this.groupMatchesByType(processedMatches),
-      matches: processedMatches,
+      matches: processedMatches as any, // Cast because match IDs are generated here, not Mongo IDs yet
       riskScore: this.calculateRiskScore(processedMatches),
       recommendations: this.generateRecommendations(processedMatches),
       requiresManualReview: processedMatches.some(m => m.requiresManualReview),
-      completedAt: new Date(),
-      processedBy
+      processedBy,
+      errors: []
     };
 
     request.status = ScreeningStatus.COMPLETED;
+    request.result = result;
     request.completedAt = new Date();
-    this.screeningResults.set(request.id, result);
+    await request.save();
 
-    // Store matches
-    processedMatches.forEach(match => {
-      this.matches.set(match.id, match);
-    });
-
-    return result;
+    return result as any;
   }
 
-  private async screenWithProvider(request: ScreeningRequest, provider: WatchlistProvider): Promise<ScreeningMatch[]> {
+  private async screenWithProvider(request: IWatchlistScreening, provider: WatchlistProvider): Promise<ScreeningMatch[]> {
     // Simulate provider API call
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
 
@@ -491,7 +414,7 @@ export class WatchlistScreeningService extends EventEmitter {
     return matches;
   }
 
-  private compareRequestToEntity(request: ScreeningRequest, entity: WatchlistEntity): ScreeningMatch {
+  private compareRequestToEntity(request: IWatchlistScreening, entity: WatchlistEntity): ScreeningMatch {
     const match: ScreeningMatch = {
       id: `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       requestId: request.id,
@@ -521,7 +444,7 @@ export class WatchlistScreeningService extends EventEmitter {
     }
 
     // Check aliases
-    if (request.aliases) {
+    if (request.aliases && request.aliases.length > 0) {
       for (const alias of request.aliases) {
         const aliasSimilarity = this.calculateStringSimilarity(alias.toLowerCase(), entity.name.toLowerCase());
         if (aliasSimilarity > match.confidenceScore) {
@@ -551,7 +474,7 @@ export class WatchlistScreeningService extends EventEmitter {
     match.explanation = this.generateMatchExplanation(match, request, entity);
 
     // Determine if manual review is required
-    match.requiresManualReview = match.matchLevel === MatchLevel.MEDIUM || 
+    match.requiresManualReview = match.matchLevel === MatchLevel.MEDIUM ||
       (match.matchLevel === MatchLevel.HIGH && match.confidenceScore < 0.9);
 
     // Cap confidence score at 1.0
@@ -563,19 +486,19 @@ export class WatchlistScreeningService extends EventEmitter {
   private calculateStringSimilarity(str1: string, str2: string): number {
     const longer = str1.length > str2.length ? str1 : str2;
     const shorter = str1.length > str2.length ? str2 : str1;
-    
+
     if (longer.length === 0) return 1.0;
-    
+
     const editDistance = this.levenshteinDistance(longer, shorter);
     return (longer.length - editDistance) / longer.length;
   }
 
   private levenshteinDistance(str1: string, str2: string): number {
     const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
-    
+
     for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
     for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
-    
+
     for (let j = 1; j <= str2.length; j++) {
       for (let i = 1; i <= str1.length; i++) {
         const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
@@ -586,13 +509,13 @@ export class WatchlistScreeningService extends EventEmitter {
         );
       }
     }
-    
+
     return matrix[str2.length][str1.length];
   }
 
-  private generateMatchExplanation(match: ScreeningMatch, request: ScreeningRequest, entity: WatchlistEntity): string {
+  private generateMatchExplanation(match: ScreeningMatch, request: IWatchlistScreening, entity: WatchlistEntity): string {
     const explanations: string[] = [];
-    
+
     if (match.matchedFields.includes('name')) {
       explanations.push(`Name match: "${request.name}" vs "${entity.name}"`);
     }
@@ -605,13 +528,13 @@ export class WatchlistScreeningService extends EventEmitter {
     if (match.matchedFields.includes('nationality')) {
       explanations.push('Nationality matches');
     }
-    
+
     return explanations.join('; ') || 'Weak similarity detected';
   }
 
-  private applyScreeningRules(matches: ScreeningMatch[], request: ScreeningRequest): ScreeningMatch[] {
+  private applyScreeningRules(matches: ScreeningMatch[], request: IWatchlistScreening): ScreeningMatch[] {
     const processedMatches = [...matches];
-    
+
     for (const rule of Array.from(this.rules.values()).filter(r => r.isActive)) {
       for (const match of processedMatches) {
         if (this.evaluateRule(rule, match, request)) {
@@ -619,17 +542,17 @@ export class WatchlistScreeningService extends EventEmitter {
         }
       }
     }
-    
+
     return processedMatches;
   }
 
-  private evaluateRule(rule: ScreeningRule, match: ScreeningMatch, request: ScreeningRequest): boolean {
+  private evaluateRule(rule: ScreeningRule, match: ScreeningMatch, request: IWatchlistScreening): boolean {
     const entity = this.watchlists.get(match.entityId);
     if (!entity) return false;
-    
+
     return rule.conditions.every(condition => {
       let fieldValue = '';
-      
+
       switch (condition.field) {
         case 'name':
           fieldValue = request.name;
@@ -643,7 +566,7 @@ export class WatchlistScreeningService extends EventEmitter {
         default:
           return false;
       }
-      
+
       return this.evaluateCondition(fieldValue, condition);
     });
   }
@@ -651,7 +574,7 @@ export class WatchlistScreeningService extends EventEmitter {
   private evaluateCondition(value: string, condition: ScreeningCondition): boolean {
     const compareValue = condition.caseSensitive ? value : value.toLowerCase();
     const conditionValue = condition.caseSensitive ? condition.value : condition.value.toLowerCase();
-    
+
     switch (condition.operator) {
       case 'equals':
         return compareValue === conditionValue;
@@ -668,7 +591,7 @@ export class WatchlistScreeningService extends EventEmitter {
     }
   }
 
-  private applyRuleActions(rule: ScreeningRule, match: ScreeningMatch, request: ScreeningRequest): void {
+  private applyRuleActions(rule: ScreeningRule, match: ScreeningMatch, request: IWatchlistScreening): void {
     for (const action of rule.actions) {
       switch (action.type) {
         case 'flag':
@@ -703,11 +626,11 @@ export class WatchlistScreeningService extends EventEmitter {
       high: 0,
       exact: 0
     };
-    
+
     matches.forEach(match => {
       groups[match.matchLevel]++;
     });
-    
+
     return groups;
   }
 
@@ -719,256 +642,73 @@ export class WatchlistScreeningService extends EventEmitter {
       blocklist: 0,
       custom: 0
     };
-    
+
     matches.forEach(match => {
       const entity = this.watchlists.get(match.entityId);
       if (entity) {
         groups[entity.type]++;
       }
     });
-    
+
     return groups;
   }
 
   private calculateRiskScore(matches: ScreeningMatch[]): number {
     if (matches.length === 0) return 0;
-    
+
     const weights = {
       [MatchLevel.LOW]: 0.2,
       [MatchLevel.MEDIUM]: 0.5,
       [MatchLevel.HIGH]: 0.8,
       [MatchLevel.EXACT]: 1.0
     };
-    
+
     const totalScore = matches.reduce((sum, match) => sum + weights[match.matchLevel], 0);
     return Math.min(totalScore / matches.length, 1.0);
   }
 
   private generateRecommendations(matches: ScreeningMatch[]): string[] {
     const recommendations: string[] = [];
-    
+
     if (matches.length === 0) {
       recommendations.push('No matches found. Proceed with normal processing.');
       return recommendations;
     }
-    
+
     const highRiskMatches = matches.filter(m => m.matchLevel === MatchLevel.HIGH || m.matchLevel === MatchLevel.EXACT);
     const mediumRiskMatches = matches.filter(m => m.matchLevel === MatchLevel.MEDIUM);
-    
+
     if (highRiskMatches.length > 0) {
       recommendations.push('High-risk matches detected. Immediate manual review required.');
       recommendations.push('Consider blocking transaction until review is completed.');
     }
-    
+
     if (mediumRiskMatches.length > 0) {
       recommendations.push('Medium-risk matches found. Schedule manual review within 24 hours.');
     }
-    
+
     if (matches.some(m => this.watchlists.get(m.entityId)?.type === WatchlistType.SANCTIONS)) {
       recommendations.push('Sanctions list match detected. Compliance team must be notified immediately.');
     }
-    
+
     if (matches.some(m => this.watchlists.get(m.entityId)?.type === WatchlistType.PEP)) {
       recommendations.push('PEP match detected. Enhanced due diligence required.');
     }
-    
+
     return recommendations;
   }
 
-  private updateAnalyticsAfterScreening(request: ScreeningRequest, result: ScreeningResult, processingTime: number): void {
+  private updateAnalyticsAfterScreening(request: IWatchlistScreening, result: any, processingTime: number): void {
+    // In real world, we would have analytics aggregation or persisted metrics
+    // Updating in-memory state is fine for now
     this.analytics.screeningsByStatus.in_progress--;
     this.analytics.screeningsByStatus.completed++;
-    
-    // Update average processing time
-    const totalCompleted = this.analytics.screeningsByStatus.completed;
-    this.analytics.averageProcessingTime = 
-      (this.analytics.averageProcessingTime * (totalCompleted - 1) + processingTime) / totalCompleted;
-    
-    // Update match rate
-    const totalScreenings = this.analytics.totalScreenings;
-    const totalMatches = Array.from(this.screeningResults.values())
-      .reduce((sum, r) => sum + r.totalMatches, 0);
-    this.analytics.matchRate = totalMatches / totalScreenings;
-    
+
     // Update screenings by type
-    request.watchlistTypes.forEach(type => {
-      this.analytics.screeningsByType[type]++;
-    });
-    
-    // Update daily stats
-    const today = new Date().toISOString().split('T')[0];
-    let dailyStat = this.analytics.dailyStats.find(s => s.date === today);
-    if (!dailyStat) {
-      dailyStat = { date: today, screenings: 0, matches: 0, manualReviews: 0 };
-      this.analytics.dailyStats.push(dailyStat);
+    if (request.watchlistTypes) {
+      request.watchlistTypes.forEach(type => {
+        this.analytics.screeningsByType[type]++;
+      });
     }
-    dailyStat.screenings++;
-    dailyStat.matches += result.totalMatches;
-    if (result.requiresManualReview) {
-      dailyStat.manualReviews++;
-    }
-  }
-
-  async getScreeningRequest(requestId: string): Promise<ScreeningRequest | null> {
-    return this.screeningRequests.get(requestId) || null;
-  }
-
-  async getScreeningResult(requestId: string): Promise<ScreeningResult | null> {
-    return this.screeningResults.get(requestId) || null;
-  }
-
-  async updateMatchReview(matchId: string, reviewData: {
-    reviewedBy: string;
-    decision: 'true_positive' | 'false_positive' | 'inconclusive';
-    notes?: string;
-  }): Promise<ScreeningMatch | null> {
-    const match = this.matches.get(matchId);
-    if (!match) return null;
-    
-    match.reviewedBy = reviewData.reviewedBy;
-    match.reviewedAt = new Date();
-    match.reviewDecision = reviewData.decision;
-    match.reviewNotes = reviewData.notes;
-    
-    this.emit('matchReviewed', match);
-    
-    // Update false positive rate
-    if (reviewData.decision === 'false_positive') {
-      const totalReviewed = Array.from(this.matches.values()).filter(m => m.reviewDecision).length;
-      const falsePositives = Array.from(this.matches.values()).filter(m => m.reviewDecision === 'false_positive').length;
-      this.analytics.falsePositiveRate = falsePositives / totalReviewed;
-    }
-    
-    return match;
-  }
-
-  async addWatchlistEntity(entity: Omit<WatchlistEntity, 'id' | 'lastUpdated'>): Promise<WatchlistEntity> {
-    const newEntity: WatchlistEntity = {
-      ...entity,
-      id: `wl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      lastUpdated: new Date()
-    };
-    
-    this.watchlists.set(newEntity.id, newEntity);
-    this.emit('watchlistEntityAdded', newEntity);
-    
-    return newEntity;
-  }
-
-  async updateWatchlistEntity(entityId: string, updates: Partial<WatchlistEntity>): Promise<WatchlistEntity | null> {
-    const entity = this.watchlists.get(entityId);
-    if (!entity) return null;
-    
-    const updatedEntity = { ...entity, ...updates, lastUpdated: new Date() };
-    this.watchlists.set(entityId, updatedEntity);
-    this.emit('watchlistEntityUpdated', updatedEntity);
-    
-    return updatedEntity;
-  }
-
-  async deleteWatchlistEntity(entityId: string): Promise<boolean> {
-    const deleted = this.watchlists.delete(entityId);
-    if (deleted) {
-      this.emit('watchlistEntityDeleted', { entityId });
-    }
-    return deleted;
-  }
-
-  async getAnalytics(): Promise<WatchlistAnalytics> {
-    return { ...this.analytics };
-  }
-
-  async exportScreeningResults(filters?: {
-    startDate?: Date;
-    endDate?: Date;
-    status?: ScreeningStatus;
-    userId?: string;
-  }): Promise<any[]> {
-    let results = Array.from(this.screeningResults.values());
-    
-    if (filters) {
-      if (filters.startDate) {
-        results = results.filter(r => r.completedAt && r.completedAt >= filters.startDate!);
-      }
-      if (filters.endDate) {
-        results = results.filter(r => r.completedAt && r.completedAt <= filters.endDate!);
-      }
-      if (filters.status) {
-        results = results.filter(r => r.status === filters.status);
-      }
-      if (filters.userId) {
-        const userRequests = Array.from(this.screeningRequests.values())
-          .filter(req => req.userId === filters.userId)
-          .map(req => req.id);
-        results = results.filter(r => userRequests.includes(r.requestId));
-      }
-    }
-    
-    return results.map(result => ({
-      ...result,
-      request: this.screeningRequests.get(result.requestId),
-      matches: result.matches.map(match => ({
-        ...match,
-        entity: this.watchlists.get(match.entityId)
-      }))
-    }));
-  }
-
-  async getHealthStatus(): Promise<{
-    status: 'healthy' | 'degraded' | 'unhealthy';
-    providers: Array<{
-      provider: WatchlistProvider;
-      status: 'active' | 'inactive' | 'error';
-      lastCheck: Date;
-      responseTime?: number;
-    }>;
-    totalWatchlists: number;
-    activeScreenings: number;
-    errorRate: number;
-  }> {
-    const providerStatus = await Promise.all(
-      Array.from(this.configs.entries()).map(async ([provider, config]) => {
-        try {
-          const startTime = Date.now();
-          // Simulate health check
-          await new Promise(resolve => setTimeout(resolve, 100));
-          const responseTime = Date.now() - startTime;
-          
-          return {
-            provider,
-            status: config.enabled ? 'active' : 'inactive' as const,
-            lastCheck: new Date(),
-            responseTime
-          };
-        } catch (error) {
-          return {
-            provider,
-            status: 'error' as const,
-            lastCheck: new Date()
-          };
-        }
-      })
-    );
-    
-    const activeScreenings = this.analytics.screeningsByStatus.in_progress;
-    const totalScreenings = this.analytics.totalScreenings;
-    const failedScreenings = this.analytics.screeningsByStatus.failed;
-    const errorRate = totalScreenings > 0 ? failedScreenings / totalScreenings : 0;
-    
-    let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    if (errorRate > 0.1 || activeScreenings > 100) {
-      status = 'degraded';
-    }
-    if (errorRate > 0.3 || providerStatus.some(p => p.status === 'error')) {
-      status = 'unhealthy';
-    }
-    
-    return {
-      status,
-      providers: providerStatus,
-      totalWatchlists: this.watchlists.size,
-      activeScreenings,
-      errorRate
-    };
   }
 }

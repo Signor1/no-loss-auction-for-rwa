@@ -1,5 +1,6 @@
 import { BaseSdkService, initializeBaseSdk } from './baseSdkService';
 import { Address, Hash, parseEventLogs } from 'viem';
+import { retry } from '../utils/retry';
 
 export const NO_LOSS_AUCTION_ABI = [
     {
@@ -232,23 +233,23 @@ export class NoLossAuctionContract {
      * Ends an auction that has reached its end time
      */
     async endAuction(auctionId: string): Promise<Hash> {
-        return this.sdk.writeContract({
+        return retry(() => this.sdk.writeContract({
             address: this.contractAddress,
             abi: NO_LOSS_AUCTION_ABI as any,
             functionName: 'endAuction',
             args: [BigInt(auctionId)]
-        });
+        }));
     }
 
     /**
      * Triggers automatic settlement for an ended auction
      */
     async triggerAutomaticSettlement(auctionId: string): Promise<Hash> {
-        return this.sdk.writeContract({
+        return retry(() => this.sdk.writeContract({
             address: this.contractAddress,
             abi: NO_LOSS_AUCTION_ABI as any,
             functionName: 'triggerAutomaticSettlement',
             args: [BigInt(auctionId)]
-        });
+        }));
     }
 }
