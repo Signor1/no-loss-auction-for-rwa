@@ -27,6 +27,7 @@ import paymentRoutes from './routes/payments'
 import financialRoutes from './routes/financial'
 import coinbaseWebhookRoutes from './routes/coinbaseWebhook'
 import complianceRoutes from './routes/compliance'
+import securityRoutes from './routes/security'
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler'
@@ -172,6 +173,7 @@ app.use('/api/payments', authenticate, paymentRoutes)
 app.use('/api/financial', authenticate, financialRoutes)
 app.use('/api/webhooks/coinbase', coinbaseWebhookRoutes)
 app.use('/api/compliance', complianceRoutes)
+app.use('/api/security', securityRoutes)
 
 
 // API documentation endpoint
