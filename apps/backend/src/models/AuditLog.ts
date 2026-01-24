@@ -52,6 +52,8 @@ const AuditLogSchema = new Schema<IAuditLog>({
     userAgent: String,
     correlationId: { type: String, index: true },
     source: { type: String, default: 'system' },
+    hash: { type: String, required: true, index: true },
+    previousHash: { type: String, index: true },
     metadata: { type: Map, of: Schema.Types.Mixed }
 }, {
     timestamps: { createdAt: true, updatedAt: false }

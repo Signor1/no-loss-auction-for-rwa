@@ -2,8 +2,16 @@ import express from 'express';
 import { authenticate, authorize } from '../middleware/auth';
 import * as securityController from '../controllers/securityController';
 import * as platformController from '../controllers/platformSecurityController';
+import * as auditTrailController from '../controllers/auditTrailController';
 
 const router = express.Router();
+
+// --- Immutable Audit Trail ---
+router.get('/trail/verify', authenticate, authorize('admin'), auditTrailController.verifyAuditIntegrity);
+router.get('/trail/export', authenticate, authorize('admin'), auditTrailController.exportAuditLogs);
+router.get('/trail/financial', authenticate, authorize('admin'), auditTrailController.getFinancialAudits);
+router.post('/trail/financial', authenticate, authorize('admin'), auditTrailController.createFinancialAudit);
+router.get('/trail/compliance', authenticate, authorize('admin'), auditTrailController.getComplianceAudits);
 
 // --- Smart Contract Registry ---
 router.get('/contracts', securityController.getContracts);
