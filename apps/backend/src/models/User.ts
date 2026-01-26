@@ -70,6 +70,11 @@ export interface IUser extends Document {
   refreshTokens: string[]
   passwordResetToken?: string
   passwordResetExpires?: Date
+  onboarding: {
+    status: 'new' | 'in-progress' | 'completed'
+    completedSteps: string[]
+    lastStep: string
+  }
   createdAt: Date
   updatedAt: Date
 }
