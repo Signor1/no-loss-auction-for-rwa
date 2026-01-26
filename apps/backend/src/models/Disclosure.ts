@@ -20,6 +20,7 @@ export interface IDisclosure extends Document {
     authority: string; // e.g., 'SEC', 'FCA'
     filingId?: string; // External filing identifier
     visibility: 'public' | 'investors_only' | 'restricted';
+    language: string; // ISO 639-1 code
     metadata: Record<string, any>;
     createdAt: Date;
     updatedAt: Date;
@@ -36,6 +37,7 @@ const DisclosureSchema = new Schema<IDisclosure>({
     authority: String,
     filingId: String,
     visibility: { type: String, enum: ['public', 'investors_only', 'restricted'], default: 'public' },
+    language: { type: String, default: 'en', index: true },
     metadata: { type: Map, of: Schema.Types.Mixed }
 }, {
     timestamps: true

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 
 // Translation types
 export type Language = 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ru' | 'ja' | 'ko' | 'zh' | 'ar'
@@ -744,7 +744,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Save language preference
     localStorage.setItem('language', language)
-    
+
     // Update document language and direction
     document.documentElement.lang = language
     document.documentElement.dir = rtlLanguages.includes(language) ? 'rtl' : 'ltr'
@@ -754,11 +754,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const t = useCallback((key: string, params?: Record<string, string | number>): string => {
     const keys = key.split('.')
     let value: any = translations[language]
-    
+
     for (const k of keys) {
       value = value?.[k]
     }
-    
+
     if (typeof value !== 'string') {
       // Fallback to English if translation not found
       value = translations.en
@@ -766,18 +766,18 @@ export function I18nProvider({ children }: { children: ReactNode }) {
         value = value?.[k]
       }
     }
-    
+
     if (typeof value !== 'string') {
       return key // Return key if no translation found
     }
-    
+
     // Replace parameters
     if (params) {
       return value.replace(/\{(\w+)\}/g, (match, param) => {
         return params[param]?.toString() || match
       })
     }
-    
+
     return value
   }, [language])
 
@@ -804,17 +804,18 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const isRTL = rtlLanguages.includes(language)
 
   return (
-    <I18nContext.Provider value={{
-      language,
+    <I18nContext.Provider value= {{
+    language,
       setLanguage,
       t,
       formatDate,
       formatNumber,
       formatCurrency,
       isRTL
-    }}>
-      {children}
-    </I18nContext.Provider>
+  }
+}>
+  { children }
+  </I18nContext.Provider>
   )
 }
 
@@ -833,11 +834,11 @@ export const i18nUtils = {
   getKey: (key: string, language: Language): string => {
     const keys = key.split('.')
     let value: any = translations[language]
-    
+
     for (const k of keys) {
       value = value?.[k]
     }
-    
+
     return typeof value === 'string' ? value : key
   },
 
@@ -845,12 +846,12 @@ export const i18nUtils = {
   hasTranslation: (key: string, language: Language): boolean => {
     const keys = key.split('.')
     let value: any = translations[language]
-    
+
     for (const k of keys) {
       value = value?.[k]
       if (value === undefined) return false
     }
-    
+
     return typeof value === 'string'
   },
 
