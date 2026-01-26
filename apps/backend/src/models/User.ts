@@ -307,6 +307,15 @@ const UserSchema = new Schema<IUser>({
   passwordResetExpires: {
     type: Date,
     select: false
+  },
+  onboarding: {
+    status: {
+      type: String,
+      enum: ['new', 'in-progress', 'completed'],
+      default: 'new'
+    },
+    completedSteps: [String],
+    lastStep: String
   }
 }, {
   timestamps: true,
