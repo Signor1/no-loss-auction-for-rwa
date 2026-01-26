@@ -10,6 +10,7 @@ import { PaymentHistory } from './PaymentHistory';
 import { PayoutHistory } from './PayoutHistory';
 import FinancialDashboard from '../admin/FinancialDashboard';
 import { SettingsPanel } from './SettingsPanel';
+import { AccessibleImage } from '../common/AccessibleImage';
 
 export function UserDashboard() {
   const { profile, isLoading } = useUserProfile();
@@ -55,10 +56,10 @@ export function UserDashboard() {
                   <p className="text-sm text-gray-600">Welcome back,</p>
                   <p className="text-lg font-semibold text-gray-900">{profile.displayName}</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <img
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+                  <AccessibleImage
                     src={profile.avatar}
-                    alt={profile.displayName}
+                    alt={`${profile.displayName}'s avatar`}
                     className="w-10 h-10 rounded-full"
                   />
                 </div>
@@ -96,22 +97,26 @@ export function UserDashboard() {
         )}
 
         {/* Navigation Tabs */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px overflow-x-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="flex -mb-px overflow-x-auto" role="tablist" aria-label="Dashboard sections">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
+                  id={`tab-${tab.id}`}
+                  role="tab"
+                  aria-selected={activeTab === tab.id}
+                  aria-controls={`panel-${tab.id}`}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`
-                    flex items-center px-6 py-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap
+                    flex items-center px-6 py-3 border-b-2 font-black text-sm transition-colors whitespace-nowrap uppercase tracking-widest
                     ${activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
+                      ? 'border-indigo-500 text-indigo-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }
                   `}
                 >
-                  <span className="mr-2">{tab.icon}</span>
+                  <span className="mr-2" aria-hidden="true">{tab.icon}</span>
                   {tab.label}
                 </button>
               ))}
@@ -120,7 +125,12 @@ export function UserDashboard() {
         </div>
 
         {/* Tab Content */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700"
+          role="tabpanel"
+          id={`panel-${activeTab}`}
+          aria-labelledby={`tab-${activeTab}`}
+        >
           {activeTab === 'profile' && <ProfileManagement />}
           {activeTab === 'activity' && <ActivityFeed />}
           {activeTab === 'wallets' && <WalletManagement />}
