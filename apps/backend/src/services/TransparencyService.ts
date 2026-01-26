@@ -1,6 +1,5 @@
 import { Asset } from '../models/Asset';
 import { AuditLog, AuditEventType } from '../models/AuditLog';
-import { Payment } from '../models/Payment';
 import { SmartContract } from '../models/SmartContract';
 
 export class TransparencyService {
