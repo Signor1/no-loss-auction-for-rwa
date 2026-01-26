@@ -7,6 +7,7 @@ import { asyncHandler } from '../middleware/errorHandler'
 import { upload } from '../services/upload'
 import { io } from '../app'
 import * as userSecurityController from '../controllers/userSecurityController'
+import * as onboardingController from '../controllers/userOnboardingController'
 
 const router = express.Router()
 
@@ -15,6 +16,11 @@ router.post('/security/2fa/setup', authenticate, userSecurityController.setup2FA
 router.post('/security/2fa/verify', authenticate, userSecurityController.verify2FA)
 router.get('/security/recovery-codes', authenticate, userSecurityController.getRecoveryCodes)
 router.get('/security/check-url', authenticate, userSecurityController.checkUrl)
+
+// Onboarding
+router.get('/onboarding/progress', authenticate, onboardingController.getOnboardingProgress)
+router.put('/onboarding/progress', authenticate, onboardingController.updateOnboardingProgress)
+router.post('/onboarding/complete', authenticate, onboardingController.completeOnboarding)
 
 // Get current user profile
 router.get('/profile', authenticate, asyncHandler(async (req: Request, res: Response) => {
