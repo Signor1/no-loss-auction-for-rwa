@@ -6,6 +6,7 @@ import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { SkipNavLink } from '@/components/accessibility/SkipNavLink';
 import { ContrastToggle } from '@/components/accessibility/ContrastToggle';
 import { TextScalingControl } from '@/components/accessibility/TextScalingControl';
+import { LanguageSelector } from '@/components/common/LanguageSelector';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -20,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" dir="ltr">
       <body className={inter.className}>
         <Providers>
           <SkipNavLink />
@@ -34,6 +35,7 @@ export default function RootLayout({
                   <div className="flex items-center space-x-2 border-r dark:border-gray-700 pr-6 mr-6">
                     <ContrastToggle />
                     <TextScalingControl />
+                    <LanguageSelector />
                   </div>
                   <WalletConnectButton />
                 </nav>

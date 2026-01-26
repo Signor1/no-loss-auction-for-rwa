@@ -110,7 +110,9 @@ export class SecurityComplianceService extends EventEmitter {
         return disclosure;
     }
 
-    async getAssetDisclosures(assetId: string): Promise<any[]> {
-        return Disclosure.find({ assetId }).sort({ filingDate: -1 });
+    async getAssetDisclosures(assetId: string, language?: string): Promise<any[]> {
+        const query: any = { assetId };
+        if (language) query.language = language;
+        return Disclosure.find(query).sort({ filingDate: -1 });
     }
 }

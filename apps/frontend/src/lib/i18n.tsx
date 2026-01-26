@@ -862,18 +862,17 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const isRTL = rtlLanguages.includes(language)
 
   return (
-    <I18nContext.Provider value= {{
-    language,
+    <I18nContext.Provider value={{
+      language,
       setLanguage,
       t,
       formatDate,
       formatNumber,
       formatCurrency,
       isRTL
-  }
-}>
-  { children }
-  </I18nContext.Provider>
+    }}>
+      {children}
+    </I18nContext.Provider>
   )
 }
 

@@ -52,7 +52,9 @@ export const checkEligibility = async (req: Request, res: Response) => {
 
 export const getAssetDisclosures = async (req: Request, res: Response) => {
     try {
-        const disclosures = await securityService.getAssetDisclosures(req.params.assetId);
+        const { assetId } = req.params;
+        const { lang } = req.query;
+        const disclosures = await securityService.getAssetDisclosures(assetId, lang as string);
         res.json(disclosures);
     } catch (error) {
         res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
