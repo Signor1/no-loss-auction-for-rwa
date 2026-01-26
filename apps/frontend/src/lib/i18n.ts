@@ -697,10 +697,68 @@ const esTranslations: Partial<TranslationKeys> = {
   // ... more translations would go here
 }
 
+// French translations
+const frTranslations: Partial<TranslationKeys> = {
+  common: {
+    loading: 'Chargement...',
+    error: 'Erreur',
+    success: 'Succès',
+    cancel: 'Annuler',
+    save: 'Enregistrer',
+    delete: 'Supprimer',
+    edit: 'Modifier',
+    view: 'Voir',
+    search: 'Rechercher',
+    submit: 'Soumettre',
+    confirm: 'Confirmer',
+    yes: 'Oui',
+    no: 'Non'
+  },
+  navigation: {
+    home: 'Accueil',
+    auctions: 'Enchères',
+    assets: 'Actifs',
+    portfolio: 'Portefeuille',
+    profile: 'Profil',
+    settings: 'Paramètres',
+    help: 'Aide'
+  }
+}
+
+// Arabic translations (RTL)
+const arTranslations: Partial<TranslationKeys> = {
+  common: {
+    loading: 'جاري التحميل...',
+    error: 'خطأ',
+    success: 'نجاح',
+    cancel: 'إلغاء',
+    save: 'حفظ',
+    delete: 'حذف',
+    edit: 'تعديل',
+    view: 'عرض',
+    search: 'بحث',
+    submit: 'إرسال',
+    confirm: 'تأكيد',
+    yes: 'نعم',
+    no: 'لا'
+  },
+  navigation: {
+    home: 'الرئيسية',
+    auctions: 'المزادات',
+    assets: 'الأصول',
+    portfolio: 'المحفظة',
+    profile: 'الملف الشخصي',
+    settings: 'الإعدادات',
+    help: 'مساعدة'
+  }
+}
+
 // All translations
 const translations: Translations = {
   en: enTranslations,
   es: esTranslations,
+  fr: frTranslations as TranslationNamespace,
+  ar: arTranslations as TranslationNamespace,
   // Add other languages as needed
 }
 
