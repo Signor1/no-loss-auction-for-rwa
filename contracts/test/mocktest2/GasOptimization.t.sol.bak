@@ -1,0 +1,689 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.23;
+
+import "forge-std/Test.sol";
+import "../src/NoLossAuction.sol";
+import "../src/AuctionFactory.sol";
+import "../src/RWAAssetNFT.sol";
+import "../src/RWAFractionalToken.sol";
+import "../src/RWATREXToken.sol";
+import "../src/RWAVault.sol";
+import "../src/AssetRegistry.sol";
+import "../src/RWAIdentityRegistry.sol";
+import "../src/DAO.sol";
+import "../src/TokenizationEngine.sol";
+import "../src/OracleManager.sol";
+import "../src/OffChainVerifier.sol";
+import "../src/MultiSigWallet.sol";
+import "../src/DividendDistributor.sol";
+import "../src/Timelock.sol";
+import "./MockERC20.sol";
+
+/// @title Gas Optimization & Benchmark Test Suite
+/// @notice Comprehensive gas usage analysis and optimization testing
+/// @dev Implements Feature 6.3: Gas optimization
+contract GasOptimizationTest is Test {
+    // Contract instances
+    NoLossAuction public auction;
+    AuctionFactory public factory;
+    RWAAssetNFT public nft;
+    RWAFractionalToken public fractionalToken;
+    RWATREXToken public trexToken;
+    RWAVault public vault;
+    AssetRegistry public registry;
+    RWAIdentityRegistry public identityRegistry;
+    DAO public dao;
+    TokenizationEngine public tokenization;
+    OracleManager public oracle;
+    OffChainVerifier public verifier;
+    MultiSigWallet public multisig;
+    DividendDistributor public dividend;
+    Timelock public timelock;
+    
+    // Test tokens
+    MockERC20 public paymentToken;
+    MockERC20 public collateralToken;
+    
+    // Addresses
+    address public owner = address(0xA11CE);
+    address public feeReceiver = address(0xFEE);
+    address public seller = address(0x1000000000000000000000000000000000000000000);
+    address public bidder1 = address(0xB1DD);
+    address public bidder2 = address(0xB2DD);
+    address public treasury = address(0x1234567890123456789012345678901234567890);
+    
+    // Gas tracking
+    uint256 public deploymentGas;
+    uint256 public auctionCreationGas;
+    uint256 public bidPlacementGas;
+    uint256 public bidWithdrawalGas;
+    uint256 public auctionEndGas;
+    uint256 public tokenTransferGas;
+    uint256 public approvalGas;
+    uint256 public registryEntryGas;
+    
+    // Benchmark results
+    struct Benchmark {
+        uint256 deployment;
+        uint256 auctionCreation;
+        uint256 bidPlacement;
+        uint256 bidWithdrawal;
+        uint256 auctionEnd;
+        uint256 tokenTransfer;
+        uint256 approval;
+        uint256 registryEntry;
+    }
+    
+    Benchmark public benchmark;
+    
+    function setUp() public {
+        // Setup addresses with ETH
+        vm.deal(owner, 1000 ether);
+        vm.deal(seller, 100 ether);
+        vm.deal(bidder1, 100 ether);
+        vm.deal(bidder2, 100 ether);
+        vm.deal(feeReceiver, 10 ether);
+        vm.deal(treasury, 10 ether);
+        
+        vm.startPrank(owner);
+        
+        // Deploy tokens first
+        paymentToken = new MockERC20("Payment Token", "PAY", 18);
+        collateralToken = new MockERC20("Collateral", "COL", 18);
+        
+        // Deploy core contracts and track gas
+        uint256 gasStart = gasleft();
+        auction = new NoLossAuction(owner);
+        uint256 gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        gasStart = gasleft();
+        factory = new AuctionFactory(address(auction), feeReceiver, 0.01 ether);
+        gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        gasStart = gasleft();
+        nft = new RWAAssetNFT("RWA Asset", "RWA", owner, false);
+        gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        gasStart = gasleft();
+        fractionalToken = new RWAFractionalToken("RWA Fractional", "RWAF", owner, owner);
+        gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        gasStart = gasleft();
+        trexToken = new RWATREXToken("RWA T-REX", "RWAT", owner, owner, address(0));
+        gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        gasStart = gasleft();
+        vault = new RWAVault(owner, address(paymentToken));
+        gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        gasStart = gasleft();
+        registry = new AssetRegistry(owner);
+        gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        gasStart = gasleft();
+        identityRegistry = new RWAIdentityRegistry(owner);
+        gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        gasStart = gasleft();
+        dao = new DAO(owner, treasury, 7 days, 1000);
+        gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        gasStart = gasleft();
+        tokenization = new TokenizationEngine(owner);
+        gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        gasStart = gasleft();
+        oracle = new OracleManager(owner);
+        gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        gasStart = gasleft();
+        verifier = new OffChainVerifier(owner);
+        gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        gasStart = gasleft();
+        multisig = new MultiSigWallet(new address[](1), 1);
+        gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        gasStart = gasleft();
+        dividend = new DividendDistributor(owner);
+        gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        gasStart = gasleft();
+        timelock = new Timelock(owner, 2 days);
+        gasUsed = gasStart - gasleft();
+        deploymentGas += gasUsed;
+        
+        vm.stopPrank();
+        
+        // Initialize benchmark
+        benchmark = Benchmark({
+            deployment: deploymentGas,
+            auctionCreation: 0,
+            bidPlacement: 0,
+            bidWithdrawal: 0,
+            auctionEnd: 0,
+            tokenTransfer: 0,
+            approval: 0,
+            registryEntry: 0
+        });
+    }
+    
+    /// @notice Benchmark auction creation gas costs
+    function testBenchmark_AuctionCreation() public {
+        vm.startPrank(seller);
+        
+        // Mint and approve NFT
+        nft.mint(seller, 1);
+        uint256 gasStart = gasleft();
+        nft.approve(address(auction), 1);
+        uint256 gasUsed = gasStart - gasleft();
+        approvalGas = gasUsed;
+        
+        // Create auction
+        gasStart = gasleft();
+        uint256 auctionId = auction.createAuction(
+            address(nft),
+            1,
+            1,
+            1 ether,
+            block.timestamp,
+            block.timestamp + 7 days,
+            0.01 ether,
+            address(0),
+            0,
+            0,
+            false,
+            0,
+            false
+        );
+        gasUsed = gasStart - gasleft();
+        auctionCreationGas = gasUsed;
+        
+        vm.stopPrank();
+        
+        // Update benchmark
+        benchmark.auctionCreation = auctionCreationGas;
+        benchmark.approval = approvalGas;
+        
+        // Log results
+        console.log("=== Auction Creation Benchmark ===");
+        console.log("NFT Approval Gas:", approvalGas);
+        console.log("Auction Creation Gas:", auctionCreationGas);
+        console.log("Total Setup Gas:", approvalGas + auctionCreationGas);
+        
+        // Assertions for reasonable gas limits
+        assertTrue(approvalGas < 100000, "NFT approval should use less than 100k gas");
+        assertTrue(auctionCreationGas < 500000, "Auction creation should use less than 500k gas");
+    }
+    
+    /// @notice Benchmark bid placement gas costs
+    function testBenchmark_BidPlacement() public {
+        // Setup auction first
+        vm.startPrank(seller);
+        nft.mint(seller, 1);
+        nft.approve(address(auction), 1);
+        uint256 auctionId = auction.createAuction(
+            address(nft),
+            1,
+            1,
+            1 ether,
+            block.timestamp,
+            block.timestamp + 7 days,
+            0.01 ether,
+            address(0),
+            0,
+            0,
+            false,
+            0,
+            false
+        );
+        vm.stopPrank();
+        
+        // Place bid
+        vm.startPrank(bidder1);
+        uint256 gasStart = gasleft();
+        auction.placeBid{value: 1 ether}(auctionId, 1 ether);
+        uint256 gasUsed = gasStart - gasleft();
+        bidPlacementGas = gasUsed;
+        vm.stopPrank();
+        
+        // Update benchmark
+        benchmark.bidPlacement = bidPlacementGas;
+        
+        // Log results
+        console.log("=== Bid Placement Benchmark ===");
+        console.log("First Bid Gas:", bidPlacementGas);
+        
+        // Test subsequent bid (should be higher due to refund logic)
+        vm.startPrank(bidder2);
+        gasStart = gasleft();
+        auction.placeBid{value: 2 ether}(auctionId, 2 ether);
+        uint256 secondBidGas = gasStart - gasleft();
+        vm.stopPrank();
+        
+        console.log("Second Bid Gas:", secondBidGas);
+        console.log("Gas Difference:", secondBidGas - bidPlacementGas);
+        
+        // Assertions
+        assertTrue(bidPlacementGas < 200000, "First bid should use less than 200k gas");
+        assertTrue(secondBidGas < 300000, "Second bid should use less than 300k gas");
+    }
+    
+    /// @notice Benchmark bid withdrawal gas costs
+    function testBenchmark_BidWithdrawal() public {
+        // Setup auction with bids
+        vm.startPrank(seller);
+        nft.mint(seller, 1);
+        nft.approve(address(auction), 1);
+        uint256 auctionId = auction.createAuction(
+            address(nft),
+            1,
+            1,
+            1 ether,
+            block.timestamp,
+            block.timestamp + 7 days,
+            0.01 ether,
+            address(0),
+            0,
+            0,
+            false,
+            0,
+            false
+        );
+        vm.stopPrank();
+        
+        // Place bids
+        vm.startPrank(bidder1);
+        auction.placeBid{value: 1 ether}(auctionId, 1 ether);
+        vm.stopPrank();
+        
+        vm.startPrank(bidder2);
+        auction.placeBid{value: 2 ether}(auctionId, 2 ether);
+        vm.stopPrank();
+        
+        // Withdraw first bid (bidder1 is outbid)
+        vm.startPrank(bidder1);
+        uint256 gasStart = gasleft();
+        auction.withdrawBid(auctionId, 0);
+        uint256 gasUsed = gasStart - gasleft();
+        bidWithdrawalGas = gasUsed;
+        vm.stopPrank();
+        
+        // Update benchmark
+        benchmark.bidWithdrawal = bidWithdrawalGas;
+        
+        // Log results
+        console.log("=== Bid Withdrawal Benchmark ===");
+        console.log("Bid Withdrawal Gas:", bidWithdrawalGas);
+        
+        // Assertions
+        assertTrue(bidWithdrawalGas < 150000, "Bid withdrawal should use less than 150k gas");
+    }
+    
+    /// @notice Benchmark auction ending gas costs
+    function testBenchmark_AuctionEnd() public {
+        // Setup auction with winning bid
+        vm.startPrank(seller);
+        nft.mint(seller, 1);
+        nft.approve(address(auction), 1);
+        uint256 auctionId = auction.createAuction(
+            address(nft),
+            1,
+            1,
+            1 ether,
+            block.timestamp,
+            block.timestamp + 7 days,
+            0.01 ether,
+            address(0),
+            0,
+            0,
+            false,
+            0,
+            false
+        );
+        vm.stopPrank();
+        
+        // Place winning bid
+        vm.startPrank(bidder1);
+        auction.placeBid{value: 1 ether}(auctionId, 1 ether);
+        vm.stopPrank();
+        
+        // Fast forward to end time
+        vm.warp(block.timestamp + 8 days);
+        
+        // End auction
+        uint256 gasStart = gasleft();
+        auction.endAuction(auctionId);
+        uint256 gasUsed = gasStart - gasleft();
+        auctionEndGas = gasUsed;
+        
+        // Update benchmark
+        benchmark.auctionEnd = auctionEndGas;
+        
+        // Log results
+        console.log("=== Auction End Benchmark ===");
+        console.log("Auction End Gas:", auctionEndGas);
+        
+        // Assertions
+        assertTrue(auctionEndGas < 200000, "Auction end should use less than 200k gas");
+    }
+    
+    /// @notice Benchmark token operations gas costs
+    function testBenchmark_TokenOperations() public {
+        // ERC-721 Transfer
+        vm.startPrank(owner);
+        nft.mint(owner, 1);
+        uint256 gasStart = gasleft();
+        nft.transferFrom(owner, seller, 1);
+        uint256 nftTransferGas = gasStart - gasleft();
+        
+        // ERC-20 Transfer
+        paymentToken.mint(owner, 1000 ether);
+        gasStart = gasleft();
+        paymentToken.transfer(seller, 100 ether);
+        uint256 erc20TransferGas = gasStart - gasleft();
+        
+        // ERC-20 Approval
+        gasStart = gasleft();
+        paymentToken.approve(seller, 500 ether);
+        uint256 erc20ApprovalGas = gasStart - gasleft();
+        
+        vm.stopPrank();
+        
+        // Update benchmark
+        tokenTransferGas = nftTransferGas + erc20TransferGas;
+        benchmark.tokenTransfer = tokenTransferGas;
+        
+        // Log results
+        console.log("=== Token Operations Benchmark ===");
+        console.log("ERC-721 Transfer Gas:", nftTransferGas);
+        console.log("ERC-20 Transfer Gas:", erc20TransferGas);
+        console.log("ERC-20 Approval Gas:", erc20ApprovalGas);
+        
+        // Assertions
+        assertTrue(nftTransferGas < 100000, "ERC-721 transfer should use less than 100k gas");
+        assertTrue(erc20TransferGas < 80000, "ERC-20 transfer should use less than 80k gas");
+        assertTrue(erc20ApprovalGas < 50000, "ERC-20 approval should use less than 50k gas");
+    }
+    
+    /// @notice Benchmark registry operations gas costs
+    function testBenchmark_RegistryOperations() public {
+        vm.startPrank(owner);
+        
+        // Register asset
+        uint256 gasStart = gasleft();
+        registry.registerAsset(
+            address(nft),
+            1,
+            "Test Asset",
+            "ipfs://QmTest",
+            1000000,
+            owner
+        );
+        uint256 gasUsed = gasStart - gasleft();
+        registryEntryGas = gasUsed;
+        
+        vm.stopPrank();
+        
+        // Update benchmark
+        benchmark.registryEntry = registryEntryGas;
+        
+        // Log results
+        console.log("=== Registry Operations Benchmark ===");
+        console.log("Asset Registration Gas:", registryEntryGas);
+        
+        // Assertions
+        assertTrue(registryEntryGas < 200000, "Asset registration should use less than 200k gas");
+    }
+    
+    /// @notice Comprehensive benchmark report
+    function testBenchmark_ComprehensiveReport() public {
+        // Run all benchmarks
+        testBenchmark_AuctionCreation();
+        testBenchmark_BidPlacement();
+        testBenchmark_BidWithdrawal();
+        testBenchmark_AuctionEnd();
+        testBenchmark_TokenOperations();
+        testBenchmark_RegistryOperations();
+        
+        // Generate comprehensive report
+        console.log("\n=== COMPREHENSIVE GAS BENCHMARK REPORT ===");
+        console.log("Contract Deployment Gas:", benchmark.deployment);
+        console.log("Auction Creation Gas:", benchmark.auctionCreation);
+        console.log("Bid Placement Gas:", benchmark.bidPlacement);
+        console.log("Bid Withdrawal Gas:", benchmark.bidWithdrawal);
+        console.log("Auction End Gas:", benchmark.auctionEnd);
+        console.log("Token Transfer Gas:", benchmark.tokenTransfer);
+        console.log("Approval Gas:", benchmark.approval);
+        console.log("Registry Entry Gas:", benchmark.registryEntry);
+        
+        uint256 totalAuctionFlow = benchmark.auctionCreation + 
+                                 benchmark.bidPlacement + 
+                                 benchmark.bidWithdrawal + 
+                                 benchmark.auctionEnd;
+        
+        console.log("\nTotal Auction Flow Gas:", totalAuctionFlow);
+        console.log("Average per Operation:", totalAuctionFlow / 4);
+        
+        // Optimization recommendations
+        console.log("\n=== OPTIMIZATION RECOMMENDATIONS ===");
+        
+        if (benchmark.deployment > 5000000) {
+            console.log("⚠️  High deployment cost - consider factory pattern");
+        }
+        
+        if (benchmark.auctionCreation > 400000) {
+            console.log("⚠️  High auction creation cost - optimize storage writes");
+        }
+        
+        if (benchmark.bidPlacement > 180000) {
+            console.log("⚠️  High bid placement cost - reduce refund complexity");
+        }
+        
+        if (benchmark.auctionEnd > 180000) {
+            console.log("⚠️  High auction end cost - optimize asset transfer");
+        }
+        
+        // Gas efficiency score (lower is better)
+        uint256 efficiencyScore = (totalAuctionFlow * 100) / 1000000; // per million gas
+        console.log("\nGas Efficiency Score:", efficiencyScore, "/100");
+        
+        if (efficiencyScore < 50) {
+            console.log("✅ Excellent gas efficiency");
+        } else if (efficiencyScore < 75) {
+            console.log("⚠️  Good gas efficiency with room for improvement");
+        } else {
+            console.log("❌ Poor gas efficiency - optimization needed");
+        }
+    }
+    
+    /// @notice Test gas optimization with batch operations
+    function testBenchmark_BatchOperations() public {
+        vm.startPrank(seller);
+        
+        // Create multiple auctions
+        uint256[] memory auctionIds = new uint256[](5);
+        uint256 totalGas = 0;
+        
+        for (uint256 i = 0; i < 5; i++) {
+            nft.mint(seller, i + 1);
+            nft.approve(address(auction), i + 1);
+            
+            uint256 gasStart = gasleft();
+            auctionIds[i] = auction.createAuction(
+                address(nft),
+                i + 1,
+                1,
+                1 ether,
+                block.timestamp,
+                block.timestamp + 7 days,
+                0.01 ether,
+                address(0),
+                0,
+                0,
+                false,
+                0,
+                false
+            );
+            totalGas += gasStart - gasleft();
+        }
+        
+        vm.stopPrank();
+        
+        console.log("=== Batch Operations Benchmark ===");
+        console.log("5 Auctions Total Gas:", totalGas);
+        console.log("Average per Auction:", totalGas / 5);
+        console.log("Batch Efficiency:", (auctionCreationGas * 5) > totalGas ? "Improved" : "No improvement");
+        
+        // Test batch bids
+        vm.startPrank(bidder1);
+        uint256 bidGas = 0;
+        
+        for (uint256 i = 0; i < 5; i++) {
+            uint256 gasStart = gasleft();
+            auction.placeBid{value: 1 ether}(auctionIds[i], 1 ether);
+            bidGas += gasStart - gasleft();
+        }
+        
+        console.log("5 Bids Total Gas:", bidGas);
+        console.log("Average per Bid:", bidGas / 5);
+        
+        vm.stopPrank();
+    }
+    
+    /// @notice Test gas usage with different token standards
+    function testBenchmark_TokenStandards() public {
+        // Test ERC-721 auction
+        vm.startPrank(seller);
+        nft.mint(seller, 1);
+        nft.approve(address(auction), 1);
+        
+        uint256 gasStart = gasleft();
+        uint256 nftAuctionId = auction.createAuction(
+            address(nft),
+            1,
+            1,
+            1 ether,
+            block.timestamp,
+            block.timestamp + 7 days,
+            0.01 ether,
+            address(0),
+            0,
+            0,
+            false,
+            0,
+            false
+        );
+        uint256 nftGas = gasStart - gasleft();
+        
+        // Test ERC-20 auction
+        paymentToken.mint(seller, 100 ether);
+        paymentToken.approve(address(auction), 100 ether);
+        
+        gasStart = gasleft();
+        uint256 erc20AuctionId = auction.createAuction(
+            address(paymentToken),
+            0,
+            100 ether,
+            1 ether,
+            block.timestamp,
+            block.timestamp + 7 days,
+            0.01 ether,
+            address(0),
+            0,
+            0,
+            false,
+            0,
+            false
+        );
+        uint256 erc20Gas = gasStart - gasleft();
+        
+        vm.stopPrank();
+        
+        console.log("=== Token Standards Benchmark ===");
+        console.log("ERC-721 Auction Creation Gas:", nftGas);
+        console.log("ERC-20 Auction Creation Gas:", erc20Gas);
+        console.log("Gas Difference:", nftGas > erc20Gas ? nftGas - erc20Gas : erc20Gas - nftGas);
+        
+        // Test bids
+        vm.startPrank(bidder1);
+        
+        gasStart = gasleft();
+        auction.placeBid{value: 1 ether}(nftAuctionId, 1 ether);
+        uint256 nftBidGas = gasStart - gasleft();
+        
+        gasStart = gasleft();
+        auction.placeBid{value: 1 ether}(erc20AuctionId, 1 ether);
+        uint256 erc20BidGas = gasStart - gasleft();
+        
+        vm.stopPrank();
+        
+        console.log("ERC-721 Bid Gas:", nftBidGas);
+        console.log("ERC-20 Bid Gas:", erc20BidGas);
+    }
+    
+    /// @notice Gas optimization stress test
+    function testBenchmark_StressTest() public {
+        uint256 totalGasUsed = 0;
+        uint256 iterations = 100;
+        
+        console.log("=== Gas Stress Test ===");
+        console.log("Running", iterations, "auction operations...");
+        
+        for (uint256 i = 0; i < iterations; i++) {
+            vm.startPrank(seller);
+            nft.mint(seller, i + 1);
+            nft.approve(address(auction), i + 1);
+            
+            uint256 gasStart = gasleft();
+            uint256 auctionId = auction.createAuction(
+                address(nft),
+                i + 1,
+                1,
+                1 ether,
+                block.timestamp,
+                block.timestamp + 7 days,
+                0.01 ether,
+                address(0),
+                0,
+                0,
+                false,
+                0,
+                false
+            );
+            totalGasUsed += gasStart - gasleft();
+            
+            vm.stopPrank();
+            
+            vm.startPrank(bidder1);
+            gasStart = gasleft();
+            auction.placeBid{value: 1 ether}(auctionId, 1 ether);
+            totalGasUsed += gasStart - gasleft();
+            vm.stopPrank();
+        }
+        
+        console.log("Total Gas Used:", totalGasUsed);
+        console.log("Average per Operation:", totalGasUsed / (iterations * 2));
+        console.log("Gas per Block (15M limit):", (15000000 * 100) / totalGasUsed, "% utilization");
+        
+        // Check if we're approaching block gas limits
+        uint256 avgPerOp = totalGasUsed / (iterations * 2);
+        assertTrue(avgPerOp < 300000, "Average operation should stay well under block gas limit");
+    }
+    
+    receive() external payable {}
+}
